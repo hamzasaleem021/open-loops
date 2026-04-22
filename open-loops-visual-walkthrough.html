@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Loops - Visual Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f1ebe2;
+    --bg-deep: #e7ddcf;
+    --surface: #fbf7f0;
+    --surface-2: #f7f0e7;
+    --surface-3: #f3e7da;
+    --ink: #221c16;
+    --ink-soft: #62584d;
+    --ink-faint: #8f8376;
+    --rule: rgba(34, 28, 22, 0.14);
+    --rule-strong: rgba(34, 28, 22, 0.24);
+    --accent: #b65c36;
+    --accent-soft: rgba(182, 92, 54, 0.12);
+    --accent-strong: #9f4d2a;
+    --sage: #6e7a62;
+    --sage-soft: rgba(110, 122, 98, 0.13);
+    --gold: #a27a36;
+    --shadow: 0 24px 60px rgba(47, 33, 20, 0.12);
+    --shadow-soft: 0 12px 30px rgba(47, 33, 20, 0.08);
+    --radius-xl: 28px;
+    --radius-lg: 22px;
+    --radius-md: 18px;
+    --radius-sm: 14px;
+    --serif: "Fraunces", Georgia, serif;
+    --sans: "Manrope", "Segoe UI", sans-serif;
+    --phone-width: 393px;
+    --tablet-width: 760px;
+    --laptop-width: 1100px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    background:
+      radial-gradient(circle at top left, rgba(182, 92, 54, 0.14), transparent 30%),
+      radial-gradient(circle at top right, rgba(110, 122, 98, 0.1), transparent 28%),
+      linear-gradient(180deg, #f4eee6 0%, #ece4d8 100%);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.28)),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.55;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 36px 22px 80px;
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: 24px;
+    align-items: end;
+    margin-bottom: 28px;
+  }
+
+  .hero-copy,
+  .hero-meta {
+    background: rgba(251, 247, 240, 0.74);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(34, 28, 22, 0.08);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .hero-copy {
+    padding: 28px 30px;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 26px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.55;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(2.2rem, 4vw, 4rem);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+  }
+
+  .hero-copy p {
+    max-width: 58ch;
+    margin: 16px 0 0;
+    color: var(--ink-soft);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .hero-meta {
+    padding: 20px;
+  }
+
+  .meta-grid {
+    display: grid;
+    gap: 14px;
+  }
+
+  .meta-card {
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(34, 28, 22, 0.06);
+  }
+
+  .meta-card strong {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+  }
+
+  .meta-card p {
+    margin: 0;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    font-size: 0.94rem;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+  }
+
+  .panel,
+  .stage,
+  .notes-grid article {
+    background: rgba(251, 247, 240, 0.82);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(34, 28, 22, 0.08);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .panel {
+    position: sticky;
+    top: 18px;
+    padding: 22px 20px;
+    display: grid;
+    gap: 20px;
+  }
+
+  .panel-block {
+    display: grid;
+    gap: 10px;
+  }
+
+  .panel-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-faint);
+  }
+
+  .segmented {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .segmented button,
+  .flow-grid button {
+    border: 1px solid rgba(34, 28, 22, 0.12);
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--ink-soft);
+    border-radius: 14px;
+    padding: 10px 12px;
+    transition: 0.18s ease;
+  }
+
+  .segmented button.active,
+  .flow-grid button.active {
+    color: var(--ink);
+    background: var(--surface);
+    border-color: rgba(182, 92, 54, 0.28);
+    box-shadow: inset 0 0 0 1px rgba(182, 92, 54, 0.16);
+  }
+
+  .flow-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .flow-grid button:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .control-copy {
+    color: var(--ink-soft);
+    line-height: 1.65;
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  .principles {
+    display: grid;
+    gap: 10px;
+  }
+
+  .principles div {
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.42);
+    border-radius: 16px;
+    border: 1px solid rgba(34, 28, 22, 0.06);
+    color: var(--ink-soft);
+    line-height: 1.55;
+    font-size: 0.92rem;
+  }
+
+  .principles strong {
+    display: block;
+    font-size: 0.84rem;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .stage {
+    padding: 20px;
+    display: grid;
+    gap: 18px;
+  }
+
+  .stage-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .stage-headline {
+    display: grid;
+    gap: 4px;
+  }
+
+  .stage-headline strong {
+    font-size: 0.95rem;
+  }
+
+  .stage-headline span {
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+
+  .stage-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(34, 28, 22, 0.08);
+    border-radius: 999px;
+    padding: 8px 12px;
+    color: var(--ink-soft);
+    font-size: 0.84rem;
+  }
+
+  .stage-status strong {
+    color: var(--ink);
+  }
+
+  .canvas {
+    min-height: 780px;
+    padding: 18px;
+    border-radius: 26px;
+    background:
+      radial-gradient(circle at top left, rgba(255, 255, 255, 0.85), transparent 35%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(246, 238, 228, 0.84) 100%);
+    border: 1px solid rgba(34, 28, 22, 0.08);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .device-wrap {
+    width: 100%;
+    display: grid;
+    place-items: center;
+  }
+
+  .device-frame {
+    position: relative;
+    background: #f8f3eb;
+    box-shadow: 0 38px 90px rgba(41, 31, 19, 0.2);
+  }
+
+  .device-wrap.phone .device-frame,
+  .device-wrap.tablet .device-frame {
+    border: 10px solid #231d18;
+    overflow: hidden;
+  }
+
+  .device-wrap.phone .device-frame {
+    width: min(var(--phone-width), 100%);
+    height: 812px;
+    border-radius: 38px;
+  }
+
+  .device-wrap.tablet .device-frame {
+    width: min(var(--tablet-width), 100%);
+    height: 880px;
+    border-radius: 34px;
+  }
+
+  .device-wrap.laptop {
+    width: 100%;
+  }
+
+  .browser-frame {
+    width: min(var(--laptop-width), 100%);
+    height: 760px;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid rgba(34, 28, 22, 0.12);
+    background: #ddd4c7;
+    box-shadow: 0 38px 90px rgba(41, 31, 19, 0.16);
+  }
+
+  .browser-bar {
+    height: 48px;
+    background: #dfd4c6;
+    border-bottom: 1px solid rgba(34, 28, 22, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+  }
+
+  .window-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .window-dots span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(34, 28, 22, 0.18);
+  }
+
+  .browser-address {
+    flex: 1;
+    min-width: 0;
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(34, 28, 22, 0.08);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .device-wrap.phone .viewport,
+  .device-wrap.tablet .viewport,
+  .browser-viewport {
+    position: relative;
+    height: 100%;
+    background:
+      radial-gradient(circle at top left, rgba(182, 92, 54, 0.06), transparent 30%),
+      linear-gradient(180deg, #f7f1e8 0%, #f1e8dc 100%);
+    overflow: hidden;
+  }
+
+  .device-wrap.phone .viewport::before,
+  .device-wrap.tablet .viewport::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+    pointer-events: none;
+  }
+
+  .status-bar {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 28px;
+    padding: 10px 14px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--ink-soft);
+    font-size: 0.74rem;
+    z-index: 4;
+  }
+
+  .status-icons {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .status-icons span {
+    display: block;
+    width: 14px;
+    height: 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(34, 28, 22, 0.25);
+  }
+
+  .app {
+    position: relative;
+    height: 100%;
+    padding: 42px 18px 18px;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(34, 28, 22, 0.18) transparent;
+  }
+
+  .device-wrap.tablet .app {
+    padding: 28px 26px 24px;
+  }
+
+  .browser-viewport .app {
+    padding: 26px 26px 22px;
+  }
+
+  .app-centered {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .laptop-shell {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .screen-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: start;
+  }
+
+  .screen-head h2 {
+    margin: 4px 0 0;
+    font-family: var(--serif);
+    font-size: clamp(1.65rem, 3vw, 2.35rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+  }
+
+  .screen-head p {
+    margin: 8px 0 0;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    max-width: 32ch;
+  }
+
+  .screen-kicker {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+  }
+
+  .quiet-link,
+  .ghost-action,
+  .text-link,
+  .secondary-btn,
+  .mini-action,
+  .overflow-btn {
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+  }
+
+  .ghost-action,
+  .secondary-btn,
+  .mini-action,
+  .primary-btn,
+  .choice-card,
+  .capture-fab,
+  .waiting-strip,
+  .inbox-tray,
+  .reentry-card,
+  .loop-card,
+  .detail-pane,
+  .guide-panel,
+  .sheet,
+  .drawer {
+    border-radius: var(--radius-md);
+  }
+
+  .ghost-action,
+  .secondary-btn,
+  .primary-btn,
+  .mini-action {
+    padding: 11px 16px;
+    border: 1px solid rgba(34, 28, 22, 0.1);
+    transition: 0.18s ease;
+  }
+
+  .ghost-action,
+  .secondary-btn {
+    background: rgba(255, 255, 255, 0.54);
+  }
+
+  .primary-btn,
+  .capture-fab,
+  .mini-action {
+    background: var(--accent);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 12px 24px rgba(182, 92, 54, 0.2);
+  }
+
+  .primary-btn:disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .quiet-link,
+  .text-link {
+    padding: 0;
+    font-size: 0.92rem;
+    color: var(--ink-faint);
+  }
+
+  .reentry-card,
+  .inbox-tray,
+  .panel-surface,
+  .detail-pane,
+  .guide-panel,
+  .sheet,
+  .drawer {
+    background: rgba(251, 247, 240, 0.9);
+    border: 1px solid rgba(34, 28, 22, 0.08);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .reentry-card {
+    padding: 18px;
+    margin-bottom: 14px;
+    background: linear-gradient(180deg, rgba(243, 231, 218, 0.82) 0%, rgba(251, 247, 240, 0.95) 100%);
+  }
+
+  .reentry-card strong,
+  .inbox-tray strong,
+  .section-heading strong,
+  .detail-pane strong,
+  .guide-meta strong {
+    display: block;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+  }
+
+  .reentry-card h3,
+  .detail-pane h3,
+  .guide-panel h3 {
+    margin: 10px 0 8px;
+    font-family: var(--serif);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+
+  .reentry-card h3 {
+    font-size: 1.45rem;
+  }
+
+  .reentry-card p,
+  .detail-pane p,
+  .guide-panel p,
+  .inbox-tray p {
+    margin: 0;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  .action-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .panel-surface {
+    padding: 16px;
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .section-heading h3 {
+    margin: 4px 0 0;
+    font-family: var(--serif);
+    font-size: 1.36rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+
+  .section-stat {
+    color: var(--ink-faint);
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .inbox-tray {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(247, 240, 231, 0.96));
+  }
+
+  .loop-stack {
+    display: grid;
+    gap: 12px;
+  }
+
+  .loop-card {
+    position: relative;
+    padding: 16px;
+    border: 1px solid rgba(34, 28, 22, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 240, 231, 0.98));
+    box-shadow: 0 12px 26px rgba(47, 33, 20, 0.05);
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .loop-card.selected,
+  .loop-card.highlighted {
+    border-color: rgba(182, 92, 54, 0.3);
+    box-shadow: 0 16px 36px rgba(182, 92, 54, 0.12);
+  }
+
+  .loop-card.highlighted::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgba(182, 92, 54, 0.2);
+    pointer-events: none;
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: start;
+    margin-bottom: 12px;
+  }
+
+  .type-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 10px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+
+  .chip-do { background: rgba(110, 122, 98, 0.14); color: #4f5a46; }
+  .chip-decide { background: rgba(162, 122, 54, 0.15); color: #79591f; }
+  .chip-ask { background: rgba(182, 92, 54, 0.14); color: #904522; }
+  .chip-schedule { background: rgba(84, 112, 143, 0.13); color: #435a72; }
+  .chip-let_go { background: rgba(114, 102, 124, 0.13); color: #5c5264; }
+
+  .overflow-btn {
+    padding: 8px 10px;
+    font-size: 1.15rem;
+    color: var(--ink-faint);
+  }
+
+  .loop-card h4 {
+    margin: 0 0 10px;
+    font-size: 1.03rem;
+    line-height: 1.45;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .next-label {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    color: var(--ink-soft);
+    font-size: 0.93rem;
+    line-height: 1.55;
+  }
+
+  .next-label::before {
+    content: "Next";
+    flex: 0 0 auto;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+    margin-top: 1px;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-top: 15px;
+  }
+
+  .card-state {
+    color: var(--ink-faint);
+    font-size: 0.85rem;
+  }
+
+  .mini-action {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  .waiting-strip {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 15px 16px;
+    border: 1px solid rgba(34, 28, 22, 0.1);
+    background: rgba(255, 255, 255, 0.54);
+    color: var(--ink);
+  }
+
+  .waiting-strip span {
+    font-size: 0.98rem;
+  }
+
+  .waiting-strip strong {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--surface-3);
+    color: var(--ink);
+    font-size: 0.84rem;
+  }
+
+  .footer-link {
+    margin: 14px 4px 2px;
+    text-align: left;
+  }
+
+  .capture-fab {
+    position: sticky;
+    bottom: 8px;
+    width: 100%;
+    margin-top: 18px;
+    padding: 16px 18px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .home-layout {
+    display: block;
+    padding-bottom: 12px;
+  }
+
+  .home-layout.with-detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 292px;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .detail-pane {
+    padding: 18px;
+    position: sticky;
+    top: 12px;
+  }
+
+  .detail-pane h3 {
+    font-size: 1.36rem;
+  }
+
+  .detail-meta {
+    display: grid;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .detail-meta div {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.52);
+    border-radius: 14px;
+    border: 1px solid rgba(34, 28, 22, 0.06);
+  }
+
+  .detail-meta span {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: var(--ink-faint);
+    margin-bottom: 4px;
+  }
+
+  .detail-meta p {
+    margin: 0;
+    font-size: 0.93rem;
+  }
+
+  .detail-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .guide-shell {
+    min-height: 100%;
+    display: grid;
+    align-items: center;
+  }
+
+  .guide-shell.overlay {
+    padding: 22px;
+    background:
+      linear-gradient(180deg, rgba(245, 237, 227, 0.88), rgba(241, 232, 220, 0.96)),
+      radial-gradient(circle at top left, rgba(182, 92, 54, 0.08), transparent 36%);
+  }
+
+  .ghost-home {
+    position: absolute;
+    inset: 24px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.42);
+    border: 1px solid rgba(34, 28, 22, 0.06);
+    filter: blur(0.4px);
+    opacity: 0.62;
+    pointer-events: none;
+  }
+
+  .ghost-home::before,
+  .ghost-home::after {
+    content: "";
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(34, 28, 22, 0.05);
+  }
+
+  .ghost-home::before {
+    top: 18px;
+    height: 134px;
+  }
+
+  .ghost-home::after {
+    top: 172px;
+    height: 340px;
+  }
+
+  .guide-panel {
+    position: relative;
+    width: min(100%, 560px);
+    margin: 0 auto;
+    padding: 28px;
+  }
+
+  .guide-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .guide-step {
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+  }
+
+  .guide-panel h3 {
+    font-size: clamp(1.72rem, 3.8vw, 2.5rem);
+  }
+
+  .guide-copy {
+    margin-top: 10px;
+    font-size: 1rem;
+    max-width: 34ch;
+  }
+
+  .capture-field,
+  .answer-field {
+    width: 100%;
+    min-height: 148px;
+    margin-top: 18px;
+    padding: 18px 18px 20px;
+    resize: none;
+    border-radius: 20px;
+    border: 1px solid rgba(34, 28, 22, 0.1);
+    background: rgba(255, 255, 255, 0.78);
+    color: var(--ink);
+    line-height: 1.6;
+    font-size: 1rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  .capture-field:focus,
+  .answer-field:focus {
+    outline: none;
+    border-color: rgba(182, 92, 54, 0.32);
+    box-shadow: 0 0 0 4px rgba(182, 92, 54, 0.1);
+  }
+
+  .choice-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .choice-card {
+    width: 100%;
+    text-align: left;
+    padding: 16px 18px;
+    border: 1px solid rgba(34, 28, 22, 0.08);
+    background: rgba(255, 255, 255, 0.72);
+    transition: 0.18s ease;
+  }
+
+  .choice-card.active {
+    background: rgba(182, 92, 54, 0.1);
+    border-color: rgba(182, 92, 54, 0.26);
+  }
+
+  .choice-card strong {
+    display: block;
+    font-size: 1rem;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .choice-card span {
+    color: var(--ink-soft);
+    line-height: 1.5;
+    font-size: 0.94rem;
+  }
+
+  .helper-note {
+    margin-top: 14px;
+    font-size: 0.9rem;
+    color: var(--ink-faint);
+  }
+
+  .preview-card {
+    margin-top: 18px;
+    padding: 20px;
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 240, 231, 0.98));
+    border: 1px solid rgba(34, 28, 22, 0.08);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .preview-card h4 {
+    margin: 12px 0 10px;
+    font-size: 1.2rem;
+    line-height: 1.45;
+    letter-spacing: -0.02em;
+  }
+
+  .preview-note {
+    margin-top: 16px;
+    padding: 13px 14px;
+    border-radius: 16px;
+    background: rgba(110, 122, 98, 0.08);
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  .sheet-backdrop,
+  .drawer-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+  }
+
+  .sheet-backdrop::before,
+  .drawer-wrap::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(34, 28, 22, 0.16);
+    backdrop-filter: blur(4px);
+  }
+
+  .sheet,
+  .drawer {
+    position: absolute;
+    z-index: 1;
+    overflow: auto;
+  }
+
+  .drawer {
+    width: min(100% - 28px, 360px);
+    top: 18px;
+    bottom: 18px;
+    right: 18px;
+    padding: 18px;
+  }
+
+  .device-wrap.phone .drawer,
+  .device-wrap.tablet .drawer {
+    top: auto;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+    max-height: 60%;
+  }
+
+  .device-wrap.tablet .drawer {
+    left: auto;
+    right: 18px;
+    top: 18px;
+    bottom: 18px;
+    width: 350px;
+    max-height: none;
+  }
+
+  .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: start;
+    margin-bottom: 14px;
+  }
+
+  .drawer h4 {
+    margin: 4px 0 0;
+    font-family: var(--serif);
+    font-size: 1.42rem;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  .drawer p {
+    margin: 6px 0 0;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  .close-btn {
+    border: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(34, 28, 22, 0.06);
+    color: var(--ink-soft);
+    font-size: 1.1rem;
+  }
+
+  .drawer-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .drawer-item {
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.66);
+    border: 1px solid rgba(34, 28, 22, 0.06);
+  }
+
+  .drawer-item strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.98rem;
+  }
+
+  .drawer-item span {
+    color: var(--ink-soft);
+    line-height: 1.55;
+    font-size: 0.92rem;
+  }
+
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 22px;
+  }
+
+  .notes-grid article {
+    padding: 20px;
+  }
+
+  .notes-grid h3 {
+    margin: 0 0 10px;
+    font-family: var(--serif);
+    font-size: 1.34rem;
+    letter-spacing: -0.03em;
+  }
+
+  .notes-grid p,
+  .notes-grid li {
+    color: var(--ink-soft);
+    line-height: 1.65;
+  }
+
+  .notes-grid ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  .notes-grid li + li {
+    margin-top: 8px;
+  }
+
+  .notes-grid .note-eyebrow {
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 1180px) {
+    .hero {
+      grid-template-columns: 1fr;
+    }
+
+    .workspace {
+      grid-template-columns: 1fr;
+    }
+
+    .panel {
+      position: static;
+    }
+
+    .notes-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .page {
+      padding: 20px 14px 50px;
+    }
+
+    .hero-copy,
+    .hero-meta,
+    .panel,
+    .stage,
+    .notes-grid article {
+      border-radius: 20px;
+    }
+
+    .hero-copy {
+      padding: 22px 20px;
+    }
+
+    .panel,
+    .stage {
+      padding: 16px;
+    }
+
+    .flow-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .canvas {
+      min-height: 700px;
+      padding: 12px;
+    }
+
+    .device-wrap.phone .device-frame {
+      height: 760px;
+    }
+
+    .device-wrap.tablet .device-frame {
+      height: 780px;
+    }
+
+    .home-layout.with-detail {
+      grid-template-columns: 1fr;
+    }
+
+    .action-row {
+      flex-direction: column;
+    }
+
+    .action-row > * {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <section class="hero-copy">
+      <div class="eyebrow">Open Loops v1 walkthrough</div>
+      <h1>Calm clarity, one unfinished thing at a time.</h1>
+      <p>
+        This is a clickable visual prototype for the Open Loops concept: capture a thought,
+        make it clearer in three calm steps, and return to a home screen that stays gentle even
+        when life does not.
+      </p>
+    </section>
+    <aside class="hero-meta">
+      <div class="meta-grid">
+        <div class="meta-card">
+          <strong>Thesis</strong>
+          <p>A personal clarity tool, not a task manager. It helps unresolved thoughts land somewhere calm.</p>
+        </div>
+        <div class="meta-card">
+          <strong>Audience posture</strong>
+          <p>Quietly universal and AuDHD-friendly: low-overwhelm, low-guilt, guided without feeling clinical.</p>
+        </div>
+        <div class="meta-card">
+          <strong>Core loop</strong>
+          <p>Re-entry - capture - clarify - now. The app keeps showing only a few things that matter right now.</p>
+        </div>
+      </div>
+    </aside>
+  </header>
+
+  <main class="workspace">
+    <aside class="panel">
+      <section class="panel-block">
+        <span class="panel-label">Device</span>
+        <div class="segmented" id="device-switcher">
+          <button type="button" data-device="phone" class="active">Samsung A56</button>
+          <button type="button" data-device="tablet">Samsung A9</button>
+          <button type="button" data-device="laptop">Laptop</button>
+        </div>
+      </section>
+
+      <section class="panel-block">
+        <span class="panel-label">Walkthrough step</span>
+        <div class="flow-grid" id="screen-switcher">
+          <button type="button" data-screen="home" class="active">Home</button>
+          <button type="button" data-screen="capture">Capture</button>
+          <button type="button" data-screen="kind">Clarify 1</button>
+          <button type="button" data-screen="detail">Clarify 2</button>
+          <button type="button" data-screen="preview">Preview</button>
+        </div>
+      </section>
+
+      <section class="panel-block">
+        <span class="panel-label">Use this prototype</span>
+        <p class="control-copy">
+          Switch devices, move through the flow, or click inside the preview itself. On laptop,
+          select a loop card to reveal the optional detail pane.
+        </p>
+      </section>
+
+      <section class="panel-block">
+        <span class="panel-label">Design rules</span>
+        <div class="principles">
+          <div>
+            <strong>One primary action</strong>
+            Every screen has one obvious next move and one softer escape hatch.
+          </div>
+          <div>
+            <strong>Not the full backlog</strong>
+            Home surfaces only a few active loops, plus a gentle re-entry card.
+          </div>
+          <div>
+            <strong>No guilt mechanics</strong>
+            No streaks, no overdue states, no red urgency, no failure language.
+          </div>
+          <div>
+            <strong>Clarify, do not manage</strong>
+            The product turns vague residue into a clear next state. It does not become a system of everything.
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="stage">
+      <div class="stage-head">
+        <div class="stage-headline">
+          <strong id="stage-title">Home</strong>
+          <span id="stage-subtitle">Re-entry card, calm now list, and a bottom capture action.</span>
+        </div>
+        <div class="stage-status"><span>Current posture</span> <strong id="stage-device">Samsung A56</strong></div>
+      </div>
+      <div class="canvas" id="canvas"></div>
+    </section>
+  </main>
+
+  <section class="notes-grid">
+    <article>
+      <span class="note-eyebrow">Why it feels calmer</span>
+      <h3>It does not make everything equally loud.</h3>
+      <p>
+        The prototype keeps the main screen narrow in meaning, not just narrow in width. Now is visible,
+        Waiting is collapsed, Released is tucked away, and Inbox only appears if something still needs clarification.
+      </p>
+    </article>
+    <article>
+      <span class="note-eyebrow">Responsive behavior</span>
+      <h3>The flow adapts without becoming a dashboard.</h3>
+      <ul>
+        <li>Phone stays single-column with a bottom-fixed capture button.</li>
+        <li>Tablet breathes wider and lets Waiting open as a slide-over, not a second column.</li>
+        <li>Laptop keeps a centered reading-width layout and only shows a detail pane after selection.</li>
+      </ul>
+    </article>
+    <article>
+      <span class="note-eyebrow">Intentionally absent</span>
+      <h3>No cleverness that raises the temperature.</h3>
+      <ul>
+        <li>No dense dashboards, badges, nested projects, or kanban behavior.</li>
+        <li>No guilt language like overdue, missed, behind, or failing to keep up.</li>
+        <li>No AI coaching or life-optimization framing in this first pass.</li>
+      </ul>
+    </article>
+  </section>
+</div>
+
+<script>
+  const kindMeta = {
+    do: {
+      label: "Do",
+      className: "chip-do",
+      action: "Start",
+      question: "What is the smallest next visible step?",
+      helper: "Keep it concrete enough that you could start without another planning session."
+    },
+    decide: {
+      label: "Decide",
+      className: "chip-decide",
+      action: "Decide",
+      question: "What decision needs to be made?",
+      helper: "Name the decision plainly instead of keeping the whole swirl alive."
+    },
+    ask: {
+      label: "Ask",
+      className: "chip-ask",
+      action: "Reach out",
+      question: "Who do you need something from?",
+      helper: "One person, one ask, one next message is enough."
+    },
+    schedule: {
+      label: "Schedule",
+      className: "chip-schedule",
+      action: "Add time",
+      question: "What needs to be put on a calendar?",
+      helper: "Treat time as the missing ingredient, not a moral failure."
+    },
+    let_go: {
+      label: "Let go",
+      className: "chip-let_go",
+      action: "Release",
+      question: "What are you choosing to release?",
+      helper: "The goal is relief, not proving the thought was silly."
+    }
+  };
+
+  const baseActiveLoops = [
+    {
+      id: "loop-1",
+      kind: "ask",
+      text: "Text the building manager about the leak near the sink",
+      nextLabel: "Ask when someone can come by and whether I need to move anything first."
+    },
+    {
+      id: "loop-2",
+      kind: "decide",
+      text: "Pick either the afternoon train or the early flight for Karachi",
+      nextLabel: "Decide by Friday and stop reopening comparison tabs after that."
+    },
+    {
+      id: "loop-3",
+      kind: "do",
+      text: "Return the borrowed monitor stand",
+      nextLabel: "Put it by the front door tonight so tomorrow is automatic."
+    },
+    {
+      id: "loop-4",
+      kind: "schedule",
+      text: "Book the dentist cleaning that keeps slipping",
+      nextLabel: "Add one 15-minute admin block instead of waiting for motivation."
+    },
+    {
+      id: "loop-5",
+      kind: "do",
+      text: "Upload the passport photo before the form window closes",
+      nextLabel: "Take the photo near the window tomorrow morning and upload it right away."
+    },
+    {
+      id: "loop-6",
+      kind: "decide",
+      text: "Choose one savings account and stop researching",
+      nextLabel: "Compare only the top two and call it done."
+    },
+    {
+      id: "loop-7",
+      kind: "ask",
+      text: "Check in with Dad about Saturday lunch",
+      nextLabel: "Send one short message instead of mentally rehearsing it."
+    }
+  ];
+
+  const baseWaitingLoops = [
+    {
+      id: "wait-1",
+      kind: "ask",
+      text: "Insurance claim email",
+      nextLabel: "Waiting for the documents request to come back."
+    },
+    {
+      id: "wait-2",
+      kind: "schedule",
+      text: "Car service reminder",
+      nextLabel: "Waiting until next week to choose a slot."
+    },
+    {
+      id: "wait-3",
+      kind: "ask",
+      text: "Accountant tax checklist",
+      nextLabel: "Waiting on the missing file request."
+    }
+  ];
+
+  const baseReleasedLoops = [
+    {
+      id: "rel-1",
+      kind: "let_go",
+      text: "Read every desk review before deciding",
+      nextLabel: "Released after narrowing the choice enough."
+    },
+    {
+      id: "rel-2",
+      kind: "let_go",
+      text: "Reply perfectly to that old group thread",
+      nextLabel: "Released because silence is also an answer sometimes."
+    },
+    {
+      id: "rel-3",
+      kind: "let_go",
+      text: "Rescue the broken speaker this month",
+      nextLabel: "Released until it becomes genuinely relevant again."
+    }
+  ];
+
+  const baseInboxLoops = [
+    {
+      id: "inbox-1",
+      text: "Need to sort out the summer trip dates",
+      detailAnswer: "Decide whether the first week of July is actually realistic."
+    },
+    {
+      id: "inbox-2",
+      text: "Something about updating the laptop warranty",
+      detailAnswer: "Find the deadline before it turns into a vague worry."
+    }
+  ];
+
+  const state = {
+    device: "phone",
+    screen: "home",
+    reentryVisible: true,
+    homeExpanded: false,
+    waitingOpen: false,
+    releasedOpen: false,
+    selectedLoopId: null,
+    highlightedLoopId: null,
+    captureText: "Need to figure out what to do about the kitchen leak",
+    selectedKind: "ask",
+    detailAnswer: "Ask the building manager when someone can come by and whether I need to clear the area first.",
+    activeLoops: structuredClone(baseActiveLoops),
+    waitingLoops: structuredClone(baseWaitingLoops),
+    releasedLoops: structuredClone(baseReleasedLoops),
+    inboxLoops: structuredClone(baseInboxLoops)
+  };
+
+  const screenMeta = {
+    home: {
+      title: "Home",
+      subtitle: "Re-entry card, calm now list, and a bottom capture action."
+    },
+    capture: {
+      title: "Capture",
+      subtitle: "One input, one next move, and an easy save-for-later exit."
+    },
+    kind: {
+      title: "Clarify 1 of 3",
+      subtitle: "Choose the kind of loop before adding more words."
+    },
+    detail: {
+      title: "Clarify 2 of 3",
+      subtitle: "Ask one tailored follow-up question, not a whole form."
+    },
+    preview: {
+      title: "Preview 3 of 3",
+      subtitle: "Review the clarified card and send it back into the system."
+    }
+  };
+
+  const deviceLabels = {
+    phone: "Samsung A56",
+    tablet: "Samsung A9",
+    laptop: "Laptop"
+  };
+
+  const canvas = document.getElementById("canvas");
+
+  function esc(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function currentSuggestedLoop() {
+    return state.activeLoops.find(loop => loop.id === "loop-1") || state.activeLoops[0];
+  }
+
+  function currentKind() {
+    return kindMeta[state.selectedKind] || kindMeta.ask;
+  }
+
+  function renderDeviceChrome(content) {
+    if (state.device === "laptop") {
+      return `
+        <div class="device-wrap laptop">
+          <div class="browser-frame">
+            <div class="browser-bar">
+              <div class="window-dots"><span></span><span></span><span></span></div>
+              <div class="browser-address">open-loops.local/walkthrough</div>
+            </div>
+            <div class="browser-viewport">${content}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="device-wrap ${state.device}">
+        <div class="device-frame">
+          <div class="status-bar">
+            <span>${state.device === "phone" ? "9:41" : "10:12"}</span>
+            <div class="status-icons"><span></span><span></span><span></span></div>
+          </div>
+          <div class="viewport">${content}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHome() {
+    const visibleLoops = state.homeExpanded ? state.activeLoops : state.activeLoops.slice(0, 5);
+    const hiddenCount = Math.max(0, state.activeLoops.length - 5);
+    const selectedLoop = state.activeLoops.find(loop => loop.id === state.selectedLoopId);
+    const showDetailPane = state.device === "laptop" && !!selectedLoop;
+
+    return `
+      <div class="app">
+        <div class="${state.device === "laptop" ? "laptop-shell" : "app-centered"}">
+          <div class="home-layout ${showDetailPane ? "with-detail" : ""}">
+            <div>
+              <div class="screen-head">
+                <div>
+                  <div class="screen-kicker">Open Loops</div>
+                  <h2>Good afternoon</h2>
+                  <p>You can come back to the rest later. Only a few things need your attention now.</p>
+                </div>
+                ${state.device === "laptop" ? '<button type="button" class="primary-btn" data-action="open-capture">Capture a loop</button>' : ""}
+              </div>
+
+              ${state.reentryVisible ? renderReentryCard() : ""}
+              ${state.inboxLoops.length ? renderInboxTray() : ""}
+
+              <section class="panel-surface">
+                <div class="section-heading">
+                  <div>
+                    <strong>Visible focus</strong>
+                    <h3>Now</h3>
+                  </div>
+                  <span class="section-stat">${Math.min(state.activeLoops.length, 5)} visible</span>
+                </div>
+                <div class="loop-stack">
+                  ${visibleLoops.map(renderLoopCard).join("")}
+                </div>
+                ${hiddenCount > 0 && !state.homeExpanded ? `<button type="button" class="text-link" data-action="show-more">See ${hiddenCount} more</button>` : ""}
+              </section>
+
+              <button type="button" class="waiting-strip" data-action="toggle-waiting">
+                <span>Waiting</span>
+                <strong>${state.waitingLoops.length}</strong>
+              </button>
+
+              <button type="button" class="quiet-link footer-link" data-action="toggle-released">View released</button>
+
+              ${state.device !== "laptop" ? '<button type="button" class="capture-fab" data-action="open-capture">Capture a loop</button>' : ""}
+            </div>
+
+            ${showDetailPane ? renderDetailPane(selectedLoop) : ""}
+          </div>
+        </div>
+        ${state.waitingOpen ? renderDrawer("waiting") : ""}
+        ${state.releasedOpen ? renderDrawer("released") : ""}
+      </div>
+    `;
+  }
+
+  function renderReentryCard() {
+    const loop = currentSuggestedLoop();
+    return `
+      <section class="reentry-card">
+        <strong>Pick up where you left off</strong>
+        <h3>${esc(loop.text)}</h3>
+        <p>${esc(loop.nextLabel)}</p>
+        <div class="action-row">
+          <button type="button" class="primary-btn" data-action="continue-reentry">Continue</button>
+          <button type="button" class="secondary-btn" data-action="dismiss-reentry">Not now</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderInboxTray() {
+    return `
+      <section class="inbox-tray">
+        <div>
+          <strong>Inbox</strong>
+          <p>${state.inboxLoops.length} unclarified loop${state.inboxLoops.length === 1 ? "" : "s"} are waiting quietly. The app only asks about one at a time.</p>
+        </div>
+        <button type="button" class="secondary-btn" data-action="clarify-inbox">Clarify one</button>
+      </section>
+    `;
+  }
+
+  function renderLoopCard(loop) {
+    const meta = kindMeta[loop.kind];
+    const selected = state.selectedLoopId === loop.id;
+    const highlighted = state.highlightedLoopId === loop.id;
+    return `
+      <article class="loop-card ${selected ? "selected" : ""} ${highlighted ? "highlighted" : ""}">
+        <div class="card-top">
+          <span class="type-chip ${meta.className}">${meta.label}</span>
+          <button type="button" class="overflow-btn" data-action="overflow" data-loop-id="${esc(loop.id)}" aria-label="More actions">...</button>
+        </div>
+        <h4>${esc(loop.text)}</h4>
+        <div class="next-label">${esc(loop.nextLabel)}</div>
+        <div class="card-footer">
+          <span class="card-state">One clear next move</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button type="button" class="ghost-action" data-action="select-loop" data-loop-id="${esc(loop.id)}">Open</button>
+            <button type="button" class="mini-action" data-action="trigger-primary" data-loop-id="${esc(loop.id)}">${meta.action}</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderDetailPane(loop) {
+    const meta = kindMeta[loop.kind];
+    return `
+      <aside class="detail-pane">
+        <strong>Selected loop</strong>
+        <h3>${esc(loop.text)}</h3>
+        <p>${esc(loop.nextLabel)}</p>
+        <div class="detail-meta">
+          <div>
+            <span>Kind</span>
+            <p>${meta.label}</p>
+          </div>
+          <div>
+            <span>Primary action</span>
+            <p>${meta.action}</p>
+          </div>
+          <div>
+            <span>Why this stays calm</span>
+            <p>The detail pane appears only after selection. Nothing is shouting from the side on first open.</p>
+          </div>
+        </div>
+        <div class="detail-actions">
+          <button type="button" class="primary-btn" data-action="trigger-primary" data-loop-id="${esc(loop.id)}">${meta.action}</button>
+          <button type="button" class="secondary-btn" data-action="clear-selection">Back to list</button>
+        </div>
+      </aside>
+    `;
+  }
+
+  function renderCapture() {
+    const panel = `
+      <section class="guide-panel">
+        <div class="guide-meta">
+          <strong>New loop</strong>
+          <span class="guide-step">Capture</span>
+        </div>
+        <h3>What is sitting in your head?</h3>
+        <p class="guide-copy">Drop the thought here exactly as it arrives. You can make it clearer in the next step.</p>
+        <textarea id="capture-input" class="capture-field" placeholder="Write one unfinished thing...">${esc(state.captureText)}</textarea>
+        <p class="helper-note">This should feel like putting a thought in a tray, not starting a project.</p>
+        <div class="action-row">
+          <button type="button" class="primary-btn" data-action="capture-continue" ${state.captureText.trim() ? "" : "disabled"}>Continue</button>
+          <button type="button" class="secondary-btn" data-action="save-for-later">Save for later</button>
+        </div>
+      </section>
+    `;
+
+    if (state.device === "laptop") {
+      return `
+        <div class="app">
+          <div class="guide-shell overlay">
+            <div class="ghost-home"></div>
+            ${panel}
+          </div>
+        </div>
+      `;
+    }
+
+    return `<div class="app"><div class="guide-shell">${panel}</div></div>`;
+  }
+
+  function renderKindStep() {
+    const cards = Object.entries(kindMeta).map(([key, meta]) => {
+      return `
+        <button type="button" class="choice-card ${state.selectedKind === key ? "active" : ""}" data-action="choose-kind" data-kind="${key}">
+          <strong>${meta.label}</strong>
+          <span>${esc(meta.helper)}</span>
+        </button>
+      `;
+    }).join("");
+
+    return `
+      <div class="app">
+        <div class="${state.device === "laptop" ? "guide-shell overlay" : "guide-shell"}">
+          ${state.device === "laptop" ? '<div class="ghost-home"></div>' : ""}
+          <section class="guide-panel">
+            <div class="guide-meta">
+              <strong>Let's make this clearer</strong>
+              <span class="guide-step">1 of 3</span>
+            </div>
+            <h3>What kind of loop is this?</h3>
+            <p class="guide-copy">Pick the shape of the unfinished thing before you decide anything else.</p>
+            <div class="choice-list">${cards}</div>
+            <div class="action-row">
+              <button type="button" class="primary-btn" data-action="go-detail">Continue</button>
+              <button type="button" class="secondary-btn" data-action="back-home">Back</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDetailStep() {
+    const meta = currentKind();
+    return `
+      <div class="app">
+        <div class="${state.device === "laptop" ? "guide-shell overlay" : "guide-shell"}">
+          ${state.device === "laptop" ? '<div class="ghost-home"></div>' : ""}
+          <section class="guide-panel">
+            <div class="guide-meta">
+              <strong>${meta.label}</strong>
+              <span class="guide-step">2 of 3</span>
+            </div>
+            <h3>${esc(meta.question)}</h3>
+            <p class="guide-copy">${esc(meta.helper)}</p>
+            <textarea id="detail-input" class="answer-field" placeholder="Write one clear next state...">${esc(state.detailAnswer)}</textarea>
+            <p class="helper-note">You can come back to the rest later. This only needs to be clear enough for the next move.</p>
+            <div class="action-row">
+              <button type="button" class="primary-btn" data-action="go-preview" ${state.detailAnswer.trim() ? "" : "disabled"}>Continue</button>
+              <button type="button" class="secondary-btn" data-action="back-kind">Back</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPreviewStep() {
+    const meta = currentKind();
+    return `
+      <div class="app">
+        <div class="${state.device === "laptop" ? "guide-shell overlay" : "guide-shell"}">
+          ${state.device === "laptop" ? '<div class="ghost-home"></div>' : ""}
+          <section class="guide-panel">
+            <div class="guide-meta">
+              <strong>Preview</strong>
+              <span class="guide-step">3 of 3</span>
+            </div>
+            <h3>Here is the clarified card.</h3>
+            <p class="guide-copy">One kind, one next state, one calm place to return to.</p>
+
+            <div class="preview-card">
+              <span class="type-chip ${meta.className}">${meta.label}</span>
+              <h4>${esc(state.captureText || "Untitled loop")}</h4>
+              <div class="next-label">${esc(state.detailAnswer || meta.helper)}</div>
+              <div class="card-footer">
+                <span class="card-state">One clear next move</span>
+                <button type="button" class="mini-action" data-action="noop">${meta.action}</button>
+              </div>
+            </div>
+
+            <div class="preview-note">You can come back to the rest later.</div>
+
+            <div class="action-row">
+              <button type="button" class="primary-btn" data-action="finish-flow">Done</button>
+              <button type="button" class="secondary-btn" data-action="back-detail">Back</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDrawer(kind) {
+    const isWaiting = kind === "waiting";
+    const list = isWaiting ? state.waitingLoops : state.releasedLoops;
+    const title = isWaiting ? "Waiting" : "Released";
+    const description = isWaiting
+      ? "Things you do not need to hold in active focus right now."
+      : "Thoughts you deliberately let stop taking up active space.";
+
+    return `
+      <div class="drawer-wrap">
+        <section class="drawer">
+          <div class="drawer-header">
+            <div>
+              <strong>${title}</strong>
+              <h4>${title}</h4>
+              <p>${description}</p>
+            </div>
+            <button type="button" class="close-btn" data-action="close-drawers" aria-label="Close">&times;</button>
+          </div>
+          <div class="drawer-list">
+            ${list.map(item => `
+              <div class="drawer-item">
+                <strong>${esc(item.text)}</strong>
+                <span>${esc(item.nextLabel)}</span>
+              </div>
+            `).join("")}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function renderScreen() {
+    switch (state.screen) {
+      case "capture":
+        return renderCapture();
+      case "kind":
+        return renderKindStep();
+      case "detail":
+        return renderDetailStep();
+      case "preview":
+        return renderPreviewStep();
+      case "home":
+      default:
+        return renderHome();
+    }
+  }
+
+  function syncStageCopy() {
+    const meta = screenMeta[state.screen];
+    document.getElementById("stage-title").textContent = meta.title;
+    document.getElementById("stage-subtitle").textContent = meta.subtitle;
+    document.getElementById("stage-device").textContent = deviceLabels[state.device];
+
+    document.querySelectorAll("[data-device]").forEach(button => {
+      button.classList.toggle("active", button.dataset.device === state.device);
+    });
+
+    document.querySelectorAll("[data-screen]").forEach(button => {
+      button.classList.toggle("active", button.dataset.screen === state.screen);
+    });
+  }
+
+  function render() {
+    syncStageCopy();
+    canvas.innerHTML = renderDeviceChrome(renderScreen());
+  }
+
+  function nextId(prefix) {
+    return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+  }
+
+  function resetFlow(keepText) {
+    state.screen = "home";
+    state.waitingOpen = false;
+    state.releasedOpen = false;
+    state.selectedKind = "ask";
+    state.detailAnswer = "Ask the building manager when someone can come by and whether I need to clear the area first.";
+    state.highlightedLoopId = null;
+    if (!keepText) {
+      state.captureText = "Need to figure out what to do about the kitchen leak";
+    }
+  }
+
+  function createLoopFromFlow() {
+    const meta = currentKind();
+    const loop = {
+      id: nextId("loop"),
+      kind: state.selectedKind,
+      text: (state.captureText || "Untitled loop").trim(),
+      nextLabel: (state.detailAnswer || meta.helper).trim()
+    };
+
+    if (state.selectedKind === "let_go") {
+      state.releasedLoops.unshift(loop);
+    } else {
+      state.activeLoops.unshift(loop);
+      state.highlightedLoopId = loop.id;
+      if (state.device === "laptop") state.selectedLoopId = loop.id;
+    }
+  }
+
+  document.addEventListener("click", (event) => {
+    const deviceButton = event.target.closest("[data-device]");
+    if (deviceButton) {
+      state.device = deviceButton.dataset.device;
+      if (state.device !== "laptop") {
+        state.selectedLoopId = null;
+      }
+      render();
+      return;
+    }
+
+    const screenButton = event.target.closest("[data-screen]");
+    if (screenButton) {
+      state.screen = screenButton.dataset.screen;
+      state.waitingOpen = false;
+      state.releasedOpen = false;
+      render();
+      return;
+    }
+
+    const actionEl = event.target.closest("[data-action]");
+    if (!actionEl) return;
+
+    const action = actionEl.dataset.action;
+    const loopId = actionEl.dataset.loopId;
+
+    switch (action) {
+      case "open-capture":
+        state.screen = "capture";
+        state.waitingOpen = false;
+        state.releasedOpen = false;
+        break;
+
+      case "capture-continue":
+        state.screen = "kind";
+        break;
+
+      case "save-for-later":
+        state.inboxLoops.unshift({
+          id: nextId("inbox"),
+          text: (state.captureText || "Untitled loop").trim(),
+          detailAnswer: "Clarify later when there is more room."
+        });
+        resetFlow(false);
+        break;
+
+      case "choose-kind":
+        state.selectedKind = actionEl.dataset.kind;
+        break;
+
+      case "go-detail":
+        state.screen = "detail";
+        break;
+
+      case "go-preview":
+        state.screen = "preview";
+        break;
+
+      case "back-home":
+        state.screen = "home";
+        break;
+
+      case "back-kind":
+        state.screen = "kind";
+        break;
+
+      case "back-detail":
+        state.screen = "detail";
+        break;
+
+      case "finish-flow":
+        createLoopFromFlow();
+        resetFlow(false);
+        break;
+
+      case "continue-reentry":
+        state.reentryVisible = false;
+        state.highlightedLoopId = currentSuggestedLoop().id;
+        if (state.device === "laptop") {
+          state.selectedLoopId = currentSuggestedLoop().id;
+        }
+        break;
+
+      case "dismiss-reentry":
+        state.reentryVisible = false;
+        state.highlightedLoopId = null;
+        break;
+
+      case "show-more":
+        state.homeExpanded = true;
+        break;
+
+      case "toggle-waiting":
+        state.waitingOpen = !state.waitingOpen;
+        state.releasedOpen = false;
+        break;
+
+      case "toggle-released":
+        state.releasedOpen = !state.releasedOpen;
+        state.waitingOpen = false;
+        break;
+
+      case "close-drawers":
+        state.waitingOpen = false;
+        state.releasedOpen = false;
+        break;
+
+      case "clarify-inbox": {
+        const nextInbox = state.inboxLoops.shift();
+        if (nextInbox) {
+          state.captureText = nextInbox.text;
+          state.detailAnswer = nextInbox.detailAnswer;
+          state.selectedKind = "decide";
+          state.screen = "kind";
+        }
+        break;
+      }
+
+      case "select-loop":
+        state.selectedLoopId = loopId;
+        state.highlightedLoopId = loopId;
+        break;
+
+      case "clear-selection":
+        state.selectedLoopId = null;
+        state.highlightedLoopId = null;
+        break;
+
+      case "trigger-primary":
+        state.highlightedLoopId = loopId || null;
+        if (state.device === "laptop" && loopId) {
+          state.selectedLoopId = loopId;
+        }
+        break;
+
+      case "overflow":
+      case "noop":
+      default:
+        break;
+    }
+
+    render();
+  });
+
+  document.addEventListener("input", (event) => {
+    if (event.target.id === "capture-input") {
+      state.captureText = event.target.value;
+      const button = document.querySelector('[data-action="capture-continue"]');
+      if (button) button.disabled = !state.captureText.trim();
+    }
+
+    if (event.target.id === "detail-input") {
+      state.detailAnswer = event.target.value;
+      const button = document.querySelector('[data-action="go-preview"]');
+      if (button) button.disabled = !state.detailAnswer.trim();
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
