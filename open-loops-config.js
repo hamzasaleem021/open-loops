@@ -6,9 +6,6 @@ window.OL_CONFIG = Object.freeze({
   EMAIL_REDIRECT_TO: null,
 
   STORAGE_KEY: 'open_loops_data',
-  INSTALL_DISMISSED_KEY: 'open_loops_install_dismissed',
-  SESSION_COUNT_KEY: 'open_loops_session_count',
-  LAST_SESSION_KEY: 'open_loops_last_session',
 
   EXTERNAL_API_HOSTS: [
     'supabase.co',

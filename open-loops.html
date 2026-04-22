@@ -10,6 +10,9 @@
 <meta name="theme-color" content="#0f0f0f">
 <meta name="description" content="A calm place for unfinished things.">
 <title>Open Loops</title>
+<link rel="manifest" href="./open-loops-manifest.json">
+<link rel="icon" href="./open-loops-icon-192.png">
+<link rel="apple-touch-icon" href="./open-loops-icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
@@ -949,7 +952,7 @@ a { color: inherit; text-decoration: none; }
       <span class="brand-name">Open Loops</span>
     </div>
     <div class="topbar-right">
-      <button class="pill-btn" id="sync-pill" type="button">
+      <button class="pill-btn" id="sync-pill" type="button" data-action="open-sync">
         <span class="dot"></span>
         <span id="sync-label">Sync</span>
       </button>
@@ -1125,7 +1128,7 @@ a { color: inherit; text-decoration: none; }
 
     if (view.inlineEditId === loop.id) {
       return `
-        <div class="loop-card${hl}" style="${delay}" data-loop-id="${esc(loop.id)}">
+        <article class="loop-card${hl}" style="${delay}" data-loop-id="${esc(loop.id)}">
           <div class="loop-card-top">
             ${chipHtml(loop.kind)}
             <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More">
@@ -1137,7 +1140,7 @@ a { color: inherit; text-decoration: none; }
             <button class="btn-action btn btn-sm" data-action="inline-edit-save" data-loop-id="${esc(loop.id)}">Save</button>
             <button class="btn-ghost btn btn-sm" data-action="inline-edit-cancel">Cancel</button>
           </div>
-        </div>`;
+        </article>`;
     }
 
     return `
@@ -1176,11 +1179,11 @@ a { color: inherit; text-decoration: none; }
     if (showReentry && view.activeTab === 'now') {
       html += `
         <section class="reentry">
-          <div class="reentry-eyebrow">Continue</div>
+          <div class="reentry-eyebrow">Pick up where you left off</div>
           <h2 class="reentry-title">${esc(suggested_loop.rawText)}</h2>
           <p class="reentry-note">${esc(suggested_loop.promptAnswer || 'This is still waiting for a clear next move.')}</p>
           <div class="reentry-actions">
-            <button class="btn btn-primary btn-sm" data-action="continue-reentry">Pick up</button>
+            <button class="btn btn-primary btn-sm" data-action="continue-reentry">Back to it</button>
             <button class="btn btn-ghost btn-sm" data-action="dismiss-reentry">Skip</button>
           </div>
         </section>`;
@@ -1221,7 +1224,7 @@ a { color: inherit; text-decoration: none; }
           html += `<button class="show-more" data-action="show-more">Show ${hidden} more loop${hidden > 1 ? 's' : ''}</button>`;
         }
       } else {
-        html += `<div class="empty-state"><strong>Nothing in focus</strong>Capture a loop when something starts taking up headspace.</div>`;
+        html += `<div class="empty-state"><strong>Your head is quiet</strong>When something starts taking up space in it, drop it here.</div>`;
       }
       html += `</div>`;
     }
@@ -1245,7 +1248,7 @@ a { color: inherit; text-decoration: none; }
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state"><strong>Nothing parked</strong>Things you've paused without forgetting them appear here.</div>`;
+        html += `<div class="empty-state"><strong>Nothing waiting</strong>Park things here when they're not yours to move yet.</div>`;
       }
       html += `</div>`;
     }
@@ -1268,7 +1271,7 @@ a { color: inherit; text-decoration: none; }
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state"><strong>Nothing released yet</strong>Things you've consciously let go of live here.</div>`;
+        html += `<div class="empty-state"><strong>Nothing let go of yet</strong>When you close a loop, it rests here.</div>`;
       }
       html += `</div>`;
     }
@@ -1433,7 +1436,7 @@ a { color: inherit; text-decoration: none; }
           <button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
         <h2 class="overlay-title">Keep loops everywhere.</h2>
-        <p class="overlay-subtitle">Your loops save locally first. Supabase adds cross-device sync on top.</p>
+        <p class="overlay-subtitle">Your loops save on this device first. Add an email to keep them in sync everywhere.</p>
         ${!hasSupabaseCfg() ? `
           <div class="sync-info">Edit <code>open-loops-config.js</code> with your Supabase URL and key, then run <code>open-loops-supabase.sql</code> in the Supabase SQL editor.</div>
         ` : loggedIn ? `
@@ -1443,7 +1446,7 @@ a { color: inherit; text-decoration: none; }
             <button class="btn btn-ghost" data-action="close-overlay">Close</button>
           </div>
         ` : `
-          <div class="sync-info">Enter your email — Supabase will send a magic link. No password needed.</div>
+          <div class="sync-info">Enter your email — you'll receive a magic link. No password needed.</div>
           <div class="email-row">
             <input type="email" class="email-input" id="sync-email" placeholder="you@example.com" autocomplete="email">
             <button class="btn btn-primary" data-action="send-magic-link">Send link</button>
@@ -1484,7 +1487,7 @@ a { color: inherit; text-decoration: none; }
     };
     const cfg = actions[loop.kind] || actions.do;
     const opts = cfg.options.map(o => `
-      <button class="${o.primary ? 'menu-item' : 'menu-item'}" data-action="${o.action}" data-loop-id="${esc(loop.id)}" style="${o.primary ? 'color:var(--accent);border-color:var(--accent-dim);background:var(--accent-dim)' : ''}">
+      <button class="menu-item${o.primary ? ' menu-item-primary' : ''}" data-action="${o.action}" data-loop-id="${esc(loop.id)}" style="${o.primary ? 'color:var(--accent);border-color:var(--accent-dim);background:var(--accent-dim)' : ''}">
         ${o.label}
       </button>`).join('');
     return `
@@ -1606,7 +1609,7 @@ a { color: inherit; text-decoration: none; }
     if (action === 'clarify-inbox') {
       const next = byStatus('inbox')[0];
       if (next) {
-        view.overlay = { type: 'capture', step: 'kind', rawText: next.rawText, kind: 'ask', promptAnswer: next.promptAnswer || '', sourceId: next.id };
+        view.overlay = { type: 'capture', step: 'kind', rawText: next.rawText, kind: null, promptAnswer: next.promptAnswer || '', sourceId: next.id };
         renderOverlay();
       }
       return;
@@ -1704,7 +1707,7 @@ a { color: inherit; text-decoration: none; }
     }
     if (action === 'complete-progress') {
       closeOverlay();
-      toast('Still in progress. It stays in Now.');
+      toast('Still in progress.');
       return;
     }
     if (action === 'complete-update') {
@@ -1838,17 +1841,23 @@ a { color: inherit; text-decoration: none; }
     }
   });
 
-  // Keyboard: Escape closes overlays, Enter saves inline edit
+  // Keyboard: Escape closes overlays, Enter saves inline edit, c opens capture
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (view.inlineEditId) { view.inlineEditId = null; renderMain(); }
       else closeOverlay();
     }
+    if (e.key === 'c' && !view.overlay && !view.inlineEditId &&
+        !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) {
+      e.preventDefault();
+      view.overlay = { type: 'capture', step: 'capture', rawText: '', kind: null, promptAnswer: '', sourceId: null };
+      renderOverlay();
+    }
     if (e.key === 'Enter' && e.target.classList.contains('inline-edit-input') && !e.shiftKey) {
       e.preventDefault();
       const loopId = e.target.id.replace('inline-edit-', '');
       const val = e.target.value.trim();
-      if (val) { updateLoop(loopId, { rawText: val }); save(); toast('Updated.'); }
+      if (val) { updateLoop(loopId, { rawText: val }); persistAndSync(); toast('Updated.'); }
       view.inlineEditId = null;
       renderMain();
     }
@@ -1880,7 +1889,24 @@ a { color: inherit; text-decoration: none; }
 
     function applyRemote(cfg) {
       if (!Array.isArray(cfg.loops)) return;
-      data = { version: 2, lastLoopId: cfg.lastReentryLoopId || null, activeTab: 'now', loops: cfg.loops.map(sanitize) };
+      const remoteLoops = cfg.loops.map(sanitize);
+      const localById = new Map(data.loops.map(l => [l.id, l]));
+      const remoteById = new Map(remoteLoops.map(l => [l.id, l]));
+      const merged = [];
+      const seen = new Set();
+
+      // Merge: for loops in both, keep newer; remote-only adds; local-only keeps
+      for (const rl of remoteLoops) {
+        seen.add(rl.id);
+        const ll = localById.get(rl.id);
+        if (!ll) { merged.push(rl); }
+        else { merged.push(rl.updatedAt >= ll.updatedAt ? rl : ll); }
+      }
+      for (const ll of data.loops) {
+        if (!seen.has(ll.id)) merged.push(ll);
+      }
+
+      data = { version: 2, lastLoopId: cfg.lastReentryLoopId || data.lastLoopId || null, activeTab: 'now', loops: merged };
       save();
       renderMain();
     }
@@ -1974,6 +2000,13 @@ a { color: inherit; text-decoration: none; }
   load();
   renderAll();
   Sync.init();
+
+  // ── SERVICE WORKER ──
+  if ('serviceWorker' in navigator && !IS_FILE) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./open-loops-sw.js').catch(() => {});
+    });
+  }
 })();
 </script>
 </body>
