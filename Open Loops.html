@@ -1,0 +1,2274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Open Loops">
+<meta name="theme-color" content="#f2ebe1">
+<meta name="description" content="A calm place for unfinished things.">
+<link rel="manifest" href="./open-loops-manifest.json">
+<link rel="icon" type="image/png" href="./open-loops-icon-192.png">
+<title>Open Loops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="./open-loops-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3"></script>
+<style>
+  :root {
+    --bg: #f2ebe1;
+    --bg-deep: #e6dccd;
+    --surface: rgba(251, 247, 240, 0.92);
+    --surface-solid: #fbf7f0;
+    --surface-soft: #f6ede2;
+    --surface-warm: #f2e6d7;
+    --ink: #231d17;
+    --ink-soft: #62584d;
+    --ink-faint: #8f8376;
+    --rule: rgba(35, 29, 23, 0.1);
+    --rule-strong: rgba(35, 29, 23, 0.18);
+    --accent: #b65c36;
+    --accent-soft: rgba(182, 92, 54, 0.12);
+    --accent-strong: #a34f2a;
+    --sage: #6c765f;
+    --sage-soft: rgba(108, 118, 95, 0.14);
+    --gold: #9f7838;
+    --gold-soft: rgba(159, 120, 56, 0.14);
+    --slate: #56697b;
+    --slate-soft: rgba(86, 105, 123, 0.14);
+    --plum: #756a7c;
+    --plum-soft: rgba(117, 106, 124, 0.14);
+    --shadow: 0 24px 60px rgba(49, 33, 20, 0.12);
+    --shadow-soft: 0 12px 30px rgba(49, 33, 20, 0.08);
+    --radius-xl: 28px;
+    --radius-lg: 22px;
+    --radius-md: 18px;
+    --radius-sm: 14px;
+    --serif: "Fraunces", Georgia, serif;
+    --sans: "Manrope", "Segoe UI", sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--sans);
+    color: var(--ink);
+    background:
+      radial-gradient(circle at top left, rgba(182, 92, 54, 0.14), transparent 34%),
+      radial-gradient(circle at top right, rgba(108, 118, 95, 0.1), transparent 28%),
+      linear-gradient(180deg, #f4eee6 0%, #ece4d8 100%);
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.26)),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23noise)' opacity='0.045'/%3E%3C/svg%3E");
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  .shell {
+    position: relative;
+    z-index: 1;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 22px 16px 96px;
+  }
+
+  .topbar {
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 14px;
+    padding: 18px 18px 16px;
+    border-radius: var(--radius-lg);
+    background: rgba(251, 247, 240, 0.78);
+    border: 1px solid rgba(35, 29, 23, 0.08);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 24px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.55;
+  }
+
+  .brand h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(2rem, 4vw, 3.35rem);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+  }
+
+  .brand p {
+    max-width: 54ch;
+    margin: 10px 0 0;
+    color: var(--ink-soft);
+    line-height: 1.65;
+  }
+
+  .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: end;
+  }
+
+  .status-pill,
+  .quiet-link,
+  .ghost-btn,
+  .secondary-btn,
+  .primary-btn,
+  .mini-action,
+  .overflow-btn,
+  .fab {
+    border-radius: 999px;
+    border: 1px solid var(--rule);
+    transition: 0.18s ease;
+  }
+
+  .status-pill,
+  .quiet-link,
+  .ghost-btn,
+  .secondary-btn {
+    background: rgba(255, 255, 255, 0.58);
+    color: var(--ink-soft);
+  }
+
+  .status-pill,
+  .quiet-link {
+    padding: 10px 14px;
+    text-decoration: none;
+  }
+
+  .status-pill.syncing {
+    color: var(--accent-strong);
+    border-color: rgba(182, 92, 54, 0.24);
+    background: rgba(182, 92, 54, 0.08);
+  }
+
+  .status-pill.synced {
+    color: #445041;
+    border-color: rgba(108, 118, 95, 0.22);
+    background: rgba(108, 118, 95, 0.09);
+  }
+
+  .status-pill.error {
+    color: var(--accent-strong);
+    border-color: rgba(182, 92, 54, 0.26);
+    background: rgba(182, 92, 54, 0.09);
+  }
+
+  .notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background: rgba(251, 247, 240, 0.84);
+    border: 1px solid rgba(35, 29, 23, 0.08);
+    box-shadow: var(--shadow-soft);
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  .notice strong {
+    color: var(--ink);
+  }
+
+  .notice.warn {
+    border-color: rgba(182, 92, 54, 0.18);
+    background: rgba(242, 230, 215, 0.9);
+  }
+
+  .quick-panel {
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, rgba(242, 230, 215, 0.96) 0%, rgba(251, 247, 240, 0.98) 100%);
+    border: 1px solid rgba(35, 29, 23, 0.08);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .quick-kicker,
+  .summary-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .quick-panel h2 {
+    margin: 8px 0 8px;
+    font-family: var(--serif);
+    font-size: clamp(1.55rem, 4vw, 2.1rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  .quick-panel p {
+    margin: 0;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  .summary-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .summary-card {
+    text-align: left;
+    padding: 15px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(35, 29, 23, 0.08);
+    background: rgba(255, 255, 255, 0.62);
+    color: var(--ink);
+  }
+
+  .summary-count {
+    display: block;
+    margin-top: 6px;
+    font-family: var(--serif);
+    font-size: 1.45rem;
+    color: var(--ink);
+  }
+
+  .summary-hint {
+    display: block;
+    margin-top: 6px;
+    color: var(--ink-faint);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .home-grid {
+    display: grid;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .stack {
+    display: grid;
+    gap: 14px;
+  }
+
+  .reentry-card,
+  .inbox-tray,
+  .section-card,
+  .detail-pane,
+  .overlay-card,
+  .drawer,
+  .context-menu {
+    background: rgba(251, 247, 240, 0.88);
+    border: 1px solid rgba(35, 29, 23, 0.08);
+    box-shadow: var(--shadow-soft);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(10px);
+  }
+
+  .reentry-card {
+    padding: 18px;
+    background: linear-gradient(180deg, rgba(242, 230, 215, 0.9) 0%, rgba(251, 247, 240, 0.96) 100%);
+  }
+
+  .reentry-card strong,
+  .section-kicker,
+  .inbox-tray strong,
+  .detail-pane strong,
+  .overlay-meta strong,
+  .drawer-head strong,
+  .context-menu strong {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+  }
+
+  .reentry-card h2,
+  .section-title,
+  .detail-pane h3,
+  .overlay-card h2,
+  .drawer-head h3,
+  .context-menu h3 {
+    margin: 8px 0 10px;
+    font-family: var(--serif);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+  }
+
+  .reentry-card h2 {
+    font-size: clamp(1.45rem, 4vw, 1.9rem);
+  }
+
+  .reentry-card p,
+  .detail-pane p,
+  .overlay-card p,
+  .drawer-head p,
+  .drawer-item p,
+  .context-menu p,
+  .inbox-tray p {
+    margin: 0;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  .action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .ghost-btn,
+  .secondary-btn,
+  .primary-btn,
+  .mini-action {
+    padding: 11px 16px;
+  }
+
+  .primary-btn,
+  .mini-action,
+  .fab {
+    border-color: transparent;
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(182, 92, 54, 0.22);
+  }
+
+  .primary-btn:disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .inbox-tray {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 18px;
+  }
+
+  .section-card {
+    padding: 16px;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-size: clamp(1.42rem, 3vw, 1.74rem);
+  }
+
+  .section-stat {
+    color: var(--ink-faint);
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .loop-stack {
+    display: grid;
+    gap: 12px;
+  }
+
+  .section-intro {
+    margin: -4px 0 14px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  .loop-card {
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(35, 29, 23, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 240, 231, 0.98));
+    box-shadow: 0 12px 26px rgba(49, 33, 20, 0.05);
+  }
+
+  .loop-card.highlighted {
+    border-color: rgba(182, 92, 54, 0.28);
+    box-shadow: 0 16px 36px rgba(182, 92, 54, 0.12);
+  }
+
+  .card-top,
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .card-top {
+    margin-bottom: 12px;
+  }
+
+  .card-footer {
+    align-items: center;
+    margin-top: 14px;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .chip-do { background: var(--sage-soft); color: #50594a; }
+  .chip-decide { background: var(--gold-soft); color: #75571d; }
+  .chip-ask { background: var(--accent-soft); color: #8e4321; }
+  .chip-schedule { background: var(--slate-soft); color: #4a5e72; }
+  .chip-let_go { background: var(--plum-soft); color: #605566; }
+  .chip-inbox { background: rgba(35, 29, 23, 0.06); color: var(--ink-faint); }
+
+  .overflow-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+    background: rgba(255, 255, 255, 0.54);
+    color: var(--ink-faint);
+  }
+
+  .loop-card h3 {
+    margin: 0 0 10px;
+    font-size: 1.04rem;
+    line-height: 1.45;
+    letter-spacing: -0.02em;
+  }
+
+  .next-line {
+    display: flex;
+    gap: 8px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    font-size: 0.93rem;
+  }
+
+  .next-line::before {
+    content: "Next";
+    font-size: 0.74rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    flex: 0 0 auto;
+    margin-top: 2px;
+  }
+
+  .card-state {
+    color: var(--ink-faint);
+    font-size: 0.85rem;
+  }
+
+  .waiting-strip,
+  .released-link {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 16px;
+    margin-top: 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(35, 29, 23, 0.1);
+    background: rgba(255, 255, 255, 0.56);
+    color: var(--ink);
+  }
+
+  .released-link {
+    justify-content: start;
+    color: var(--ink-soft);
+  }
+
+  .waiting-strip strong {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--surface-warm);
+    font-size: 0.84rem;
+  }
+
+  .show-more {
+    margin-top: 14px;
+    border: none;
+    background: transparent;
+    color: var(--ink-faint);
+    padding: 0;
+  }
+
+  .empty-card {
+    padding: 18px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.52);
+    border: 1px dashed rgba(35, 29, 23, 0.16);
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  .fab {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 5;
+    padding: 16px 18px;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .overlay-root {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(35, 29, 23, 0.18);
+    backdrop-filter: blur(6px);
+    pointer-events: auto;
+  }
+
+  .overlay-card {
+    width: min(100%, 620px);
+    padding: 24px;
+  }
+
+  .overlay-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .overlay-step {
+    color: var(--ink-faint);
+    font-size: 0.9rem;
+  }
+
+  .overlay-card h2 {
+    font-size: clamp(1.65rem, 4vw, 2.45rem);
+  }
+
+  .overlay-body {
+    margin-top: 16px;
+  }
+
+  .big-input {
+    width: 100%;
+    min-height: 160px;
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(35, 29, 23, 0.1);
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--ink);
+    font-size: 1rem;
+    line-height: 1.65;
+    resize: none;
+  }
+
+  .big-input:focus,
+  .email-input:focus {
+    outline: none;
+    border-color: rgba(182, 92, 54, 0.28);
+    box-shadow: 0 0 0 4px rgba(182, 92, 54, 0.1);
+  }
+
+  .helper {
+    margin-top: 12px;
+    color: var(--ink-faint);
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .choice-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .choice-card {
+    width: 100%;
+    text-align: left;
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(35, 29, 23, 0.08);
+    background: rgba(255, 255, 255, 0.72);
+  }
+
+  .choice-card.active {
+    background: rgba(182, 92, 54, 0.1);
+    border-color: rgba(182, 92, 54, 0.24);
+  }
+
+  .choice-card strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 1rem;
+    color: var(--ink);
+  }
+
+  .choice-card span {
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  .compact-form {
+    display: grid;
+    gap: 16px;
+    margin-top: 18px;
+  }
+
+  .field-group {
+    display: grid;
+    gap: 8px;
+  }
+
+  .field-group label {
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+  }
+
+  .preview-card {
+    margin-top: 18px;
+    padding: 20px;
+    border-radius: 22px;
+    border: 1px solid rgba(35, 29, 23, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 240, 231, 0.98));
+    box-shadow: var(--shadow-soft);
+  }
+
+  .preview-card h3 {
+    margin: 12px 0 10px;
+    font-size: 1.22rem;
+    letter-spacing: -0.02em;
+    line-height: 1.45;
+  }
+
+  .preview-note {
+    margin-top: 16px;
+    padding: 13px 14px;
+    border-radius: 16px;
+    background: rgba(108, 118, 95, 0.1);
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  .drawer {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    bottom: 18px;
+    width: min(100%, 360px);
+    padding: 18px;
+    overflow: auto;
+  }
+
+  .drawer-head {
+    margin-bottom: 16px;
+  }
+
+  .drawer-head h3 {
+    font-size: 1.5rem;
+  }
+
+  .drawer-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .drawer-item {
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(35, 29, 23, 0.06);
+  }
+
+  .drawer-item h4 {
+    margin: 0 0 6px;
+    font-size: 1rem;
+  }
+
+  .drawer-item .action-row {
+    margin-top: 12px;
+  }
+
+  .context-menu {
+    width: min(100%, 460px);
+    padding: 20px;
+  }
+
+  .menu-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .menu-btn {
+    width: 100%;
+    text-align: left;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(35, 29, 23, 0.08);
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--ink);
+  }
+
+  .email-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 16px;
+  }
+
+  .email-input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(35, 29, 23, 0.1);
+    background: rgba(255, 255, 255, 0.82);
+  }
+
+  .sync-note {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(35, 29, 23, 0.06);
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(18px);
+    min-width: min(460px, calc(100% - 24px));
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(34, 28, 22, 0.92);
+    color: #f8f4ec;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.18s ease;
+    z-index: 30;
+  }
+
+  .toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (min-width: 1080px) {
+    .shell {
+      padding: 28px 20px 72px;
+    }
+
+    .desktop-only {
+      display: inline-flex;
+    }
+
+    .mobile-only {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1079px) {
+    .desktop-only {
+      display: none;
+    }
+
+    .drawer {
+      left: 16px;
+      right: 16px;
+      top: auto;
+      bottom: 16px;
+      width: auto;
+      max-height: 65vh;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .shell {
+      padding: 14px 14px 96px;
+    }
+
+    .topbar {
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    .header-actions {
+      width: 100%;
+      justify-content: start;
+    }
+
+    .summary-grid,
+    .choice-list {
+      grid-template-columns: 1fr;
+    }
+
+    .inbox-tray,
+    .notice,
+    .action-row,
+    .email-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .action-row > *,
+    .email-row > * {
+      width: 100%;
+    }
+
+    .overlay {
+      padding: 12px;
+    }
+
+    .overlay-card,
+    .context-menu {
+      width: 100%;
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .fab {
+      left: 14px;
+      right: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="eyebrow">Open Loops</div>
+        <h1>Clear the mental pile.</h1>
+        <p>Capture unfinished thoughts, decide what matters now, and move the rest out of the way.</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="status-pill" id="sync-pill">Set up sync</button>
+        <button type="button" class="status-pill" id="install-btn" hidden>Install</button>
+      </div>
+    </header>
+
+    <div class="notice" id="file-notice" hidden>
+      <div><strong>Running from file://</strong> Install and magic-link redirects need a local server or deployed URL. Use <code>python -m http.server 8000</code> and open <code>http://localhost:8000/open-loops.html</code>.</div>
+    </div>
+
+    <div class="notice warn" id="save-banner" hidden>
+      <div><strong>Sync needs attention.</strong> <span id="save-banner-text">Local changes are safe here, but they are not in the cloud yet.</span></div>
+      <button type="button" class="secondary-btn" id="retry-sync-btn">Retry now</button>
+    </div>
+
+    <main id="app-main"></main>
+  </div>
+
+  <div class="overlay-root" id="overlay-root"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  (() => {
+    const CFG = window.OL_CONFIG || {};
+    const STORAGE_KEY = CFG.STORAGE_KEY || 'open_loops_data';
+    const INSTALL_DISMISSED_KEY = CFG.INSTALL_DISMISSED_KEY || 'open_loops_install_dismissed';
+    const SESSION_COUNT_KEY = CFG.SESSION_COUNT_KEY || 'open_loops_session_count';
+    const LAST_SESSION_KEY = CFG.LAST_SESSION_KEY || 'open_loops_last_session';
+    const CLIENT_NONCE = (window.crypto && window.crypto.randomUUID)
+      ? window.crypto.randomUUID()
+      : `ol-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const VALID_KINDS = new Set(['do', 'decide', 'ask', 'schedule', 'let_go']);
+    const VALID_STATUSES = new Set(['active', 'waiting', 'released', 'inbox']);
+    const EMPTY_SYNC_TEXT = 'Set up sync';
+    const IS_FILE = window.location.protocol === 'file:';
+    const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    const kindMeta = {
+      do: {
+        label: 'Do',
+        className: 'chip-do',
+        action: 'Start',
+        question: 'What is the smallest next visible step?',
+        helper: 'Keep it concrete enough that you could begin without another planning session.'
+      },
+      decide: {
+        label: 'Decide',
+        className: 'chip-decide',
+        action: 'Decide',
+        question: 'What decision needs to be made?',
+        helper: 'Name the decision cleanly instead of holding the whole swirl in your head.'
+      },
+      ask: {
+        label: 'Ask',
+        className: 'chip-ask',
+        action: 'Reach out',
+        question: 'Who do you need something from?',
+        helper: 'One person and one ask is enough for now.'
+      },
+      schedule: {
+        label: 'Schedule',
+        className: 'chip-schedule',
+        action: 'Add time',
+        question: 'What needs to be put on a calendar?',
+        helper: 'Treat time as the missing ingredient, not motivation.'
+      },
+      let_go: {
+        label: 'Let go',
+        className: 'chip-let_go',
+        action: 'Release',
+        question: 'What are you choosing to release?',
+        helper: 'The goal is relief, not proving the thought was silly.'
+      },
+      inbox: {
+        label: 'Inbox',
+        className: 'chip-inbox',
+        action: 'Clarify',
+        question: '',
+        helper: ''
+      }
+    };
+
+    const view = {
+      selectedLoopId: null,
+      highlightedLoopId: null,
+      homeExpanded: false,
+      reentryDismissedFor: null,
+      overlay: null,
+      syncStatus: { key: 'not_configured', text: EMPTY_SYNC_TEXT },
+      deferredInstall: null,
+      showInstallButton: false,
+      magicLinkEmail: '',
+      magicLinkSent: false
+    };
+
+    let toastTimer = null;
+    let lastFocusedElement = null;
+
+    function nowIso() {
+      return new Date().toISOString();
+    }
+
+    function uniqueId(prefix) {
+      return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+    }
+
+    function seedLoop(id, rawText, kind, status, promptAnswer) {
+      const timestamp = nowIso();
+      return {
+        id,
+        rawText,
+        displayText: rawText,
+        kind,
+        status,
+        promptAnswer,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+    }
+
+    function createSeedState() {
+      return {
+        version: 1,
+        lastReentryLoopId: 'loop-1',
+        loops: [
+          seedLoop('loop-1', 'Text the building manager about the leak near the sink', 'ask', 'active', 'Ask when someone can come by and whether I need to clear the area first.'),
+          seedLoop('loop-2', 'Pick either the afternoon train or the early flight for Karachi', 'decide', 'active', 'Decide by Friday and stop reopening comparison tabs after that.'),
+          seedLoop('loop-3', 'Return the borrowed monitor stand', 'do', 'active', 'Put it by the front door tonight so tomorrow is automatic.'),
+          seedLoop('loop-4', 'Book the dentist cleaning that keeps slipping', 'schedule', 'active', 'Add one 15-minute admin block instead of waiting for motivation.'),
+          seedLoop('loop-5', 'Upload the passport photo before the form window closes', 'do', 'active', 'Take the photo near the window tomorrow morning and upload it right away.'),
+          seedLoop('loop-6', 'Choose one savings account and stop researching', 'decide', 'waiting', 'Waiting until I compare only the top two options.'),
+          seedLoop('loop-7', 'Check in with Dad about Saturday lunch', 'ask', 'waiting', 'Waiting until tomorrow morning when I can send a short message.'),
+          seedLoop('loop-8', 'Read every desk review before deciding', 'let_go', 'released', 'Released after narrowing the choice enough.'),
+          seedLoop('loop-9', 'Reply perfectly to that old group thread', 'let_go', 'released', 'Released because silence is also an answer sometimes.'),
+          seedLoop('loop-10', 'Need to sort out the summer trip dates', null, 'inbox', 'Decide whether the first week of July is actually realistic.'),
+          seedLoop('loop-11', 'Something about updating the laptop warranty', null, 'inbox', 'Find the deadline before it turns into a vague worry.')
+        ]
+      };
+    }
+
+    function sanitizeLoop(loop) {
+      const createdAt = typeof loop.createdAt === 'string' ? loop.createdAt : nowIso();
+      const updatedAt = typeof loop.updatedAt === 'string' ? loop.updatedAt : createdAt;
+      const kind = VALID_KINDS.has(loop.kind) ? loop.kind : null;
+      const status = VALID_STATUSES.has(loop.status) ? loop.status : 'active';
+      const rawText = typeof loop.rawText === 'string' ? loop.rawText.trim() : '';
+      const displayText = typeof loop.displayText === 'string' && loop.displayText.trim()
+        ? loop.displayText.trim()
+        : rawText;
+      const promptAnswer = typeof loop.promptAnswer === 'string' ? loop.promptAnswer.trim() : '';
+
+      return {
+        id: typeof loop.id === 'string' && loop.id ? loop.id : uniqueId('loop'),
+        rawText: rawText || 'Untitled loop',
+        displayText: displayText || rawText || 'Untitled loop',
+        kind,
+        status,
+        promptAnswer,
+        createdAt,
+        updatedAt
+      };
+    }
+
+    function sanitizeState(data) {
+      if (!data || !Array.isArray(data.loops)) return createSeedState();
+      const loops = data.loops.map(sanitizeLoop);
+      return {
+        version: 1,
+        lastReentryLoopId: typeof data.lastReentryLoopId === 'string' ? data.lastReentryLoopId : null,
+        loops
+      };
+    }
+
+    const State = (() => {
+      let data = createSeedState();
+
+      return {
+        replace(next) {
+          data = sanitizeState(next);
+        },
+        snapshot() {
+          return JSON.parse(JSON.stringify(data));
+        },
+        serializable() {
+          return {
+            version: 1,
+            lastReentryLoopId: data.lastReentryLoopId,
+            loops: data.loops
+          };
+        },
+        getLoop(id) {
+          return data.loops.find(loop => loop.id === id) || null;
+        },
+        getLoopsByStatus(status) {
+          return data.loops.filter(loop => loop.status === status);
+        },
+        getActiveVisible() {
+          const loops = this.getLoopsByStatus('active');
+          return view.homeExpanded ? loops : loops.slice(0, 5);
+        },
+        activeCount() {
+          return this.getLoopsByStatus('active').length;
+        },
+        getSuggestedLoop() {
+          if (data.lastReentryLoopId) {
+            const preferred = this.getLoop(data.lastReentryLoopId);
+            if (preferred && preferred.status === 'active') return preferred;
+          }
+          return this.getLoopsByStatus('active')[0] || null;
+        },
+        setLastReentryLoopId(id) {
+          data.lastReentryLoopId = id || null;
+        },
+        createLoop({ rawText, kind, promptAnswer, status }) {
+          const loop = sanitizeLoop({
+            id: uniqueId('loop'),
+            rawText,
+            displayText: rawText,
+            kind,
+            status,
+            promptAnswer,
+            createdAt: nowIso(),
+            updatedAt: nowIso()
+          });
+          data.loops.unshift(loop);
+          if (loop.status === 'active') data.lastReentryLoopId = loop.id;
+          return loop;
+        },
+        updateLoop(id, patch) {
+          const loop = this.getLoop(id);
+          if (!loop) return null;
+          Object.assign(loop, patch, { updatedAt: nowIso() });
+          if (typeof patch.kind === 'string' && !VALID_KINDS.has(patch.kind)) loop.kind = null;
+          if (typeof patch.status === 'string' && !VALID_STATUSES.has(patch.status)) loop.status = 'active';
+          if (!loop.displayText || !loop.displayText.trim()) loop.displayText = loop.rawText;
+          if (loop.status === 'active') data.lastReentryLoopId = loop.id;
+          return loop;
+        },
+        clarifyLoop(id, { rawText, kind, promptAnswer }) {
+          return this.updateLoop(id, {
+            rawText,
+            displayText: rawText,
+            kind,
+            promptAnswer,
+            status: kind === 'let_go' ? 'released' : 'active'
+          });
+        },
+        moveStatus(id, status) {
+          return this.updateLoop(id, { status });
+        },
+        removeLoop(id) {
+          data.loops = data.loops.filter(loop => loop.id !== id);
+          if (data.lastReentryLoopId === id) {
+            data.lastReentryLoopId = this.getSuggestedLoop()?.id || null;
+          }
+        }
+      };
+    })();
+
+    function parseIsoTime(value) {
+      const time = Date.parse(value || '');
+      return Number.isNaN(time) ? 0 : time;
+    }
+
+    function mergeStates(localState, remoteState) {
+      const merged = new Map();
+      const local = sanitizeState(localState);
+      const remote = sanitizeState(remoteState);
+
+      for (const loop of remote.loops) {
+        merged.set(loop.id, loop);
+      }
+
+      for (const loop of local.loops) {
+        const existing = merged.get(loop.id);
+        if (!existing || parseIsoTime(loop.updatedAt) >= parseIsoTime(existing.updatedAt)) {
+          merged.set(loop.id, loop);
+        }
+      }
+
+      const loops = Array.from(merged.values())
+        .sort((a, b) => parseIsoTime(b.updatedAt) - parseIsoTime(a.updatedAt));
+      const preferredId = local.lastReentryLoopId || remote.lastReentryLoopId || null;
+
+      return {
+        version: 1,
+        loops,
+        lastReentryLoopId: loops.some(loop => loop.id === preferredId) ? preferredId : (loops[0]?.id || null)
+      };
+    }
+
+    const Persist = {
+      hasStoredState() {
+        try {
+          return !!localStorage.getItem(STORAGE_KEY);
+        } catch (_) {
+          return false;
+        }
+      },
+      load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          State.replace(parsed);
+        } catch (error) {
+          console.warn('Persist.load failed', error);
+        }
+      },
+      save() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(State.serializable()));
+        } catch (error) {
+          console.warn('Persist.save failed', error);
+        }
+      }
+    };
+
+    function hasSupabaseConfig() {
+      return !!(
+        CFG.SUPABASE_URL &&
+        CFG.SUPABASE_KEY &&
+        !CFG.SUPABASE_URL.includes('YOUR_PROJECT') &&
+        !CFG.SUPABASE_KEY.includes('YOUR_SUPABASE_PUBLISHABLE_KEY')
+      );
+    }
+
+    function setSyncStatus(key, text) {
+      view.syncStatus = { key, text };
+      renderHeader();
+      renderOverlay();
+    }
+
+    function showSaveBanner(message) {
+      const banner = document.getElementById('save-banner');
+      const text = document.getElementById('save-banner-text');
+      if (text) text.textContent = message;
+      if (banner) banner.hidden = false;
+    }
+
+    function hideSaveBanner() {
+      const banner = document.getElementById('save-banner');
+      if (banner) banner.hidden = true;
+    }
+
+    const Sync = (() => {
+      if (!window.supabase || !hasSupabaseConfig()) {
+        return {
+          init: async () => {},
+          pushAfterChange: async () => ({ ok: true, pending: true }),
+          retryPush: async () => ({ ok: false, error: new Error('not configured') }),
+          sendMagicLink: async () => { throw new Error('Supabase is not configured yet.'); },
+          signOut: async () => {},
+          isAvailable: () => false,
+          isLoggedIn: () => false
+        };
+      }
+
+      const db = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      });
+
+      let currentUser = null;
+      let isBusy = false;
+      let pendingRemote = null;
+      let hasPendingChanges = false;
+      let channel = null;
+
+      function cleanAuthUrl() {
+        if (!window.location.hash && !window.location.search.includes('code=')) return;
+        history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      function payload() {
+        const snapshot = State.snapshot();
+        return {
+          version: 1,
+          loops: snapshot.loops,
+          lastReentryLoopId: snapshot.lastReentryLoopId,
+          _nonce: CLIENT_NONCE,
+          _at: Date.now()
+        };
+      }
+
+      function applyRemote(config, options = {}) {
+        const remoteState = {
+          version: 1,
+          loops: Array.isArray(config.loops) ? config.loops : [],
+          lastReentryLoopId: config.lastReentryLoopId || null
+        };
+        const nextState = options.mergeWithLocal
+          ? mergeStates(State.snapshot(), remoteState)
+          : remoteState;
+
+        State.replace(nextState);
+        Persist.save();
+        view.highlightedLoopId = null;
+        renderMain();
+
+        if (options.mergeWithLocal) {
+          showToast('Merged local and cloud loops.');
+        }
+      }
+
+      async function pull(options = {}) {
+        if (!currentUser || isBusy) return;
+        isBusy = true;
+        try {
+          const { data, error } = await db.rpc('get_open_loops_state', { p_user_id: currentUser.id });
+          if (error) throw error;
+
+          if (Array.isArray(data) && data.length > 0 && data[0].state_data) {
+            applyRemote(data[0].state_data, options);
+            setSyncStatus('synced', 'Synced');
+            hideSaveBanner();
+          } else if (Array.isArray(data) && data.length === 0) {
+            await pushNow();
+          }
+        } catch (error) {
+          console.error('Sync pull failed', error);
+          setSyncStatus('error', 'Sync needs attention');
+        } finally {
+          isBusy = false;
+          if (pendingRemote) {
+            applyRemote(pendingRemote);
+            pendingRemote = null;
+          }
+        }
+      }
+
+      async function pushNow() {
+        if (!currentUser) return { ok: false, error: new Error('not logged in') };
+        try {
+          const { error } = await db.rpc('upsert_open_loops_state', {
+            p_user_id: currentUser.id,
+            p_state_data: payload()
+          });
+          if (error) throw error;
+          hasPendingChanges = false;
+          hideSaveBanner();
+          setSyncStatus('synced', 'Synced');
+          return { ok: true };
+        } catch (error) {
+          console.error('Sync push failed', error);
+          hasPendingChanges = true;
+          showSaveBanner('Local changes are safe here, but they have not reached Supabase yet.');
+          setSyncStatus('error', 'Not saved');
+          return { ok: false, error };
+        }
+      }
+
+      function setupRealtime() {
+        if (!currentUser || channel) return;
+        channel = db
+          .channel('open-loops-state')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'open_loops_state',
+            filter: `user_id=eq.${currentUser.id}`
+          }, payload => {
+            const incoming = payload.new && payload.new.state_data;
+            if (!incoming) return;
+            if (incoming._nonce === CLIENT_NONCE) return;
+            if (isBusy) pendingRemote = incoming;
+            else {
+              applyRemote(incoming);
+              setSyncStatus('synced', 'Synced');
+            }
+          })
+          .subscribe();
+      }
+
+      function teardownRealtime() {
+        if (!channel) return;
+        db.removeChannel(channel);
+        channel = null;
+      }
+
+      db.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          currentUser = session.user;
+          view.magicLinkSent = false;
+          cleanAuthUrl();
+          setSyncStatus('syncing', 'Syncing...');
+          await pull({ mergeWithLocal: Persist.hasStoredState() });
+          setupRealtime();
+          if (hasPendingChanges) await pushNow();
+        } else if (event === 'SIGNED_OUT') {
+          currentUser = null;
+          teardownRealtime();
+          hideSaveBanner();
+          setSyncStatus('not_synced', 'Sign in to sync');
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          currentUser = session.user;
+        }
+      });
+
+      return {
+        async init() {
+          try {
+            const { data: { session } } = await db.auth.getSession();
+            if (session) {
+              currentUser = session.user;
+              cleanAuthUrl();
+              setSyncStatus('syncing', 'Syncing...');
+              await pull({ mergeWithLocal: Persist.hasStoredState() });
+              setupRealtime();
+            } else {
+              setSyncStatus('not_synced', 'Sign in to sync');
+            }
+          } catch (error) {
+            console.error('Sync init failed', error);
+            setSyncStatus('error', 'Sync needs attention');
+          }
+        },
+        async pushAfterChange() {
+          hasPendingChanges = true;
+          if (!currentUser) return { ok: true, pending: true };
+          return pushNow();
+        },
+        async retryPush() {
+          if (!currentUser) return { ok: false, error: new Error('not logged in') };
+          return pushNow();
+        },
+        async sendMagicLink(email) {
+          let redirectUrl = CFG.EMAIL_REDIRECT_TO || `${window.location.origin}${window.location.pathname}`;
+          if (IS_FILE && !CFG.EMAIL_REDIRECT_TO) {
+            throw new Error('Set EMAIL_REDIRECT_TO in open-loops-config.js before sending a magic link.');
+          }
+          const { error } = await db.auth.signInWithOtp({
+            email,
+            options: { emailRedirectTo: redirectUrl }
+          });
+          if (error) throw error;
+          view.magicLinkSent = true;
+          renderOverlay();
+        },
+        async signOut() {
+          await db.auth.signOut();
+        },
+        isAvailable() { return true; },
+        isLoggedIn() { return !!currentUser; }
+      };
+    })();
+
+    function metaForKind(kind) {
+      return kindMeta[kind] || kindMeta.inbox;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderHeader() {
+      const pill = document.getElementById('sync-pill');
+      if (!pill) return;
+      pill.textContent = view.syncStatus.text;
+      pill.className = 'status-pill';
+      if (view.syncStatus.key === 'syncing') pill.classList.add('syncing');
+      if (view.syncStatus.key === 'synced') pill.classList.add('synced');
+      if (view.syncStatus.key === 'error') pill.classList.add('error');
+
+      const installBtn = document.getElementById('install-btn');
+      if (installBtn) {
+        installBtn.hidden = !view.showInstallButton;
+      }
+
+      const fileNotice = document.getElementById('file-notice');
+      if (fileNotice) {
+        fileNotice.hidden = !IS_FILE;
+      }
+    }
+
+    function renderLoopCard(loop) {
+      const meta = metaForKind(loop.kind);
+      const highlighted = view.highlightedLoopId === loop.id ? ' highlighted' : '';
+
+      return `
+        <article class="loop-card${highlighted}">
+          <div class="card-top">
+            <span class="chip ${meta.className}">${meta.label}</span>
+            <button type="button" class="overflow-btn" data-action="open-menu" data-loop-id="${escapeHtml(loop.id)}" aria-label="More">...</button>
+          </div>
+          <h3>${escapeHtml(loop.displayText)}</h3>
+          <div class="next-line">${escapeHtml(loop.promptAnswer || 'Clarify one next state.')}</div>
+          <div class="card-footer">
+            <span class="card-state">One clear next move</span>
+            <div class="card-actions">
+              <button type="button" class="mini-action" data-action="primary-loop" data-loop-id="${escapeHtml(loop.id)}">${meta.action}</button>
+              <button type="button" class="ghost-btn" data-action="select-loop" data-loop-id="${escapeHtml(loop.id)}">Details</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderHome() {
+      const activeLoops = State.getLoopsByStatus('active');
+      const visibleLoops = State.getActiveVisible();
+      const waitingCount = State.getLoopsByStatus('waiting').length;
+      const inboxCount = State.getLoopsByStatus('inbox').length;
+      const releasedCount = State.getLoopsByStatus('released').length;
+      const suggestedLoop = State.getSuggestedLoop();
+      const hiddenCount = Math.max(0, activeLoops.length - visibleLoops.length);
+      const visibleCount = visibleLoops.length;
+      const showReentry = suggestedLoop && view.reentryDismissedFor !== suggestedLoop.id;
+
+      return `
+        <div class="home-grid">
+          <div class="stack">
+            <section class="quick-panel">
+              <span class="quick-kicker">Start here</span>
+              <h2>${showReentry ? escapeHtml(suggestedLoop.displayText) : 'Keep only a few things in view.'}</h2>
+              <p>${showReentry
+                ? escapeHtml(suggestedLoop.promptAnswer || 'This is the clearest place to pick back up.')
+                : 'Use Open Loops as a sorting table: capture it, clarify it, then keep only the current work on the screen.'}
+              </p>
+              <div class="action-row">
+                ${showReentry
+                  ? `<button type="button" class="primary-btn" data-action="continue-reentry">Continue this</button>
+                     <button type="button" class="secondary-btn" data-action="dismiss-reentry">Hide suggestion</button>`
+                  : `<button type="button" class="primary-btn" data-action="open-capture">Capture something</button>`
+                }
+              </div>
+            </section>
+
+            <div class="summary-grid">
+              <button type="button" class="summary-card" data-action="clarify-inbox">
+                <span class="summary-label">Inbox</span>
+                <span class="summary-count">${inboxCount}</span>
+                <span class="summary-hint">${inboxCount ? 'Clarify one' : 'Nothing waiting'}</span>
+              </button>
+              <button type="button" class="summary-card" data-action="open-waiting">
+                <span class="summary-label">Waiting</span>
+                <span class="summary-count">${waitingCount}</span>
+                <span class="summary-hint">Parked for later</span>
+              </button>
+              <button type="button" class="summary-card" data-action="open-released">
+                <span class="summary-label">Released</span>
+                <span class="summary-count">${releasedCount}</span>
+                <span class="summary-hint">Deliberately dropped</span>
+              </button>
+            </div>
+
+            <section class="section-card">
+              <div class="section-head">
+                <div>
+                  <span class="section-kicker">Current focus</span>
+                  <h2 class="section-title">Now</h2>
+                </div>
+                <span class="section-stat">${visibleCount} visible</span>
+              </div>
+              <p class="section-intro">These are the only loops asking for attention right now.</p>
+              <div class="loop-stack">
+                ${visibleLoops.length
+                  ? visibleLoops.map(renderLoopCard).join('')
+                  : `<div class="empty-card">Nothing needs active focus right now. Capture a loop when something starts occupying headspace.</div>`
+                }
+              </div>
+              ${hiddenCount > 0 && !view.homeExpanded ? `<button type="button" class="show-more" data-action="show-more">See ${hiddenCount} more</button>` : ''}
+            </section>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCaptureOverlay() {
+      const capture = view.overlay && view.overlay.type === 'capture' ? view.overlay : null;
+      if (!capture) return '';
+
+      if (capture.step === 'capture') {
+        return `
+          <div class="overlay">
+            <section class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="capture-title" tabindex="-1">
+              <div class="overlay-meta">
+                <strong>New loop</strong>
+                <span class="overlay-step">Capture</span>
+              </div>
+              <h2 id="capture-title">What is sitting in your head?</h2>
+              <p>Drop the thought here exactly as it arrives. You can make it clearer in the next step.</p>
+              <div class="overlay-body">
+                <label class="sr-only" for="capture-input">What is sitting in your head?</label>
+                <textarea class="big-input" id="capture-input" placeholder="Write one unfinished thing...">${escapeHtml(capture.rawText)}</textarea>
+                <p class="helper">This should feel like placing a thought in a tray, not starting a project.</p>
+                <div class="action-row">
+                  <button type="button" class="primary-btn" data-action="capture-next"${capture.rawText.trim() ? '' : ' disabled'}>Next</button>
+                  <button type="button" class="secondary-btn" data-action="save-for-later">Save for later</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        `;
+      }
+      return `
+        <div class="overlay">
+          <section class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="preview-title" tabindex="-1">
+            <div class="overlay-meta">
+              <strong>Clarify</strong>
+              <span class="overlay-step">2 of 2</span>
+            </div>
+            <h2 id="preview-title">Turn it into one clear card.</h2>
+            <p>Pick the type, write the next state, and keep it lightweight.</p>
+            <div class="choice-list">
+              ${['do', 'decide', 'ask', 'schedule', 'let_go'].map(kind => {
+                const meta = metaForKind(kind);
+                const active = capture.kind === kind ? ' active' : '';
+                return `
+                  <button type="button" class="choice-card${active}" data-action="pick-kind" data-kind="${kind}">
+                    <strong>${meta.label}</strong>
+                    <span>${escapeHtml(meta.helper)}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+            <div class="compact-form">
+              <div class="field-group">
+                <label for="detail-input">${escapeHtml(metaForKind(capture.kind).question)}</label>
+                <textarea class="big-input" id="detail-input" placeholder="Write one clear next state...">${escapeHtml(capture.promptAnswer)}</textarea>
+              </div>
+              <div class="preview-card">
+                <span class="chip ${metaForKind(capture.kind).className}">${metaForKind(capture.kind).label}</span>
+                <h3>${escapeHtml(capture.rawText || 'Untitled loop')}</h3>
+                <div class="next-line">${escapeHtml(capture.promptAnswer || metaForKind(capture.kind).helper)}</div>
+              </div>
+            </div>
+            <div class="preview-note">Good enough is enough here. The goal is a clean next return point, not perfect planning.</div>
+            <div class="action-row">
+              <button type="button" class="primary-btn" data-action="finish-capture"${capture.promptAnswer.trim() ? '' : ' disabled'}>Save loop</button>
+              <button type="button" class="secondary-btn" data-action="capture-back">Back</button>
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function renderDrawer(kind) {
+      const loops = State.getLoopsByStatus(kind);
+      const title = kind === 'waiting' ? 'Waiting' : 'Released';
+      const description = kind === 'waiting'
+        ? 'Things you do not need to hold in active focus right now.'
+        : 'Thoughts you deliberately let stop taking up active space.';
+
+      return `
+        <div class="overlay">
+          <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1">
+            <div class="drawer-head">
+              <strong>${title}</strong>
+              <h3 id="drawer-title">${title}</h3>
+              <p>${description}</p>
+            </div>
+            <div class="drawer-list">
+              ${loops.length ? loops.map(loop => `
+                <article class="drawer-item">
+                  <h4>${escapeHtml(loop.displayText)}</h4>
+                  <p>${escapeHtml(loop.promptAnswer || 'No note yet.')}</p>
+                  <div class="action-row">
+                    ${kind === 'waiting'
+                      ? `<button type="button" class="secondary-btn" data-action="restore-active" data-loop-id="${escapeHtml(loop.id)}">Return to Now</button>`
+                      : `<button type="button" class="secondary-btn" data-action="restore-active" data-loop-id="${escapeHtml(loop.id)}">Restore</button>`
+                    }
+                  </div>
+                </article>
+              `).join('') : `<div class="empty-card">Nothing is parked here right now.</div>`}
+            </div>
+            <div class="action-row">
+              <button type="button" class="secondary-btn" data-action="close-overlay">Close</button>
+            </div>
+          </aside>
+        </div>
+      `;
+    }
+
+    function renderMenu(loop) {
+      if (!loop) return '';
+      return `
+        <div class="overlay">
+          <section class="context-menu" role="dialog" aria-modal="true" aria-labelledby="menu-title" tabindex="-1">
+            <strong>Loop options</strong>
+            <h3 id="menu-title">${escapeHtml(loop.displayText)}</h3>
+            <p>Use secondary actions only when its state changed. The main screen stays calm because these choices stay tucked away.</p>
+            <div class="menu-actions">
+              <button type="button" class="menu-btn" data-action="keep-active" data-loop-id="${escapeHtml(loop.id)}">Keep in Now</button>
+              <button type="button" class="menu-btn" data-action="move-waiting" data-loop-id="${escapeHtml(loop.id)}">Move to Waiting</button>
+              <button type="button" class="menu-btn" data-action="move-released" data-loop-id="${escapeHtml(loop.id)}">Release</button>
+              <button type="button" class="menu-btn" data-action="delete-loop" data-loop-id="${escapeHtml(loop.id)}">Delete loop</button>
+            </div>
+            <div class="action-row">
+              <button type="button" class="secondary-btn" data-action="close-overlay">Close</button>
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function renderSyncOverlay() {
+      return `
+        <div class="overlay">
+          <section class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="sync-title" tabindex="-1">
+            <div class="overlay-meta">
+              <strong>Cross-device sync</strong>
+              <span class="overlay-step">${escapeHtml(view.syncStatus.text)}</span>
+            </div>
+            <h2 id="sync-title">Keep the same loops on every device.</h2>
+            <p>The app stays local-first. Supabase adds account-based sync on top of that.</p>
+            <div class="overlay-body">
+              ${!Sync.isAvailable() ? `
+                <div class="sync-note">
+                  Edit <code>open-loops-config.js</code> with your Supabase URL, publishable key, and email redirect URL. Then run <code>open-loops-supabase.sql</code> in Supabase.
+                </div>
+              ` : Sync.isLoggedIn() ? `
+                <div class="sync-note">
+                  Your loop state is connected to Supabase. Changes still save locally first, then sync to the cloud.
+                </div>
+                <div class="action-row">
+                  <button type="button" class="secondary-btn" data-action="sign-out">Sign out</button>
+                  <button type="button" class="secondary-btn" data-action="close-overlay">Close</button>
+                </div>
+              ` : `
+                <div class="sync-note">
+                  Enter your email and Supabase will send a magic link. Add your local and deployed app URLs to Supabase Auth redirect URLs first.
+                </div>
+                <div class="email-row">
+                  <label class="sr-only" for="sync-email-input">Email address</label>
+                  <input type="email" class="email-input" id="sync-email-input" value="${escapeHtml(view.magicLinkEmail)}" placeholder="you@example.com" autocomplete="email">
+                  <button type="button" class="primary-btn" data-action="send-magic-link">Send link</button>
+                </div>
+                ${view.magicLinkSent ? `<p class="helper">Check your email for the sign-in link.</p>` : ''}
+                <div class="action-row">
+                  <button type="button" class="secondary-btn" data-action="close-overlay">Close</button>
+                </div>
+              `}
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function renderInstallOverlay() {
+      return `
+        <div class="overlay">
+          <section class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="install-title" tabindex="-1">
+            <div class="overlay-meta">
+              <strong>Install Open Loops</strong>
+              <span class="overlay-step">PWA</span>
+            </div>
+            <h2 id="install-title">Keep it close.</h2>
+            <p>Install to your home screen or desktop for a calmer, app-like experience.</p>
+            <div class="sync-note">
+              ${IS_IOS
+                ? 'On iPhone or iPad, tap Share in Safari and choose "Add to Home Screen."'
+                : IS_FILE
+                  ? 'PWA install requires http://localhost or a deployed HTTPS URL.'
+                  : 'Use the install prompt when it appears in the browser.'}
+            </div>
+            <div class="action-row">
+              <button type="button" class="secondary-btn" data-action="close-overlay">Close</button>
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function renderOverlay() {
+      const root = document.getElementById('overlay-root');
+      if (!root) return;
+      const overlay = view.overlay;
+      if (!overlay) {
+        root.innerHTML = '';
+        return;
+      }
+
+      if (overlay.type === 'capture') root.innerHTML = renderCaptureOverlay();
+      else if (overlay.type === 'waiting') root.innerHTML = renderDrawer('waiting');
+      else if (overlay.type === 'released') root.innerHTML = renderDrawer('released');
+      else if (overlay.type === 'menu') root.innerHTML = renderMenu(State.getLoop(overlay.loopId));
+      else if (overlay.type === 'sync') root.innerHTML = renderSyncOverlay();
+      else if (overlay.type === 'install') root.innerHTML = renderInstallOverlay();
+      else root.innerHTML = '';
+
+      const dialog = root.querySelector('[role="dialog"]');
+      if (dialog) {
+        const firstControl = dialog.querySelector('textarea, input, button');
+        (firstControl || dialog).focus();
+      }
+    }
+
+    function renderMain() {
+      const main = document.getElementById('app-main');
+      if (!main) return;
+      main.innerHTML = renderHome();
+      const desktopButton = window.matchMedia('(min-width: 1080px)').matches
+        ? '<button type="button" class="primary-btn desktop-only" data-action="open-capture">Capture a loop</button>'
+        : '<button type="button" class="fab mobile-only" data-action="open-capture">Capture a loop</button>';
+      main.insertAdjacentHTML('beforeend', desktopButton);
+      renderOverlay();
+    }
+
+    function renderAll() {
+      renderHeader();
+      renderMain();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.add('visible');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('visible'), 2400);
+    }
+
+    function openCapture(initial = {}) {
+      lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      view.overlay = {
+        type: 'capture',
+        step: initial.step || 'capture',
+        sourceLoopId: initial.sourceLoopId || null,
+        rawText: initial.rawText || '',
+        kind: initial.kind || 'ask',
+        promptAnswer: initial.promptAnswer || ''
+      };
+      renderOverlay();
+    }
+
+    function closeOverlay() {
+      view.overlay = null;
+      renderOverlay();
+      if (lastFocusedElement && document.contains(lastFocusedElement)) {
+        lastFocusedElement.focus();
+      }
+    }
+
+    async function persistAndSync() {
+      Persist.save();
+      renderMain();
+      const result = await Sync.pushAfterChange();
+      if (result.ok === false) {
+        showToast('Saved here. Sync still needs attention.');
+      }
+    }
+
+    function updateCaptureField(name, value) {
+      if (!view.overlay || view.overlay.type !== 'capture') return;
+      view.overlay[name] = value;
+    }
+
+    async function finishCapture() {
+      if (!view.overlay || view.overlay.type !== 'capture') return;
+      const draft = view.overlay;
+      const rawText = draft.rawText.trim();
+      const promptAnswer = draft.promptAnswer.trim();
+      const kind = draft.kind;
+      if (!rawText) return;
+
+      let loop = null;
+      if (draft.sourceLoopId) {
+        loop = State.clarifyLoop(draft.sourceLoopId, { rawText, kind, promptAnswer });
+      } else {
+        loop = State.createLoop({
+          rawText,
+          kind,
+          promptAnswer,
+          status: kind === 'let_go' ? 'released' : 'active'
+        });
+      }
+
+      view.highlightedLoopId = loop ? loop.id : null;
+      view.selectedLoopId = window.matchMedia('(min-width: 1080px)').matches ? loop?.id || null : null;
+      view.reentryDismissedFor = null;
+      closeOverlay();
+      await persistAndSync();
+    }
+
+    function saveForLater() {
+      if (!view.overlay || view.overlay.type !== 'capture') return;
+      const rawText = view.overlay.rawText.trim();
+      if (!rawText) return;
+      if (view.overlay.sourceLoopId) {
+        State.updateLoop(view.overlay.sourceLoopId, {
+          rawText,
+          displayText: rawText,
+          status: 'inbox'
+        });
+      } else {
+        State.createLoop({
+          rawText,
+          kind: null,
+          promptAnswer: '',
+          status: 'inbox'
+        });
+      }
+      closeOverlay();
+      persistAndSync();
+    }
+
+    function trackSession() {
+      try {
+        const last = Number(localStorage.getItem(LAST_SESSION_KEY) || 0);
+        const now = Date.now();
+        const idle = 30 * 60 * 1000;
+        let sessions = Number(localStorage.getItem(SESSION_COUNT_KEY) || 0);
+        if (!last || now - last > idle) {
+          sessions += 1;
+          localStorage.setItem(SESSION_COUNT_KEY, String(sessions));
+        }
+        localStorage.setItem(LAST_SESSION_KEY, String(now));
+      } catch (_) {}
+    }
+
+    function registerInstallPrompt() {
+      window.addEventListener('beforeinstallprompt', event => {
+        event.preventDefault();
+        view.deferredInstall = event;
+        view.showInstallButton = true;
+        renderHeader();
+      });
+
+      window.addEventListener('appinstalled', () => {
+        view.deferredInstall = null;
+        view.showInstallButton = false;
+        try { localStorage.setItem(INSTALL_DISMISSED_KEY, 'true'); } catch (_) {}
+        renderHeader();
+      });
+
+      if (IS_IOS && !window.matchMedia('(display-mode: standalone)').matches) {
+        try {
+          if (localStorage.getItem(INSTALL_DISMISSED_KEY) !== 'true') {
+            view.showInstallButton = true;
+            renderHeader();
+          }
+        } catch (_) {}
+      }
+    }
+
+    async function handleInstall() {
+      if (view.deferredInstall) {
+        view.deferredInstall.prompt();
+        const choice = await view.deferredInstall.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+          view.deferredInstall = null;
+          view.showInstallButton = false;
+          renderHeader();
+        }
+        return;
+      }
+
+      lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      view.overlay = { type: 'install' };
+      renderOverlay();
+    }
+
+    async function registerServiceWorker() {
+      if (!('serviceWorker' in navigator) || IS_FILE) return;
+      try {
+        await navigator.serviceWorker.register('./open-loops-sw.js');
+      } catch (error) {
+        console.warn('Service worker registration failed', error);
+      }
+    }
+
+    document.addEventListener('click', async event => {
+      const actionEl = event.target.closest('[data-action]');
+      if (!actionEl) return;
+
+      const action = actionEl.dataset.action;
+      const loopId = actionEl.dataset.loopId || null;
+
+      if (action === 'open-capture') {
+        openCapture();
+        return;
+      }
+
+      if (action === 'continue-reentry') {
+        const loop = State.getSuggestedLoop();
+        view.reentryDismissedFor = loop ? loop.id : null;
+        view.highlightedLoopId = loop ? loop.id : null;
+        view.selectedLoopId = window.matchMedia('(min-width: 1080px)').matches ? loop?.id || null : null;
+        if (loop) State.setLastReentryLoopId(loop.id);
+        renderMain();
+        return;
+      }
+
+      if (action === 'dismiss-reentry') {
+        const loop = State.getSuggestedLoop();
+        view.reentryDismissedFor = loop ? loop.id : null;
+        renderMain();
+        return;
+      }
+
+      if (action === 'show-more') {
+        view.homeExpanded = true;
+        renderMain();
+        return;
+      }
+
+      if (action === 'open-waiting') {
+        lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        view.overlay = { type: 'waiting' };
+        renderOverlay();
+        return;
+      }
+
+      if (action === 'open-released') {
+        lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        view.overlay = { type: 'released' };
+        renderOverlay();
+        return;
+      }
+
+      if (action === 'select-loop') {
+        lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        view.overlay = { type: 'menu', loopId };
+        renderOverlay();
+        return;
+      }
+
+      if (action === 'primary-loop') {
+        const loop = State.getLoop(loopId);
+        if (!loop) return;
+        view.selectedLoopId = loop.id;
+        view.highlightedLoopId = loop.id;
+        State.setLastReentryLoopId(loop.id);
+        renderMain();
+        showToast('Take the next step outside the app, then use More if its state changed.');
+        return;
+      }
+
+      if (action === 'open-menu') {
+        lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        view.overlay = { type: 'menu', loopId };
+        renderOverlay();
+        return;
+      }
+
+      if (action === 'close-overlay') {
+        closeOverlay();
+        return;
+      }
+
+      if (action === 'keep-active') {
+        State.moveStatus(loopId, 'active');
+        closeOverlay();
+        await persistAndSync();
+        return;
+      }
+
+      if (action === 'move-waiting') {
+        State.moveStatus(loopId, 'waiting');
+        if (view.selectedLoopId === loopId) view.selectedLoopId = null;
+        closeOverlay();
+        await persistAndSync();
+        return;
+      }
+
+      if (action === 'move-released') {
+        State.moveStatus(loopId, 'released');
+        if (view.selectedLoopId === loopId) view.selectedLoopId = null;
+        closeOverlay();
+        await persistAndSync();
+        return;
+      }
+
+      if (action === 'restore-active') {
+        State.moveStatus(loopId, 'active');
+        closeOverlay();
+        await persistAndSync();
+        return;
+      }
+
+      if (action === 'delete-loop') {
+        State.removeLoop(loopId);
+        if (view.selectedLoopId === loopId) view.selectedLoopId = null;
+        closeOverlay();
+        await persistAndSync();
+        return;
+      }
+
+      if (action === 'clarify-inbox') {
+        const nextInbox = State.getLoopsByStatus('inbox')[0];
+        if (nextInbox) {
+          openCapture({
+            sourceLoopId: nextInbox.id,
+            rawText: nextInbox.rawText,
+            kind: 'ask',
+            promptAnswer: nextInbox.promptAnswer,
+            step: 'preview'
+          });
+          renderOverlay();
+        }
+        return;
+      }
+
+      if (action === 'capture-next') {
+        if (!view.overlay || view.overlay.type !== 'capture') return;
+        view.overlay.step = 'preview';
+        renderOverlay();
+        return;
+      }
+
+      if (action === 'pick-kind') {
+        if (!view.overlay || view.overlay.type !== 'capture') return;
+        view.overlay.kind = actionEl.dataset.kind || 'ask';
+        renderOverlay();
+        return;
+      }
+
+      if (action === 'capture-back') {
+        if (!view.overlay || view.overlay.type !== 'capture') return;
+        view.overlay.step = 'capture';
+        renderOverlay();
+        return;
+      }
+
+      if (action === 'finish-capture') {
+        await finishCapture();
+        return;
+      }
+
+      if (action === 'save-for-later') {
+        saveForLater();
+        return;
+      }
+
+      if (action === 'send-magic-link') {
+        const input = document.getElementById('sync-email-input');
+        const email = input ? input.value.trim() : view.magicLinkEmail.trim();
+        if (!email) {
+          showToast('Enter an email first.');
+          return;
+        }
+        try {
+          setSyncStatus('syncing', 'Sending link...');
+          await Sync.sendMagicLink(email);
+          setSyncStatus('not_synced', 'Check your email');
+          showToast('Magic link sent.');
+        } catch (error) {
+          console.error(error);
+          setSyncStatus('error', 'Sync needs attention');
+          showToast(error.message || 'Could not send the magic link.');
+        }
+        return;
+      }
+
+      if (action === 'sign-out') {
+        await Sync.signOut();
+        closeOverlay();
+        return;
+      }
+
+      if (action === 'noop') return;
+    });
+
+    document.addEventListener('input', event => {
+      if (event.target.id === 'capture-input') {
+        updateCaptureField('rawText', event.target.value);
+        const btn = document.querySelector('[data-action="capture-next"]');
+        if (btn) btn.disabled = !event.target.value.trim();
+      }
+
+      if (event.target.id === 'detail-input') {
+        updateCaptureField('promptAnswer', event.target.value);
+        const btn = document.querySelector('[data-action="finish-capture"]');
+        if (btn) btn.disabled = !event.target.value.trim();
+      }
+
+      if (event.target.id === 'sync-email-input') {
+        view.magicLinkEmail = event.target.value;
+      }
+    });
+
+    document.getElementById('sync-pill').addEventListener('click', () => {
+      lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      view.overlay = { type: 'sync' };
+      renderOverlay();
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && view.overlay) {
+        closeOverlay();
+      }
+    });
+
+    document.getElementById('install-btn').addEventListener('click', () => {
+      handleInstall();
+    });
+
+    document.getElementById('retry-sync-btn').addEventListener('click', async () => {
+      const result = await Sync.retryPush();
+      if (result.ok) {
+        hideSaveBanner();
+        showToast('Sync caught up.');
+      } else {
+        showToast('Still not synced.');
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (!window.matchMedia('(min-width: 1080px)').matches) {
+        view.selectedLoopId = null;
+      }
+      renderMain();
+    });
+
+    Persist.load();
+    trackSession();
+    renderAll();
+    registerInstallPrompt();
+    registerServiceWorker();
+    Sync.init();
+  })();
+</script>
+</body>
+</html>
