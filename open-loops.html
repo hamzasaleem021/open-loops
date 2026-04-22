@@ -13,6 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="./open-loops-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3"></script>
 <style>
 :root {
   --bg: #0f0f0f;
@@ -962,7 +964,17 @@ a { color: inherit; text-decoration: none; }
 
 <script>
 (() => {
-  const STORAGE_KEY = 'open_loops_data_v2';
+  const CFG = window.OL_CONFIG || {};
+  const STORAGE_KEY = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_v2' : 'open_loops_data_v2';
+  const CLIENT_NONCE = crypto.randomUUID ? crypto.randomUUID() : `ol-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const IS_FILE = location.protocol === 'file:';
+
+  function hasSupabaseCfg() {
+    return !!(CFG.SUPABASE_URL && CFG.SUPABASE_KEY &&
+      !CFG.SUPABASE_URL.includes('YOUR_PROJECT') &&
+      !CFG.SUPABASE_KEY.includes('YOUR_SUPABASE'));
+  }
+
   const VALID_KINDS = new Set(['do', 'decide', 'ask', 'schedule', 'let_go']);
   const VALID_STATUSES = new Set(['active', 'waiting', 'released', 'inbox']);
 
@@ -1413,6 +1425,7 @@ a { color: inherit; text-decoration: none; }
   }
 
   function renderSync() {
+    const loggedIn = Sync.isLoggedIn();
     return `
       <div class="overlay-card">
         <div class="overlay-header">
@@ -1420,13 +1433,23 @@ a { color: inherit; text-decoration: none; }
           <button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
         <h2 class="overlay-title">Keep loops everywhere.</h2>
-        <p class="overlay-subtitle">Your loops save locally first. Add Supabase for cross-device sync.</p>
-        <div class="sync-info">Configure <code>open-loops-config.js</code> with your Supabase URL and key, then run <code>open-loops-supabase.sql</code> in the Supabase SQL editor.</div>
-        <div class="email-row">
-          <input type="email" class="email-input" id="sync-email" placeholder="you@example.com" autocomplete="email">
-          <button class="btn btn-primary" data-action="send-magic-link">Send link</button>
-        </div>
-        <div class="overlay-actions"><button class="btn btn-ghost" data-action="close-overlay">Close</button></div>
+        <p class="overlay-subtitle">Your loops save locally first. Supabase adds cross-device sync on top.</p>
+        ${!hasSupabaseCfg() ? `
+          <div class="sync-info">Edit <code>open-loops-config.js</code> with your Supabase URL and key, then run <code>open-loops-supabase.sql</code> in the Supabase SQL editor.</div>
+        ` : loggedIn ? `
+          <div class="sync-info" style="color:var(--do)">Connected. Your loops sync automatically across devices.</div>
+          <div class="overlay-actions" style="margin-top:0">
+            <button class="btn btn-ghost" data-action="sign-out">Sign out</button>
+            <button class="btn btn-ghost" data-action="close-overlay">Close</button>
+          </div>
+        ` : `
+          <div class="sync-info">Enter your email — Supabase will send a magic link. No password needed.</div>
+          <div class="email-row">
+            <input type="email" class="email-input" id="sync-email" placeholder="you@example.com" autocomplete="email">
+            <button class="btn btn-primary" data-action="send-magic-link">Send link</button>
+          </div>
+        `}
+        ${!loggedIn ? `<div class="overlay-actions"><button class="btn btn-ghost" data-action="close-overlay">Close</button></div>` : ''}
       </div>`;
   }
 
@@ -1532,6 +1555,7 @@ a { color: inherit; text-decoration: none; }
   async function persistAndSync() {
     save();
     renderMain();
+    await Sync.push();
   }
 
   function closeOverlay() {
@@ -1777,15 +1801,25 @@ a { color: inherit; text-decoration: none; }
       return;
     }
     if (action === 'send-magic-link') {
-      toast('Configure Supabase in open-loops-config.js first.');
+      const input = document.getElementById('sync-email');
+      const email = input ? input.value.trim() : '';
+      if (!email) { toast('Enter your email first.'); return; }
+      try {
+        setSyncStatus('syncing', 'Sending…');
+        await Sync.sendMagicLink(email);
+        setSyncStatus('idle', 'Check email');
+        toast('Magic link sent — check your email.');
+      } catch(e) {
+        setSyncStatus('error', 'Error');
+        toast(e.message || 'Could not send link.');
+      }
       return;
     }
-  });
-
-  // Sync pill click
-  document.addEventListener('click', e => {
-    const pill = e.target.closest('#sync-pill');
-    if (pill) { view.overlay = { type: 'sync' }; renderOverlay(); }
+    if (action === 'sign-out') {
+      await Sync.signOut();
+      closeOverlay();
+      return;
+    }
   });
 
   // Input binding for capture
@@ -1820,9 +1854,126 @@ a { color: inherit; text-decoration: none; }
     }
   });
 
+  // ── SUPABASE SYNC ──
+  const Sync = (() => {
+    if (!window.supabase || !hasSupabaseCfg()) {
+      return {
+        init: async () => {},
+        push: async () => ({ ok: true, pending: true }),
+        sendMagicLink: async () => { throw new Error('Supabase is not configured in open-loops-config.js.'); },
+        signOut: async () => {},
+        isLoggedIn: () => false
+      };
+    }
+
+    const db = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    let currentUser = null;
+    let channel = null;
+
+    function cleanUrl() {
+      if (location.hash || location.search.includes('code='))
+        history.replaceState({}, document.title, location.pathname);
+    }
+
+    function applyRemote(cfg) {
+      if (!Array.isArray(cfg.loops)) return;
+      data = { version: 2, lastLoopId: cfg.lastReentryLoopId || null, activeTab: 'now', loops: cfg.loops.map(sanitize) };
+      save();
+      renderMain();
+    }
+
+    async function pull() {
+      if (!currentUser) return;
+      try {
+        const { data: rows, error } = await db.rpc('get_open_loops_state', { p_user_id: currentUser.id });
+        if (error) throw error;
+        if (rows && rows.length && rows[0].state_data) {
+          applyRemote(rows[0].state_data);
+          setSyncStatus('synced', 'Synced');
+        } else {
+          await pushNow();
+        }
+      } catch(e) { setSyncStatus('error', 'Sync error'); }
+    }
+
+    async function pushNow() {
+      if (!currentUser) return { ok: false };
+      try {
+        const { error } = await db.rpc('upsert_open_loops_state', {
+          p_user_id: currentUser.id,
+          p_state_data: { version: 1, loops: data.loops, lastReentryLoopId: data.lastLoopId, _nonce: CLIENT_NONCE, _at: Date.now() }
+        });
+        if (error) throw error;
+        setSyncStatus('synced', 'Synced');
+        return { ok: true };
+      } catch(e) { setSyncStatus('error', 'Not saved'); return { ok: false }; }
+    }
+
+    function setupRealtime() {
+      if (!currentUser || channel) return;
+      channel = db.channel('open-loops-state')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'open_loops_state', filter: `user_id=eq.${currentUser.id}` },
+          payload => {
+            const incoming = payload.new?.state_data;
+            if (!incoming || incoming._nonce === CLIENT_NONCE) return;
+            applyRemote(incoming);
+            setSyncStatus('synced', 'Synced');
+          })
+        .subscribe();
+    }
+
+    db.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        currentUser = session.user;
+        cleanUrl();
+        setSyncStatus('syncing', 'Syncing…');
+        await pull();
+        setupRealtime();
+      } else if (event === 'SIGNED_OUT') {
+        currentUser = null;
+        if (channel) { db.removeChannel(channel); channel = null; }
+        setSyncStatus('idle', 'Sync');
+      }
+    });
+
+    return {
+      async init() {
+        try {
+          const { data: { session } } = await db.auth.getSession();
+          if (session) {
+            currentUser = session.user;
+            cleanUrl();
+            setSyncStatus('syncing', 'Syncing…');
+            await pull();
+            setupRealtime();
+          }
+        } catch(e) { setSyncStatus('error', 'Sync error'); }
+      },
+      async push() { return currentUser ? pushNow() : { ok: true, pending: true }; },
+      async sendMagicLink(email) {
+        const redirect = CFG.EMAIL_REDIRECT_TO || (IS_FILE ? null : `${location.origin}${location.pathname}`);
+        if (!redirect) throw new Error('Set EMAIL_REDIRECT_TO in open-loops-config.js (required when running from file://).');
+        const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect } });
+        if (error) throw error;
+      },
+      async signOut() { await db.auth.signOut(); },
+      isLoggedIn() { return !!currentUser; }
+    };
+  })();
+
+  function setSyncStatus(key, text) {
+    view.syncStatus = key;
+    view.syncText = text;
+    renderHeader();
+  }
+
   // ── INIT ──
   load();
   renderAll();
+  Sync.init();
 })();
 </script>
 </body>
