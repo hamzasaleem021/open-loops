@@ -87,6 +87,18 @@
     font: inherit;
   }
 
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
   button {
     cursor: pointer;
   }
@@ -232,14 +244,72 @@
     background: rgba(242, 230, 215, 0.9);
   }
 
+  .quick-panel {
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, rgba(242, 230, 215, 0.96) 0%, rgba(251, 247, 240, 0.98) 100%);
+    border: 1px solid rgba(35, 29, 23, 0.08);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .quick-kicker,
+  .summary-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .quick-panel h2 {
+    margin: 8px 0 8px;
+    font-family: var(--serif);
+    font-size: clamp(1.55rem, 4vw, 2.1rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  .quick-panel p {
+    margin: 0;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  .summary-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .summary-card {
+    text-align: left;
+    padding: 15px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(35, 29, 23, 0.08);
+    background: rgba(255, 255, 255, 0.62);
+    color: var(--ink);
+  }
+
+  .summary-count {
+    display: block;
+    margin-top: 6px;
+    font-family: var(--serif);
+    font-size: 1.45rem;
+    color: var(--ink);
+  }
+
+  .summary-hint {
+    display: block;
+    margin-top: 6px;
+    color: var(--ink-faint);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
   .home-grid {
     display: grid;
     gap: 18px;
     align-items: start;
-  }
-
-  .home-grid.with-detail {
-    grid-template-columns: minmax(0, 1fr) 300px;
   }
 
   .stack {
@@ -373,6 +443,12 @@
     gap: 12px;
   }
 
+  .section-intro {
+    margin: -4px 0 14px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
   .loop-card {
     padding: 16px;
     border-radius: var(--radius-md);
@@ -401,6 +477,12 @@
   .card-footer {
     align-items: center;
     margin-top: 14px;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
   }
 
   .chip {
@@ -498,44 +580,6 @@
     padding: 0;
   }
 
-  .detail-pane {
-    position: sticky;
-    top: 18px;
-    padding: 18px;
-  }
-
-  .detail-pane h3 {
-    font-size: 1.45rem;
-  }
-
-  .detail-list {
-    display: grid;
-    gap: 10px;
-    margin-top: 16px;
-  }
-
-  .detail-item {
-    padding: 12px 13px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.52);
-    border: 1px solid rgba(35, 29, 23, 0.06);
-  }
-
-  .detail-item span {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-  }
-
-  .detail-actions {
-    display: grid;
-    gap: 10px;
-    margin-top: 18px;
-  }
-
   .empty-card {
     padding: 18px;
     border-radius: var(--radius-md);
@@ -631,6 +675,7 @@
     display: grid;
     gap: 12px;
     margin-top: 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .choice-card {
@@ -657,6 +702,22 @@
   .choice-card span {
     color: var(--ink-soft);
     line-height: 1.5;
+  }
+
+  .compact-form {
+    display: grid;
+    gap: 16px;
+    margin-top: 18px;
+  }
+
+  .field-group {
+    display: grid;
+    gap: 8px;
+  }
+
+  .field-group label {
+    font-size: 0.92rem;
+    color: var(--ink-soft);
   }
 
   .preview-card {
@@ -811,10 +872,6 @@
       display: none;
     }
 
-    .detail-pane {
-      position: static;
-    }
-
     .drawer {
       left: 16px;
       right: 16px;
@@ -838,6 +895,11 @@
     .header-actions {
       width: 100%;
       justify-content: start;
+    }
+
+    .summary-grid,
+    .choice-list {
+      grid-template-columns: 1fr;
     }
 
     .inbox-tray,
@@ -888,11 +950,10 @@
     <header class="topbar">
       <div class="brand">
         <div class="eyebrow">Open Loops</div>
-        <h1>A calm place for unfinished things.</h1>
-        <p>Capture what is sitting in your head, make it clearer, and keep only a few things in active focus.</p>
+        <h1>Clear the mental pile.</h1>
+        <p>Capture unfinished thoughts, decide what matters now, and move the rest out of the way.</p>
       </div>
       <div class="header-actions">
-        <a class="quiet-link desktop-only" href="./open-loops-visual-walkthrough.html">Walkthrough</a>
         <button type="button" class="status-pill" id="sync-pill">Set up sync</button>
         <button type="button" class="status-pill" id="install-btn" hidden>Install</button>
       </div>
@@ -988,6 +1049,7 @@
     };
 
     let toastTimer = null;
+    let lastFocusedElement = null;
 
     function nowIso() {
       return new Date().toISOString();
@@ -1150,7 +1212,46 @@
       };
     })();
 
+    function parseIsoTime(value) {
+      const time = Date.parse(value || '');
+      return Number.isNaN(time) ? 0 : time;
+    }
+
+    function mergeStates(localState, remoteState) {
+      const merged = new Map();
+      const local = sanitizeState(localState);
+      const remote = sanitizeState(remoteState);
+
+      for (const loop of remote.loops) {
+        merged.set(loop.id, loop);
+      }
+
+      for (const loop of local.loops) {
+        const existing = merged.get(loop.id);
+        if (!existing || parseIsoTime(loop.updatedAt) >= parseIsoTime(existing.updatedAt)) {
+          merged.set(loop.id, loop);
+        }
+      }
+
+      const loops = Array.from(merged.values())
+        .sort((a, b) => parseIsoTime(b.updatedAt) - parseIsoTime(a.updatedAt));
+      const preferredId = local.lastReentryLoopId || remote.lastReentryLoopId || null;
+
+      return {
+        version: 1,
+        loops,
+        lastReentryLoopId: loops.some(loop => loop.id === preferredId) ? preferredId : (loops[0]?.id || null)
+      };
+    }
+
     const Persist = {
+      hasStoredState() {
+        try {
+          return !!localStorage.getItem(STORAGE_KEY);
+        } catch (_) {
+          return false;
+        }
+      },
       load() {
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
@@ -1226,27 +1327,37 @@
       }
 
       function payload() {
+        const snapshot = State.snapshot();
         return {
           version: 1,
-          loops: State.snapshot().loops,
-          lastReentryLoopId: State.snapshot().lastReentryLoopId,
+          loops: snapshot.loops,
+          lastReentryLoopId: snapshot.lastReentryLoopId,
           _nonce: CLIENT_NONCE,
           _at: Date.now()
         };
       }
 
-      function applyRemote(config) {
-        State.replace({
+      function applyRemote(config, options = {}) {
+        const remoteState = {
           version: 1,
           loops: Array.isArray(config.loops) ? config.loops : [],
           lastReentryLoopId: config.lastReentryLoopId || null
-        });
+        };
+        const nextState = options.mergeWithLocal
+          ? mergeStates(State.snapshot(), remoteState)
+          : remoteState;
+
+        State.replace(nextState);
         Persist.save();
         view.highlightedLoopId = null;
         renderMain();
+
+        if (options.mergeWithLocal) {
+          showToast('Merged local and cloud loops.');
+        }
       }
 
-      async function pull() {
+      async function pull(options = {}) {
         if (!currentUser || isBusy) return;
         isBusy = true;
         try {
@@ -1254,7 +1365,7 @@
           if (error) throw error;
 
           if (Array.isArray(data) && data.length > 0 && data[0].state_data) {
-            applyRemote(data[0].state_data);
+            applyRemote(data[0].state_data, options);
             setSyncStatus('synced', 'Synced');
             hideSaveBanner();
           } else if (Array.isArray(data) && data.length === 0) {
@@ -1327,7 +1438,7 @@
           view.magicLinkSent = false;
           cleanAuthUrl();
           setSyncStatus('syncing', 'Syncing...');
-          await pull();
+          await pull({ mergeWithLocal: Persist.hasStoredState() });
           setupRealtime();
           if (hasPendingChanges) await pushNow();
         } else if (event === 'SIGNED_OUT') {
@@ -1348,7 +1459,7 @@
               currentUser = session.user;
               cleanAuthUrl();
               setSyncStatus('syncing', 'Syncing...');
-              await pull();
+              await pull({ mergeWithLocal: Persist.hasStoredState() });
               setupRealtime();
             } else {
               setSyncStatus('not_synced', 'Sign in to sync');
@@ -1435,42 +1546,12 @@
           <div class="next-line">${escapeHtml(loop.promptAnswer || 'Clarify one next state.')}</div>
           <div class="card-footer">
             <span class="card-state">One clear next move</span>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <button type="button" class="ghost-btn" data-action="select-loop" data-loop-id="${escapeHtml(loop.id)}">Open</button>
+            <div class="card-actions">
               <button type="button" class="mini-action" data-action="primary-loop" data-loop-id="${escapeHtml(loop.id)}">${meta.action}</button>
+              <button type="button" class="ghost-btn" data-action="select-loop" data-loop-id="${escapeHtml(loop.id)}">Details</button>
             </div>
           </div>
         </article>
-      `;
-    }
-
-    function renderDetailPane(loop) {
-      if (!loop) return '';
-      const meta = metaForKind(loop.kind);
-      return `
-        <aside class="detail-pane">
-          <strong>Selected loop</strong>
-          <h3>${escapeHtml(loop.displayText)}</h3>
-          <p>${escapeHtml(loop.promptAnswer || meta.helper)}</p>
-          <div class="detail-list">
-            <div class="detail-item">
-              <span>Kind</span>
-              ${escapeHtml(meta.label)}
-            </div>
-            <div class="detail-item">
-              <span>Primary action</span>
-              ${escapeHtml(meta.action)}
-            </div>
-            <div class="detail-item">
-              <span>Design note</span>
-              The detail pane appears only after selection so the home screen stays calm.
-            </div>
-          </div>
-          <div class="detail-actions">
-            <button type="button" class="primary-btn" data-action="primary-loop" data-loop-id="${escapeHtml(loop.id)}">${meta.action}</button>
-            <button type="button" class="secondary-btn" data-action="open-menu" data-loop-id="${escapeHtml(loop.id)}">More</button>
-          </div>
-        </aside>
       `;
     }
 
@@ -1481,44 +1562,56 @@
       const inboxCount = State.getLoopsByStatus('inbox').length;
       const releasedCount = State.getLoopsByStatus('released').length;
       const suggestedLoop = State.getSuggestedLoop();
-      const showReentry = suggestedLoop && view.reentryDismissedFor !== suggestedLoop.id;
-      const showDetail = window.matchMedia('(min-width: 1080px)').matches && view.selectedLoopId;
-      const selectedLoop = showDetail ? State.getLoop(view.selectedLoopId) : null;
       const hiddenCount = Math.max(0, activeLoops.length - visibleLoops.length);
+      const visibleCount = visibleLoops.length;
+      const showReentry = suggestedLoop && view.reentryDismissedFor !== suggestedLoop.id;
 
       return `
-        <div class="home-grid${showDetail ? ' with-detail' : ''}">
+        <div class="home-grid">
           <div class="stack">
-            ${showReentry ? `
-              <section class="reentry-card">
-                <strong>Pick up where you left off</strong>
-                <h2>${escapeHtml(suggestedLoop.displayText)}</h2>
-                <p>${escapeHtml(suggestedLoop.promptAnswer || 'This is still waiting for a clear next move.')}</p>
-                <div class="action-row">
-                  <button type="button" class="primary-btn" data-action="continue-reentry">Continue</button>
-                  <button type="button" class="secondary-btn" data-action="dismiss-reentry">Not now</button>
-                </div>
-              </section>
-            ` : ''}
+            <section class="quick-panel">
+              <span class="quick-kicker">Start here</span>
+              <h2>${showReentry ? escapeHtml(suggestedLoop.displayText) : 'Keep only a few things in view.'}</h2>
+              <p>${showReentry
+                ? escapeHtml(suggestedLoop.promptAnswer || 'This is the clearest place to pick back up.')
+                : 'Use Open Loops as a sorting table: capture it, clarify it, then keep only the current work on the screen.'}
+              </p>
+              <div class="action-row">
+                ${showReentry
+                  ? `<button type="button" class="primary-btn" data-action="continue-reentry">Continue this</button>
+                     <button type="button" class="secondary-btn" data-action="dismiss-reentry">Hide suggestion</button>`
+                  : `<button type="button" class="primary-btn" data-action="open-capture">Capture something</button>`
+                }
+              </div>
+            </section>
 
-            ${inboxCount ? `
-              <section class="inbox-tray">
-                <div>
-                  <strong>Inbox</strong>
-                  <p>${inboxCount} unclarified loop${inboxCount === 1 ? '' : 's'} are waiting quietly. The app only asks about one at a time.</p>
-                </div>
-                <button type="button" class="secondary-btn" data-action="clarify-inbox">Clarify one</button>
-              </section>
-            ` : ''}
+            <div class="summary-grid">
+              <button type="button" class="summary-card" data-action="clarify-inbox">
+                <span class="summary-label">Inbox</span>
+                <span class="summary-count">${inboxCount}</span>
+                <span class="summary-hint">${inboxCount ? 'Clarify one' : 'Nothing waiting'}</span>
+              </button>
+              <button type="button" class="summary-card" data-action="open-waiting">
+                <span class="summary-label">Waiting</span>
+                <span class="summary-count">${waitingCount}</span>
+                <span class="summary-hint">Parked for later</span>
+              </button>
+              <button type="button" class="summary-card" data-action="open-released">
+                <span class="summary-label">Released</span>
+                <span class="summary-count">${releasedCount}</span>
+                <span class="summary-hint">Deliberately dropped</span>
+              </button>
+            </div>
 
             <section class="section-card">
               <div class="section-head">
                 <div>
-                  <span class="section-kicker">Visible focus</span>
+                  <span class="section-kicker">Current focus</span>
                   <h2 class="section-title">Now</h2>
                 </div>
-                <span class="section-stat">${Math.min(activeLoops.length, 5)} visible</span>
+                <span class="section-stat">${visibleCount} visible</span>
               </div>
+              <p class="section-intro">These are the only loops asking for attention right now.</p>
               <div class="loop-stack">
                 ${visibleLoops.length
                   ? visibleLoops.map(renderLoopCard).join('')
@@ -1527,19 +1620,7 @@
               </div>
               ${hiddenCount > 0 && !view.homeExpanded ? `<button type="button" class="show-more" data-action="show-more">See ${hiddenCount} more</button>` : ''}
             </section>
-
-            <button type="button" class="waiting-strip" data-action="open-waiting">
-              <span>Waiting</span>
-              <strong>${waitingCount}</strong>
-            </button>
-
-            <button type="button" class="released-link" data-action="open-released">
-              <span>View released</span>
-              <span>${releasedCount}</span>
-            </button>
           </div>
-
-          ${showDetail ? renderDetailPane(selectedLoop) : ''}
         </div>
       `;
     }
@@ -1551,18 +1632,19 @@
       if (capture.step === 'capture') {
         return `
           <div class="overlay">
-            <section class="overlay-card">
+            <section class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="capture-title" tabindex="-1">
               <div class="overlay-meta">
                 <strong>New loop</strong>
                 <span class="overlay-step">Capture</span>
               </div>
-              <h2>What is sitting in your head?</h2>
+              <h2 id="capture-title">What is sitting in your head?</h2>
               <p>Drop the thought here exactly as it arrives. You can make it clearer in the next step.</p>
               <div class="overlay-body">
+                <label class="sr-only" for="capture-input">What is sitting in your head?</label>
                 <textarea class="big-input" id="capture-input" placeholder="Write one unfinished thing...">${escapeHtml(capture.rawText)}</textarea>
                 <p class="helper">This should feel like placing a thought in a tray, not starting a project.</p>
                 <div class="action-row">
-                  <button type="button" class="primary-btn" data-action="capture-next"${capture.rawText.trim() ? '' : ' disabled'}>Continue</button>
+                  <button type="button" class="primary-btn" data-action="capture-next"${capture.rawText.trim() ? '' : ' disabled'}>Next</button>
                   <button type="button" class="secondary-btn" data-action="save-for-later">Save for later</button>
                 </div>
               </div>
@@ -1570,85 +1652,42 @@
           </div>
         `;
       }
-
-      if (capture.step === 'kind') {
-        return `
-          <div class="overlay">
-            <section class="overlay-card">
-              <div class="overlay-meta">
-                <strong>Let's make this clearer</strong>
-                <span class="overlay-step">1 of 3</span>
-              </div>
-              <h2>What kind of loop is this?</h2>
-              <p>Pick the shape of the unfinished thing before adding more words.</p>
-              <div class="choice-list">
-                ${['do', 'decide', 'ask', 'schedule', 'let_go'].map(kind => {
-                  const meta = metaForKind(kind);
-                  const active = capture.kind === kind ? ' active' : '';
-                  return `
-                    <button type="button" class="choice-card${active}" data-action="pick-kind" data-kind="${kind}">
-                      <strong>${meta.label}</strong>
-                      <span>${escapeHtml(meta.helper)}</span>
-                    </button>
-                  `;
-                }).join('')}
-              </div>
-              <div class="action-row">
-                <button type="button" class="primary-btn" data-action="kind-next">Continue</button>
-                <button type="button" class="secondary-btn" data-action="capture-back">Back</button>
-              </div>
-            </section>
-          </div>
-        `;
-      }
-
-      if (capture.step === 'detail') {
-        const meta = metaForKind(capture.kind);
-        return `
-          <div class="overlay">
-            <section class="overlay-card">
-              <div class="overlay-meta">
-                <strong>${meta.label}</strong>
-                <span class="overlay-step">2 of 3</span>
-              </div>
-              <h2>${escapeHtml(meta.question)}</h2>
-              <p>${escapeHtml(meta.helper)}</p>
-              <div class="overlay-body">
-                <textarea class="big-input" id="detail-input" placeholder="Write one clear next state...">${escapeHtml(capture.promptAnswer)}</textarea>
-                <p class="helper">You can come back to the rest later. This only needs to be clear enough for the next move.</p>
-                <div class="action-row">
-                  <button type="button" class="primary-btn" data-action="detail-next"${capture.promptAnswer.trim() ? '' : ' disabled'}>Continue</button>
-                  <button type="button" class="secondary-btn" data-action="detail-back">Back</button>
-                </div>
-              </div>
-            </section>
-          </div>
-        `;
-      }
-
-      const previewMeta = metaForKind(capture.kind);
       return `
         <div class="overlay">
-          <section class="overlay-card">
+          <section class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="preview-title" tabindex="-1">
             <div class="overlay-meta">
-              <strong>Preview</strong>
-              <span class="overlay-step">3 of 3</span>
+              <strong>Clarify</strong>
+              <span class="overlay-step">2 of 2</span>
             </div>
-            <h2>Here is the clarified card.</h2>
-            <p>One kind, one next state, one calm place to return to.</p>
-            <div class="preview-card">
-              <span class="chip ${previewMeta.className}">${previewMeta.label}</span>
-              <h3>${escapeHtml(capture.rawText || 'Untitled loop')}</h3>
-              <div class="next-line">${escapeHtml(capture.promptAnswer || previewMeta.helper)}</div>
-              <div class="card-footer">
-                <span class="card-state">One clear next move</span>
-                <button type="button" class="mini-action" data-action="noop">${previewMeta.action}</button>
+            <h2 id="preview-title">Turn it into one clear card.</h2>
+            <p>Pick the type, write the next state, and keep it lightweight.</p>
+            <div class="choice-list">
+              ${['do', 'decide', 'ask', 'schedule', 'let_go'].map(kind => {
+                const meta = metaForKind(kind);
+                const active = capture.kind === kind ? ' active' : '';
+                return `
+                  <button type="button" class="choice-card${active}" data-action="pick-kind" data-kind="${kind}">
+                    <strong>${meta.label}</strong>
+                    <span>${escapeHtml(meta.helper)}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+            <div class="compact-form">
+              <div class="field-group">
+                <label for="detail-input">${escapeHtml(metaForKind(capture.kind).question)}</label>
+                <textarea class="big-input" id="detail-input" placeholder="Write one clear next state...">${escapeHtml(capture.promptAnswer)}</textarea>
+              </div>
+              <div class="preview-card">
+                <span class="chip ${metaForKind(capture.kind).className}">${metaForKind(capture.kind).label}</span>
+                <h3>${escapeHtml(capture.rawText || 'Untitled loop')}</h3>
+                <div class="next-line">${escapeHtml(capture.promptAnswer || metaForKind(capture.kind).helper)}</div>
               </div>
             </div>
-            <div class="preview-note">You can come back to the rest later.</div>
+            <div class="preview-note">Good enough is enough here. The goal is a clean next return point, not perfect planning.</div>
             <div class="action-row">
-              <button type="button" class="primary-btn" data-action="finish-capture">Done</button>
-              <button type="button" class="secondary-btn" data-action="preview-back">Back</button>
+              <button type="button" class="primary-btn" data-action="finish-capture"${capture.promptAnswer.trim() ? '' : ' disabled'}>Save loop</button>
+              <button type="button" class="secondary-btn" data-action="capture-back">Back</button>
             </div>
           </section>
         </div>
@@ -1664,10 +1703,10 @@
 
       return `
         <div class="overlay">
-          <aside class="drawer">
+          <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1">
             <div class="drawer-head">
               <strong>${title}</strong>
-              <h3>${title}</h3>
+              <h3 id="drawer-title">${title}</h3>
               <p>${description}</p>
             </div>
             <div class="drawer-list">
@@ -1696,9 +1735,9 @@
       if (!loop) return '';
       return `
         <div class="overlay">
-          <section class="context-menu">
+          <section class="context-menu" role="dialog" aria-modal="true" aria-labelledby="menu-title" tabindex="-1">
             <strong>Loop options</strong>
-            <h3>${escapeHtml(loop.displayText)}</h3>
+            <h3 id="menu-title">${escapeHtml(loop.displayText)}</h3>
             <p>Use secondary actions only when its state changed. The main screen stays calm because these choices stay tucked away.</p>
             <div class="menu-actions">
               <button type="button" class="menu-btn" data-action="keep-active" data-loop-id="${escapeHtml(loop.id)}">Keep in Now</button>
@@ -1717,12 +1756,12 @@
     function renderSyncOverlay() {
       return `
         <div class="overlay">
-          <section class="overlay-card">
+          <section class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="sync-title" tabindex="-1">
             <div class="overlay-meta">
               <strong>Cross-device sync</strong>
               <span class="overlay-step">${escapeHtml(view.syncStatus.text)}</span>
             </div>
-            <h2>Keep the same loops on every device.</h2>
+            <h2 id="sync-title">Keep the same loops on every device.</h2>
             <p>The app stays local-first. Supabase adds account-based sync on top of that.</p>
             <div class="overlay-body">
               ${!Sync.isAvailable() ? `
@@ -1742,6 +1781,7 @@
                   Enter your email and Supabase will send a magic link. Add your local and deployed app URLs to Supabase Auth redirect URLs first.
                 </div>
                 <div class="email-row">
+                  <label class="sr-only" for="sync-email-input">Email address</label>
                   <input type="email" class="email-input" id="sync-email-input" value="${escapeHtml(view.magicLinkEmail)}" placeholder="you@example.com" autocomplete="email">
                   <button type="button" class="primary-btn" data-action="send-magic-link">Send link</button>
                 </div>
@@ -1759,12 +1799,12 @@
     function renderInstallOverlay() {
       return `
         <div class="overlay">
-          <section class="overlay-card">
+          <section class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="install-title" tabindex="-1">
             <div class="overlay-meta">
               <strong>Install Open Loops</strong>
               <span class="overlay-step">PWA</span>
             </div>
-            <h2>Keep it close.</h2>
+            <h2 id="install-title">Keep it close.</h2>
             <p>Install to your home screen or desktop for a calmer, app-like experience.</p>
             <div class="sync-note">
               ${IS_IOS
@@ -1797,6 +1837,12 @@
       else if (overlay.type === 'sync') root.innerHTML = renderSyncOverlay();
       else if (overlay.type === 'install') root.innerHTML = renderInstallOverlay();
       else root.innerHTML = '';
+
+      const dialog = root.querySelector('[role="dialog"]');
+      if (dialog) {
+        const firstControl = dialog.querySelector('textarea, input, button');
+        (firstControl || dialog).focus();
+      }
     }
 
     function renderMain() {
@@ -1825,9 +1871,10 @@
     }
 
     function openCapture(initial = {}) {
+      lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       view.overlay = {
         type: 'capture',
-        step: 'capture',
+        step: initial.step || 'capture',
         sourceLoopId: initial.sourceLoopId || null,
         rawText: initial.rawText || '',
         kind: initial.kind || 'ask',
@@ -1839,6 +1886,9 @@
     function closeOverlay() {
       view.overlay = null;
       renderOverlay();
+      if (lastFocusedElement && document.contains(lastFocusedElement)) {
+        lastFocusedElement.focus();
+      }
     }
 
     async function persistAndSync() {
@@ -1955,6 +2005,7 @@
         return;
       }
 
+      lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       view.overlay = { type: 'install' };
       renderOverlay();
     }
@@ -2004,22 +2055,23 @@
       }
 
       if (action === 'open-waiting') {
+        lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         view.overlay = { type: 'waiting' };
         renderOverlay();
         return;
       }
 
       if (action === 'open-released') {
+        lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         view.overlay = { type: 'released' };
         renderOverlay();
         return;
       }
 
       if (action === 'select-loop') {
-        view.selectedLoopId = loopId;
-        view.highlightedLoopId = loopId;
-        if (loopId) State.setLastReentryLoopId(loopId);
-        renderMain();
+        lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        view.overlay = { type: 'menu', loopId };
+        renderOverlay();
         return;
       }
 
@@ -2035,6 +2087,7 @@
       }
 
       if (action === 'open-menu') {
+        lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         view.overlay = { type: 'menu', loopId };
         renderOverlay();
         return;
@@ -2090,9 +2143,9 @@
             sourceLoopId: nextInbox.id,
             rawText: nextInbox.rawText,
             kind: 'ask',
-            promptAnswer: nextInbox.promptAnswer
+            promptAnswer: nextInbox.promptAnswer,
+            step: 'preview'
           });
-          if (view.overlay) view.overlay.step = 'kind';
           renderOverlay();
         }
         return;
@@ -2100,14 +2153,7 @@
 
       if (action === 'capture-next') {
         if (!view.overlay || view.overlay.type !== 'capture') return;
-        view.overlay.step = 'kind';
-        renderOverlay();
-        return;
-      }
-
-      if (action === 'capture-back') {
-        if (!view.overlay || view.overlay.type !== 'capture') return;
-        view.overlay.step = 'capture';
+        view.overlay.step = 'preview';
         renderOverlay();
         return;
       }
@@ -2119,30 +2165,9 @@
         return;
       }
 
-      if (action === 'kind-next') {
+      if (action === 'capture-back') {
         if (!view.overlay || view.overlay.type !== 'capture') return;
-        view.overlay.step = 'detail';
-        renderOverlay();
-        return;
-      }
-
-      if (action === 'detail-back') {
-        if (!view.overlay || view.overlay.type !== 'capture') return;
-        view.overlay.step = 'kind';
-        renderOverlay();
-        return;
-      }
-
-      if (action === 'detail-next') {
-        if (!view.overlay || view.overlay.type !== 'capture') return;
-        view.overlay.step = 'preview';
-        renderOverlay();
-        return;
-      }
-
-      if (action === 'preview-back') {
-        if (!view.overlay || view.overlay.type !== 'capture') return;
-        view.overlay.step = 'detail';
+        view.overlay.step = 'capture';
         renderOverlay();
         return;
       }
@@ -2195,7 +2220,7 @@
 
       if (event.target.id === 'detail-input') {
         updateCaptureField('promptAnswer', event.target.value);
-        const btn = document.querySelector('[data-action="detail-next"]');
+        const btn = document.querySelector('[data-action="finish-capture"]');
         if (btn) btn.disabled = !event.target.value.trim();
       }
 
@@ -2205,8 +2230,15 @@
     });
 
     document.getElementById('sync-pill').addEventListener('click', () => {
+      lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       view.overlay = { type: 'sync' };
       renderOverlay();
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && view.overlay) {
+        closeOverlay();
+      }
     });
 
     document.getElementById('install-btn').addEventListener('click', () => {
