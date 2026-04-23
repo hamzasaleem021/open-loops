@@ -1046,6 +1046,81 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
+/* ── SYNC ERROR BANNER (Morning Brief pattern) ── */
+.sync-error-banner {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(232,197,71,0.1);
+  border: 1px solid var(--accent);
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 999;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.sync-error-msg {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.sync-error-msg strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sync-error-retry {
+  padding: 6px 12px;
+  background: var(--accent);
+  color: #0f0f0f;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sync-error-retry:hover {
+  background: #f0d060;
+  transform: translateY(-1px);
+}
+
+.sync-error-dismiss {
+  padding: 4px 8px;
+  background: transparent;
+  color: var(--text-3);
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.sync-error-dismiss:hover {
+  color: var(--text);
+}
+
+@media (max-width: 600px) {
+  .sync-error-banner {
+    top: 60px;
+    max-width: 95%;
+    font-size: 12px;
+  }
+}
+
+
 /* ── SIDEBAR (Tablet+) ── */
 .sidebar-section {
   padding: 20px 16px;
@@ -1408,6 +1483,15 @@ a { color: inherit; text-decoration: none; }
 <div class="overlay-root" id="overlay-root"></div>
 <div class="toast" id="toast"></div>
 
+<!-- Sync error banner (Morning Brief pattern) -->
+<div class="sync-error-banner" id="sync-error-banner" style="display:none;">
+  <div class="sync-error-msg">
+    <strong>Not synced.</strong> Changes saved locally only.
+  </div>
+  <button class="sync-error-retry" data-action="sync-retry">Retry</button>
+  <button class="sync-error-dismiss" data-action="dismiss-sync-banner">✕</button>
+</div>
+
 <script>
 (() => {
   const CFG = window.OL_CONFIG || {};
@@ -1487,6 +1571,7 @@ a { color: inherit; text-decoration: none; }
     inlineEditId: null,
     processingMode: false,
     currentLoopIndex: 0,
+    hasUnsyncedChanges: false,  // Track unpushed changes
   };
   let toastTimer = null;
 
@@ -2618,6 +2703,13 @@ a { color: inherit; text-decoration: none; }
       renderSidebar();
       return;
     }
+
+    // Dismiss sync error banner
+    if (action === 'dismiss-sync-banner') {
+      const banner = document.getElementById('sync-error-banner');
+      if (banner) banner.style.display = 'none';
+      return;
+    }
   });
 
   // Input binding for capture
@@ -2749,7 +2841,20 @@ a { color: inherit; text-decoration: none; }
     }
   });
 
-  // ── SUPABASE SYNC ──
+  // ── AUTO-RETRY ON NETWORK EVENTS (Morning Brief pattern) ──
+  window.addEventListener('online', async () => {
+    if (view.hasUnsyncedChanges && Sync.isLoggedIn()) {
+      await Sync.push();
+    }
+  });
+
+  window.addEventListener('focus', async () => {
+    if (view.hasUnsyncedChanges && Sync.isLoggedIn()) {
+      await Sync.push();
+    }
+  });
+
+  // ── SUPABASE SYNC (Enhanced with Morning Brief patterns) ──
   const Sync = (() => {
     if (!window.supabase || !hasSupabaseCfg()) {
       return {
@@ -2768,61 +2873,118 @@ a { color: inherit; text-decoration: none; }
 
     let currentUser = null;
     let channel = null;
+    let isSyncing = false;        // Prevent concurrent syncs
+    let pendingRemoteData = null; // Queue updates during sync
+    let retryTimer = null;        // Auto-retry timer
 
     function cleanUrl() {
       if (location.hash || location.search.includes('code='))
         history.replaceState({}, document.title, location.pathname);
     }
 
+    function showSyncErrorBanner() {
+      const banner = document.getElementById('sync-error-banner');
+      if (banner) banner.style.display = 'flex';
+    }
+
+    function hideSyncErrorBanner() {
+      const banner = document.getElementById('sync-error-banner');
+      if (banner) banner.style.display = 'none';
+    }
+
     function applyRemote(cfg) {
+      // Queue if currently syncing (prevent race conditions)
+      if (isSyncing) {
+        pendingRemoteData = cfg;
+        return;
+      }
+
       if (!Array.isArray(cfg.loops)) return;
+      
+      // SERVER IS TRUTH - No merge, just replace
+      // The server has the authoritative state
       const remoteLoops = cfg.loops.map(sanitize);
-      const localById = new Map(data.loops.map(l => [l.id, l]));
-      const remoteById = new Map(remoteLoops.map(l => [l.id, l]));
-      const merged = [];
-      const seen = new Set();
-
-      // Merge: for loops in both, keep newer; remote-only adds; local-only keeps
-      for (const rl of remoteLoops) {
-        seen.add(rl.id);
-        const ll = localById.get(rl.id);
-        if (!ll) { merged.push(rl); }
-        else { merged.push(rl.updatedAt >= ll.updatedAt ? rl : ll); }
-      }
-      for (const ll of data.loops) {
-        if (!seen.has(ll.id)) merged.push(ll);
-      }
-
-      data = { version: 2, lastLoopId: cfg.lastReentryLoopId || data.lastLoopId || null, activeTab: 'now', loops: merged };
+      
+      data = { 
+        version: 2, 
+        lastLoopId: cfg.lastReentryLoopId || data.lastLoopId || null, 
+        activeTab: 'now', 
+        loops: remoteLoops  // ← Server state becomes local state
+      };
+      
       save();
       renderMain();
     }
 
     async function pull() {
-      if (!currentUser) return;
+      if (!currentUser || isSyncing) return;
+      isSyncing = true;
+
       try {
         const { data: rows, error } = await db.rpc('get_open_loops_state', { p_user_id: currentUser.id });
         if (error) throw error;
+        
         if (rows && rows.length && rows[0].state_data) {
+          // Server has data - use it as truth
           applyRemote(rows[0].state_data);
+          view.hasUnsyncedChanges = false;
           setSyncStatus('synced', 'Synced');
+          hideSyncErrorBanner();
         } else {
+          // No server data - this is first sync, push our local state
           await pushNow();
         }
-      } catch(e) { setSyncStatus('error', 'Sync error'); }
+      } catch(e) { 
+        console.error('Pull error:', e);
+        setSyncStatus('error', 'Sync error'); 
+      } finally {
+        isSyncing = false;
+        
+        // Process any queued realtime update
+        if (pendingRemoteData) {
+          const queued = pendingRemoteData;
+          pendingRemoteData = null;
+          applyRemote(queued);
+        }
+      }
     }
 
     async function pushNow() {
-      if (!currentUser) return { ok: false };
+      if (!currentUser) return { ok: false, error: new Error('Not logged in') };
+      
       try {
         const { error } = await db.rpc('upsert_open_loops_state', {
           p_user_id: currentUser.id,
           p_state_data: { version: 1, loops: data.loops, lastReentryLoopId: data.lastLoopId, _nonce: CLIENT_NONCE, _at: Date.now() }
         });
         if (error) throw error;
+        
+        view.hasUnsyncedChanges = false;
         setSyncStatus('synced', 'Synced');
+        hideSyncErrorBanner();
         return { ok: true };
-      } catch(e) { setSyncStatus('error', 'Not saved'); return { ok: false }; }
+        
+      } catch(e) { 
+        console.error('Push error:', e);
+        view.hasUnsyncedChanges = true;
+        setSyncStatus('error', 'Not saved');
+        showSyncErrorBanner();
+        scheduleRetry();
+        return { ok: false, error: e }; 
+      }
+    }
+
+    function scheduleRetry() {
+      // Don't schedule multiple retries
+      if (retryTimer) return;
+      
+      retryTimer = setTimeout(async () => {
+        retryTimer = null;
+        // Only retry if still have unsaved changes and online
+        if (view.hasUnsyncedChanges && currentUser && navigator.onLine) {
+          await pushNow();
+        }
+      }, 8000); // 8 second delay
     }
 
     function setupRealtime() {
@@ -2831,7 +2993,19 @@ a { color: inherit; text-decoration: none; }
         .on('postgres_changes', { event: '*', schema: 'public', table: 'open_loops_state', filter: `user_id=eq.${currentUser.id}` },
           payload => {
             const incoming = payload.new?.state_data;
-            if (!incoming || incoming._nonce === CLIENT_NONCE) return;
+            if (!incoming) return;
+            
+            // Skip if this is our own echo AND the data is identical
+            // (prevents unnecessary re-renders)
+            if (incoming._nonce === CLIENT_NONCE) {
+              const incomingLoops = JSON.stringify(incoming.loops || []);
+              const currentLoops = JSON.stringify(data.loops || []);
+              if (incomingLoops === currentLoops) {
+                return; // Skip identical update
+              }
+            }
+            
+            // Apply the update (server is truth)
             applyRemote(incoming);
             setSyncStatus('synced', 'Synced');
           })
@@ -2843,12 +3017,24 @@ a { color: inherit; text-decoration: none; }
         currentUser = session.user;
         cleanUrl();
         setSyncStatus('syncing', 'Syncing…');
+        
+        // If we have local unsaved changes, push them first
+        // This preserves offline edits
+        if (view.hasUnsyncedChanges) {
+          const pushResult = await pushNow();
+          if (!pushResult.ok) {
+            console.error('Failed to push local changes on login');
+          }
+        }
+        
+        // Then pull to get server state and any changes from other devices
         await pull();
         setupRealtime();
       } else if (event === 'SIGNED_OUT') {
         currentUser = null;
         if (channel) { db.removeChannel(channel); channel = null; }
         setSyncStatus('idle', 'Sync');
+        hideSyncErrorBanner();
       }
     });
 
@@ -2863,9 +3049,18 @@ a { color: inherit; text-decoration: none; }
             await pull();
             setupRealtime();
           }
-        } catch(e) { setSyncStatus('error', 'Sync error'); }
+        } catch(e) { 
+          console.error('Sync init error:', e);
+          setSyncStatus('error', 'Sync error'); 
+        }
       },
-      async push() { return currentUser ? pushNow() : { ok: true, pending: true }; },
+      
+      async push() { 
+        view.hasUnsyncedChanges = true;
+        if (!currentUser) return { ok: true, pending: true };
+        return await pushNow(); 
+      },
+      
       async retry() {
         if (!currentUser) return { ok: true, pending: true };
         setSyncStatus('syncing', 'Syncing…');
@@ -2876,15 +3071,17 @@ a { color: inherit; text-decoration: none; }
           return r;
         } catch(e) {
           setSyncStatus('error', 'Sync error');
-          return { ok: false };
+          return { ok: false, error: e };
         }
       },
+      
       async sendMagicLink(email) {
         const redirect = CFG.EMAIL_REDIRECT_TO || (IS_FILE ? null : `${location.origin}${location.pathname}`);
         if (!redirect) throw new Error('Set EMAIL_REDIRECT_TO in open-loops-config.js (required when running from file://).');
         const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect } });
         if (error) throw error;
       },
+      
       async signOut() { await db.auth.signOut(); },
       isLoggedIn() { return !!currentUser; }
     };
