@@ -1,4 +1,4 @@
-const CACHE = 'open-loops-v1';
+const CACHE = 'open-loops-v2-responsive';
 
 const ASSETS = [
   './open-loops.html',
