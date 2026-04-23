@@ -1852,21 +1852,9 @@ a { color: inherit; text-decoration: none; }
   function seedState() {
     return {
       version: 2,
-      lastLoopId: 'l1',
+      lastLoopId: null,
       activeTab: 'now',
-      loops: [
-        mk('l1','Text the building manager about the leak near the sink','ask','active','Ask when someone can come by.'),
-        mk('l2','Pick either the afternoon train or the early flight for Karachi','decide','active','Decide by Friday — stop reopening tabs.'),
-        mk('l3','Return the borrowed monitor stand','do','active','Put it by the front door tonight.'),
-        mk('l4','Book the dentist cleaning that keeps slipping','schedule','active','Add one 15-min admin block.'),
-        mk('l5','Upload the passport photo before the form window closes','do','active','Take the photo near the window tomorrow morning.'),
-        mk('l6','Choose one savings account and stop researching','decide','waiting','Waiting until I compare only the top two.'),
-        mk('l7','Check in with Dad about Saturday lunch','ask','waiting','Waiting until tomorrow morning.'),
-        mk('l8','Read every desk review before deciding','let_go','released','Released after narrowing the choice enough.'),
-        mk('l9','Reply perfectly to that old group thread','let_go','released','Silence is also an answer.'),
-        mk('l10','Need to sort out the summer trip dates',null,'inbox','Decide whether first week of July is realistic.'),
-        mk('l11','Something about updating the laptop warranty',null,'inbox','Find the deadline.')
-      ]
+      loops: []
     };
   }
 
