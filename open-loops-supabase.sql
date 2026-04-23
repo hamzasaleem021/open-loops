@@ -1,30 +1,30 @@
--- Open Loops Supabase schema
--- Matches the current frontend sync model in open-loops.html.
+-- ──────────────────────────────────────────────────────────────────────────
+-- Open Loops – Supabase schema
+-- One row per loop (not one row per user). Run this in the Supabase SQL
+-- editor before enabling sync.
+-- ──────────────────────────────────────────────────────────────────────────
 
-create extension if not exists pgcrypto;
-
+-- ── LOOPS TABLE ──────────────────────────────────────────────────────────
 create table if not exists public.loops (
-  id text primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
-  raw_text text not null default '',
-  kind text null check (kind in ('do', 'decide', 'ask', 'schedule', 'let_go')),
-  status text not null default 'active' check (status in ('active', 'waiting', 'released', 'inbox')),
-  prompt_answer text not null default '',
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  deleted_at timestamptz null
+  id            text        primary key,
+  user_id       uuid        not null references auth.users(id) on delete cascade,
+  raw_text      text        not null default '',
+  kind          text        check (kind in ('do','decide','ask','schedule','let_go')),
+  status        text        not null default 'active'
+                              check (status in ('active','waiting','released','inbox')),
+  prompt_answer text        not null default '',
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  deleted_at    timestamptz
 );
 
-create index if not exists loops_user_created_idx
-  on public.loops (user_id, created_at desc);
+-- Fast per-user queries
+create index if not exists loops_user_id_idx       on public.loops (user_id);
+create index if not exists loops_user_deleted_idx  on public.loops (user_id, deleted_at);
 
-create index if not exists loops_user_deleted_idx
-  on public.loops (user_id, deleted_at);
-
+-- Auto-bump updated_at on every write
 create or replace function public.set_updated_at()
-returns trigger
-language plpgsql
-as $$
+returns trigger language plpgsql as $$
 begin
   new.updated_at = now();
   return new;
@@ -33,93 +33,78 @@ $$;
 
 drop trigger if exists loops_set_updated_at on public.loops;
 create trigger loops_set_updated_at
-before update on public.loops
-for each row
-execute function public.set_updated_at();
+  before update on public.loops
+  for each row execute function public.set_updated_at();
 
+-- ── ROW-LEVEL SECURITY ───────────────────────────────────────────────────
 alter table public.loops enable row level security;
 
-grant usage on schema public to authenticated;
-grant select, insert, update on public.loops to authenticated;
-revoke all on public.loops from anon;
+grant usage  on schema public to authenticated;
+grant select, insert, update on table public.loops to authenticated;
+revoke all   on table public.loops from anon;
 
-drop policy if exists "users read own loops" on public.loops;
+drop policy if exists "users read own loops"   on public.loops;
 create policy "users read own loops"
-on public.loops
-for select
-using (auth.uid() = user_id);
+  on public.loops for select
+  using (auth.uid() = user_id);
 
 drop policy if exists "users insert own loops" on public.loops;
 create policy "users insert own loops"
-on public.loops
-for insert
-with check (auth.uid() = user_id);
+  on public.loops for insert
+  with check (auth.uid() = user_id);
 
 drop policy if exists "users update own loops" on public.loops;
 create policy "users update own loops"
-on public.loops
-for update
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+  on public.loops for update
+  using  (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
+-- ── BATCH UPSERT (used when seeding server from local data) ──────────────
+-- p_loops is a JSON array whose items use camelCase keys to match the JS
+-- client: { id, rawText, kind, status, promptAnswer, createdAt }
 create or replace function public.batch_upsert_loops(p_loops jsonb)
 returns void
 language plpgsql
 security invoker
 as $$
 declare
-  v_user_id uuid := auth.uid();
+  item jsonb;
 begin
-  if v_user_id is null then
-    raise exception 'Not authenticated';
-  end if;
-
-  insert into public.loops (
-    id,
-    user_id,
-    raw_text,
-    kind,
-    status,
-    prompt_answer,
-    created_at
-  )
-  select
-    coalesce(item->>'id', gen_random_uuid()::text),
-    v_user_id,
-    coalesce(item->>'rawText', ''),
-    case
-      when item ? 'kind' and item->>'kind' in ('do', 'decide', 'ask', 'schedule', 'let_go')
-        then item->>'kind'
-      else null
-    end,
-    case
-      when item ? 'status' and item->>'status' in ('active', 'waiting', 'released', 'inbox')
-        then item->>'status'
-      else 'active'
-    end,
-    coalesce(item->>'promptAnswer', ''),
-    coalesce((item->>'createdAt')::timestamptz, now())
-  from jsonb_array_elements(coalesce(p_loops, '[]'::jsonb)) as item
-  on conflict (id) do update
-    set raw_text = excluded.raw_text,
-        kind = excluded.kind,
-        status = excluded.status,
-        prompt_answer = excluded.prompt_answer,
-        created_at = excluded.created_at
-  where public.loops.user_id = v_user_id;
+  for item in select * from jsonb_array_elements(p_loops)
+  loop
+    -- Skip any row whose user_id doesn't match the calling user (safety net)
+    insert into public.loops
+      (id, user_id, raw_text, kind, status, prompt_answer, created_at)
+    values (
+      item->>'id',
+      auth.uid(),
+      coalesce(item->>'rawText', ''),
+      nullif(item->>'kind', ''),
+      coalesce(nullif(item->>'status', ''), 'active'),
+      coalesce(item->>'promptAnswer', ''),
+      coalesce((item->>'createdAt')::timestamptz, now())
+    )
+    on conflict (id) do update
+      set raw_text      = excluded.raw_text,
+          kind          = excluded.kind,
+          status        = excluded.status,
+          prompt_answer = excluded.prompt_answer,
+          updated_at    = now()
+    where public.loops.user_id = auth.uid();
+  end loop;
 end;
 $$;
 
 grant execute on function public.batch_upsert_loops(jsonb) to authenticated;
-revoke all on function public.batch_upsert_loops(jsonb) from anon;
+revoke all   on function public.batch_upsert_loops(jsonb) from anon;
 
+-- ── REALTIME ─────────────────────────────────────────────────────────────
 do $$
 begin
   begin
     alter publication supabase_realtime add table public.loops;
   exception
     when duplicate_object then null;
-    when undefined_object then null;
   end;
 end;
 $$;

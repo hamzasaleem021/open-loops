@@ -15,43 +15,42 @@
 <link rel="apple-touch-icon" href="./open-loops-icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <script src="./open-loops-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3"></script>
 <style>
 :root {
-  --bg: #0f0f0f;
-  --surface: #181818;
-  --surface-2: #1f1f1f;
-  --surface-3: #272727;
-  --border: rgba(255,255,255,0.07);
-  --border-soft: rgba(255,255,255,0.04);
-  --text: #f0ede8;
-  --text-2: rgba(240,237,232,0.55);
-  --text-3: rgba(240,237,232,0.28);
-  --accent: #e8c547;
-  --accent-dim: rgba(232,197,71,0.12);
-  --accent-glow: rgba(232,197,71,0.06);
-  --do: #6fcf97;
-  --do-dim: rgba(111,207,151,0.1);
+  --bg: #111010;
+  --surface: #1b1918;
+  --surface-2: #222020;
+  --surface-3: #2c2a29;
+  --border: rgba(255,248,240,0.09);
+  --border-soft: rgba(255,248,240,0.05);
+  --text: #f5f0ea;
+  --text-2: rgba(245,240,234,0.55);
+  --text-3: rgba(245,240,234,0.28);
+  --accent: #d4793a;
+  --accent-dim: rgba(212,121,58,0.15);
+  --accent-glow: rgba(212,121,58,0.07);
+  --do: #5ec98a;
+  --do-dim: rgba(94,201,138,0.12);
   --decide: #e8c547;
-  --decide-dim: rgba(232,197,71,0.1);
-  --ask: #7eb8f7;
-  --ask-dim: rgba(126,184,247,0.1);
-  --schedule: #b48ef7;
-  --schedule-dim: rgba(180,142,247,0.1);
-  --let_go: rgba(240,237,232,0.3);
-  --let_go-dim: rgba(240,237,232,0.06);
+  --decide-dim: rgba(232,197,71,0.12);
+  --ask: #6ab4f5;
+  --ask-dim: rgba(106,180,245,0.12);
+  --schedule: #a87ef5;
+  --schedule-dim: rgba(168,126,245,0.12);
+  --let_go: rgba(245,240,234,0.32);
+  --let_go-dim: rgba(245,240,234,0.07);
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
   --r-xl: 22px;
-  --serif: "Instrument Serif", Georgia, serif;
+  --serif: "Playfair Display", Georgia, serif;
   --sans: "DM Sans", system-ui, sans-serif;
   
   /* Responsive breakpoints */
-  --sidebar-width: 240px;
-  --context-panel-width: 280px;
+  --sidebar-width: 220px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -61,7 +60,7 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--sans);
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
@@ -90,7 +89,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .context-panel {
-  display: none; /* Hidden on mobile/tablet */
+  display: none !important;
 }
 
 /* Tablet (768px+): sidebar + main */
@@ -117,24 +116,11 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
-/* Desktop (1024px+): sidebar + main + context panel */
+/* Desktop (1024px+): sidebar + main */
 @media (min-width: 1024px) {
-  .context-panel {
-    display: flex;
-    flex-direction: column;
-    width: var(--context-panel-width);
-    border-left: 1px solid var(--border-soft);
-    background: var(--bg);
-    position: sticky;
-    top: 61px;
-    height: calc(100vh - 61px);
-    overflow-y: auto;
-    padding: 20px;
-  }
-  
   .main {
-    max-width: none; /* Remove mobile constraint */
-    padding: 0 32px 100px;
+    max-width: none;
+    padding: 0 40px 100px;
   }
 }
 
@@ -190,9 +176,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 .brand-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   background: var(--accent);
   display: flex;
   align-items: center;
@@ -200,15 +186,16 @@ a { color: inherit; text-decoration: none; }
 }
 
 .brand-mark svg {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
 }
 
 .brand-name {
   font-size: 15px;
   font-weight: 500;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--text);
+  font-family: var(--serif);
 }
 
 .topbar-right {
@@ -217,13 +204,13 @@ a { color: inherit; text-decoration: none; }
   gap: 8px;
 }
 
-.mode-toggle-mobile {
-  display: inline-flex;
+.new-loop-btn {
+  display: none;
 }
 
-@media (min-width: 1024px) {
-  .mode-toggle-mobile {
-    display: none;
+@media (min-width: 768px) {
+  .new-loop-btn {
+    display: inline-flex;
   }
 }
 
@@ -260,13 +247,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ── TABS ── */
-.tabs {
-  display: flex;
-  gap: 0;
-  padding: 20px 0 0;
-  border-bottom: 1px solid var(--border-soft);
-  margin-bottom: 24px;
-}
+.tabs { display: none; }
 
 .tab {
   padding: 8px 16px 12px;
@@ -350,6 +331,8 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.2;
   margin: 0 0 8px;
   letter-spacing: -0.01em;
+  font-style: italic;
+  text-wrap: pretty;
 }
 
 .reentry-note {
@@ -427,18 +410,25 @@ a { color: inherit; text-decoration: none; }
 .loop-stack {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .loop-card {
   background: var(--surface);
   border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--border);
   border-radius: var(--r-lg);
-  padding: 14px 16px;
+  padding: 16px 18px 16px 16px;
   transition: border-color 0.15s, background 0.15s;
   animation: fadeSlideDown 0.2s ease backwards;
   cursor: default;
 }
+.loop-card.kind-do { border-left-color: var(--do); }
+.loop-card.kind-decide { border-left-color: var(--decide); }
+.loop-card.kind-ask { border-left-color: var(--ask); }
+.loop-card.kind-schedule { border-left-color: var(--schedule); }
+.loop-card.kind-let_go { border-left-color: var(--let_go); }
+.loop-card.kind-inbox { border-left-color: var(--border); }
 
 .loop-card:hover {
   border-color: var(--border);
@@ -462,11 +452,11 @@ a { color: inherit; text-decoration: none; }
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 9px;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   flex-shrink: 0;
 }
 
@@ -498,12 +488,14 @@ a { color: inherit; text-decoration: none; }
 .card-overflow:hover { background: var(--surface-3); color: var(--text); }
 
 .loop-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   color: var(--text);
   line-height: 1.5;
   margin: 0 0 6px;
   letter-spacing: -0.01em;
+  font-family: var(--serif);
+  text-wrap: pretty;
 }
 
 .loop-next {
@@ -641,7 +633,7 @@ a { color: inherit; text-decoration: none; }
 /* ── FAB ── */
 .fab {
   position: fixed;
-  bottom: calc(20px + env(safe-area-inset-bottom));
+  bottom: calc(68px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -650,16 +642,66 @@ a { color: inherit; text-decoration: none; }
   padding: 14px 24px;
   border-radius: 999px;
   background: var(--accent);
-  color: #0f0f0f;
+  color: #111010;
   font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 8px 32px rgba(232,197,71,0.3);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 8px 32px rgba(212,121,58,0.28);
   z-index: 5;
   transition: all 0.2s;
   white-space: nowrap;
 }
-.fab:hover { background: #f0d060; transform: translateX(-50%) translateY(-1px); box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 12px 40px rgba(232,197,71,0.4); }
+.fab:hover { background: #e18a4f; transform: translateX(-50%) translateY(-1px); box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 12px 40px rgba(212,121,58,0.34); }
 .fab:active { transform: translateX(-50%) translateY(0); }
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9;
+  display: flex;
+  background: var(--bg);
+  border-top: 1px solid var(--border-soft);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+
+.bottom-nav-btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-3);
+  padding: 8px 4px;
+  font-size: 11px;
+  position: relative;
+}
+
+.bottom-nav-btn.active {
+  color: var(--text);
+}
+
+.bottom-nav-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.bottom-nav-badge {
+  position: absolute;
+  top: 5px;
+  right: calc(50% - 24px);
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #111010;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 16px;
+  padding: 0 4px;
+}
 
 /* ── OVERLAY ── */
 .overlay-root {
@@ -745,6 +787,7 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--serif);
   font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 400;
+  font-style: italic;
   margin: 0 0 6px;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -940,7 +983,7 @@ a { color: inherit; text-decoration: none; }
 
 /* ── EMPTY ── */
 .empty-state {
-  padding: 32px 16px;
+  padding: 48px 20px;
   text-align: center;
   color: var(--text-3);
   font-size: 13px;
@@ -1044,28 +1087,14 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 600px) {
   .main { padding: 0 14px 100px; }
   .topbar { padding: 12px 16px; }
-  .tabs {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 4px;
-    padding-top: 16px;
-  }
-  .tab {
-    min-width: 0;
-    padding: 8px 8px 12px;
-    text-align: center;
-    font-size: 12px;
-  }
-  .tab-count {
-    margin-left: 4px;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
-    font-size: 9px;
-  }
   .reentry-title { font-size: 1.3rem; }
   .overlay-panel { padding: 12px; align-items: flex-end; }
   .overlay-card { width: 100%; max-height: 85vh; border-radius: 20px 20px 0 0; }
+}
+
+@media (min-width: 768px) {
+  .bottom-nav { display: none; }
+  .fab { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1509,7 +1538,7 @@ a { color: inherit; text-decoration: none; }
   width: 32px;
   height: 32px;
   background: var(--accent);
-  border-radius: 8px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1809,8 +1838,8 @@ a { color: inherit; text-decoration: none; }
     <div class="brand">
       <div class="brand-mark">
         <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="7" cy="7" r="5" stroke="#0f0f0f" stroke-width="1.5" fill="none"/>
-          <path d="M7 4.5V7.5L9 9" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="#111010" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="#111010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
       <span class="brand-name">Open Loops</span>
@@ -1821,9 +1850,7 @@ a { color: inherit; text-decoration: none; }
       </button>
     </div>
     <div class="topbar-right">
-      <button class="pill-btn mode-toggle-mobile" type="button" data-action="toggle-processing-mode">
-        <span>Process</span>
-      </button>
+      <button class="btn btn-primary btn-sm new-loop-btn" type="button" data-action="open-capture">+ New loop</button>
       <button class="pill-btn" id="sync-pill" type="button" data-action="open-sync">
         <span class="dot"></span>
         <span id="sync-label">Sync</span>
@@ -1838,10 +1865,13 @@ a { color: inherit; text-decoration: none; }
   </div>
 </div>
 
+<nav class="bottom-nav" id="bottom-nav"></nav>
+
 <div class="overlay-root" id="overlay-root"></div>
 <div id="auth-gate-root"></div>
 <div id="onboarding-root"></div>
 <div class="toast" id="toast"></div>
+<input type="file" id="import-file-input" accept=".json" style="display:none">
 
 <!-- Sync error banner (Morning Brief pattern) -->
 <div class="sync-error-banner" id="sync-error-banner" style="display:none;">
@@ -2036,7 +2066,7 @@ a { color: inherit; text-decoration: none; }
 
     if (view.inlineEditId === loop.id) {
       return `
-        <article class="loop-card${hl}" style="${delay}" data-loop-id="${esc(loop.id)}">
+        <article class="loop-card kind-${loop.kind || 'inbox'}${hl}" style="${delay}" data-loop-id="${esc(loop.id)}">
           <div class="loop-card-top">
             ${chipHtml(loop.kind)}
             <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More">
@@ -2052,7 +2082,7 @@ a { color: inherit; text-decoration: none; }
     }
 
     return `
-      <article class="loop-card${hl}" style="${delay}" data-loop-id="${esc(loop.id)}">
+      <article class="loop-card kind-${loop.kind || 'inbox'}${hl}" style="${delay}" data-loop-id="${esc(loop.id)}">
         <div class="loop-card-top">
           ${chipHtml(loop.kind)}
           <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More">
@@ -2087,12 +2117,12 @@ a { color: inherit; text-decoration: none; }
     if (showReentry && view.activeTab === 'now') {
       html += `
         <section class="reentry">
-          <div class="reentry-eyebrow">Pick up where you left off</div>
+          <div class="reentry-eyebrow">Continue with</div>
           <h2 class="reentry-title">${esc(suggested_loop.rawText)}</h2>
           <p class="reentry-note">${esc(suggested_loop.promptAnswer || 'This is still waiting for a clear next move.')}</p>
           <div class="reentry-actions">
             <button class="btn btn-primary btn-sm" data-action="continue-reentry">Back to it</button>
-            <button class="btn btn-ghost btn-sm" data-action="dismiss-reentry">Skip</button>
+            <button class="btn btn-ghost btn-sm" data-action="dismiss-reentry">Not now</button>
           </div>
         </section>`;
     }
@@ -2135,7 +2165,7 @@ a { color: inherit; text-decoration: none; }
           html += `<button class="show-more" data-action="show-more">Show ${hidden} more loop${hidden > 1 ? 's' : ''}</button>`;
         }
       } else {
-        html += `<div class="empty-state"><strong>Your head is quiet</strong>When something starts taking up space in it, drop it here.</div>`;
+        html += `<div class="empty-state"><strong>Your list is clear</strong>Capture anything that's taking up space in your head.</div>`;
       }
       html += `</div>`;
     }
@@ -2148,7 +2178,7 @@ a { color: inherit; text-decoration: none; }
         waiting.forEach((loop, i) => {
           const m = kindMeta[loop.kind] || kindMeta.inbox;
           html += `
-            <article class="loop-card" style="animation-delay:${i*0.04}s">
+            <article class="loop-card kind-${loop.kind || 'inbox'}" style="animation-delay:${i*0.04}s">
               <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
               <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '—')}</span></div>
@@ -2159,7 +2189,7 @@ a { color: inherit; text-decoration: none; }
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state"><strong>Nothing waiting</strong>Park things here when they're not yours to move yet.</div>`;
+        html += `<div class="empty-state"><strong>Nothing waiting</strong>Park things here when the next move isn't yours yet.</div>`;
       }
       html += `</div>`;
     }
@@ -2171,7 +2201,7 @@ a { color: inherit; text-decoration: none; }
         html += `<div class="loop-stack">`;
         released.forEach((loop, i) => {
           html += `
-            <article class="loop-card" style="animation-delay:${i*0.04}s;opacity:0.7">
+            <article class="loop-card kind-${loop.kind || 'inbox'}" style="animation-delay:${i*0.04}s;opacity:0.7">
               <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title" style="text-decoration:line-through;color:var(--text-2)">${esc(loop.rawText)}</p>
               <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '—')}</span></div>
@@ -2182,7 +2212,7 @@ a { color: inherit; text-decoration: none; }
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state"><strong>Nothing let go of yet</strong>When you close a loop, it rests here.</div>`;
+        html += `<div class="empty-state"><strong>Nothing released yet</strong>When you close a loop, it rests here.</div>`;
       }
       html += `</div>`;
     }
@@ -2194,7 +2224,7 @@ a { color: inherit; text-decoration: none; }
         html += `<div class="loop-stack">`;
         inbox.forEach((loop, i) => {
           html += `
-            <article class="loop-card" style="animation-delay:${i*0.04}s">
+            <article class="loop-card kind-inbox" style="animation-delay:${i*0.04}s">
               <div class="loop-card-top">${chipHtml('inbox')}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
               <div class="loop-card-bottom">
@@ -2213,7 +2243,7 @@ a { color: inherit; text-decoration: none; }
     html += `
       <button class="fab" data-action="open-capture" type="button">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        Capture loop
+        New loop
       </button>`;
 
     return html;
@@ -2231,12 +2261,12 @@ a { color: inherit; text-decoration: none; }
             <div class="overlay-meta"><div class="overlay-eyebrow">New loop</div><div class="overlay-step">Step 1 of 3</div></div>
             ${closeBtn}
           </div>
-          <h2 class="overlay-title">What's sitting in your head?</h2>
-          <p class="overlay-subtitle">Drop the thought here as it arrives. You'll shape it in the next step.</p>
-          <textarea class="big-input" id="capture-input" placeholder="Write one unfinished thing…" autofocus>${esc(ov.rawText)}</textarea>
+          <h2 class="overlay-title">What's on your mind?</h2>
+          <p class="overlay-subtitle">Write it down as it arrives. One thought — don't plan, just capture.</p>
+          <textarea class="big-input" id="capture-input" placeholder="One unfinished thing…" autofocus>${esc(ov.rawText)}</textarea>
           <p class="input-hint">One thought. Don't start a project here.</p>
           <div class="overlay-actions">
-            <button class="btn btn-ghost" data-action="save-for-later">Save raw</button>
+            <button class="btn btn-ghost" data-action="save-for-later">Save to inbox</button>
             <button class="btn btn-primary" data-action="capture-next" ${ov.rawText.trim() ? '' : 'disabled'}>Continue →</button>
           </div>
         </div>`;
@@ -2278,11 +2308,12 @@ a { color: inherit; text-decoration: none; }
           </div>
           <h2 class="overlay-title">${esc(m.question)}</h2>
           <p class="overlay-subtitle">${esc(m.helper)}</p>
-          <textarea class="big-input" id="detail-input" placeholder="One clear next state…" style="min-height:90px">${esc(ov.promptAnswer)}</textarea>
-          <p class="input-hint">Enough for the next move. You can refine it later.</p>
+          <textarea class="big-input" id="detail-input" placeholder="One clear next move…" style="min-height:90px">${esc(ov.promptAnswer)}</textarea>
+          <p class="input-hint">Optional — you can always add this later.</p>
           <div class="overlay-actions">
             <button class="btn btn-ghost" data-action="kind-back">← Back</button>
-            <button class="btn btn-primary" data-action="finish-capture" ${ov.promptAnswer.trim() ? '' : 'disabled'}>Save loop</button>
+            <button class="btn btn-subtle" data-action="finish-capture-skip">Skip</button>
+            <button class="btn btn-primary" data-action="finish-capture">Save loop</button>
           </div>
         </div>`;
     }
@@ -2360,6 +2391,43 @@ a { color: inherit; text-decoration: none; }
       </div>`;
   }
 
+  // ── EXPORT / IMPORT ──
+  function exportData() {
+    const exportObj = { version: 2, exportedAt: nowIso(), loops: data.loops };
+    const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `open-loops-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('Exported.');
+  }
+
+  function importData(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!parsed || !Array.isArray(parsed.loops)) throw new Error('Invalid format');
+        const existingIds = new Set(data.loops.map(l => l.id));
+        const incoming = parsed.loops.map(sanitize);
+        let added = 0;
+        incoming.forEach(l => {
+          if (!existingIds.has(l.id)) { data.loops.unshift(l); added++; }
+        });
+        save();
+        renderAll();
+        toast(`Imported ${added} loop${added !== 1 ? 's' : ''}.`);
+      } catch(err) {
+        toast('Import failed: invalid or unrecognised file.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
   function renderSync() {
     const loggedIn = Sync.isLoggedIn();
     const hasError = view.syncStatus === 'error';
@@ -2373,7 +2441,7 @@ a { color: inherit; text-decoration: none; }
         <h2 class="overlay-title">Keep loops everywhere.</h2>
         <p class="overlay-subtitle">Your loops save on this device first. Add an email to keep them in sync everywhere.</p>
         ${!hasSupabaseCfg() ? `
-          <div class="sync-info">Edit <code>open-loops-config.js</code> with your Supabase URL and key, then run <code>open-loops-supabase.sql</code> in the Supabase SQL editor.</div>
+          <div class="sync-info">To enable sync, edit <code>open-loops-config.js</code> with your Supabase project URL and anon key, then run <code>open-loops-supabase.sql</code> in the Supabase SQL editor. See <strong>SYNC-SETUP.md</strong> for step-by-step instructions.</div>
         ` : loggedIn ? `
           ${hasError ? `
             <div class="sync-info" style="color:#f88;border-color:rgba(255,68,119,0.15);background:rgba(255,68,119,0.06)">Last sync didn't go through. Your changes are safe on this device.</div>
@@ -2395,16 +2463,22 @@ a { color: inherit; text-decoration: none; }
           </div>
         `}
         ${!loggedIn ? `<div class="overlay-actions"><button class="btn btn-ghost" data-action="close-overlay">Close</button></div>` : ''}
+        <div style="border-top:1px solid var(--border-soft);margin-top:16px;padding-top:16px;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);margin-bottom:10px;font-weight:500;">Local data</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" data-action="export-data" style="flex:1;">↓ Export JSON</button>
+            <button class="btn btn-ghost btn-sm" data-action="import-data" style="flex:1;">↑ Import JSON</button>
+          </div>
+          <p style="font-size:11px;color:var(--text-3);margin:8px 0 0;line-height:1.5;">Export saves all your loops to a JSON file. Import merges loops from a previously exported file.</p>
+        </div>
       </div>`;
   }
 
   // ── AUTH GATE ──
-  // Shown when authReady && !Sync.isLoggedIn(). Replaces the full app.
+  // Used for opt-in sign-in display. No longer shown automatically on load.
   function renderAuthGate() {
     const root = document.getElementById('auth-gate-root');
     if (!root) return;
-
-    // Lock app visually
     const app = document.getElementById('app');
     if (app) app.classList.add('app-locked');
 
@@ -2415,8 +2489,8 @@ a { color: inherit; text-decoration: none; }
             <div class="auth-gate-logo">
               <div class="auth-gate-logo-mark">
                 <svg viewBox="0 0 14 14" fill="none" width="18" height="18">
-                  <circle cx="7" cy="7" r="5" stroke="#0f0f0f" stroke-width="1.5" fill="none"/>
-                  <path d="M7 4.5V7.5L9 9" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="#111010" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="#111010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
               <span class="auth-gate-logo-name">Open Loops</span>
@@ -2435,8 +2509,8 @@ a { color: inherit; text-decoration: none; }
             <div class="auth-gate-logo">
               <div class="auth-gate-logo-mark">
                 <svg viewBox="0 0 14 14" fill="none" width="18" height="18">
-                  <circle cx="7" cy="7" r="5" stroke="#0f0f0f" stroke-width="1.5" fill="none"/>
-                  <path d="M7 4.5V7.5L9 9" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="#111010" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="#111010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
               <span class="auth-gate-logo-name">Open Loops</span>
@@ -2460,8 +2534,8 @@ a { color: inherit; text-decoration: none; }
           <div class="auth-gate-logo">
             <div class="auth-gate-logo-mark">
               <svg viewBox="0 0 14 14" fill="none" width="18" height="18">
-                <circle cx="7" cy="7" r="5" stroke="#0f0f0f" stroke-width="1.5" fill="none"/>
-                <path d="M7 4.5V7.5L9 9" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="#111010" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="#111010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
             <span class="auth-gate-logo-name">Open Loops</span>
@@ -2680,19 +2754,19 @@ a { color: inherit; text-decoration: none; }
       <div class="sidebar-section">
         <div class="sidebar-title">Views</div>
         <div class="sidebar-tabs">
-          <div class="sidebar-tab ${view.activeTab === 'now' ? 'active' : ''}" data-action="switch-tab" data-tab="now">
+          <div class="sidebar-tab ${view.activeTab === 'now' ? 'active' : ''}" data-action="set-tab" data-tab="now">
             <span>Now</span>
             <span class="tab-count">${nowLoops.length}</span>
           </div>
-          <div class="sidebar-tab ${view.activeTab === 'later' ? 'active' : ''}" data-action="switch-tab" data-tab="later">
+          <div class="sidebar-tab ${view.activeTab === 'later' ? 'active' : ''}" data-action="set-tab" data-tab="later">
             <span>Later</span>
             <span class="tab-count">${laterLoops.length}</span>
           </div>
-          <div class="sidebar-tab ${view.activeTab === 'done' ? 'active' : ''}" data-action="switch-tab" data-tab="done">
+          <div class="sidebar-tab ${view.activeTab === 'done' ? 'active' : ''}" data-action="set-tab" data-tab="done">
             <span>Done</span>
             <span class="tab-count">${doneLoops.length}</span>
           </div>
-          <div class="sidebar-tab ${view.activeTab === 'inbox' ? 'active' : ''}" data-action="switch-tab" data-tab="inbox">
+          <div class="sidebar-tab ${view.activeTab === 'inbox' ? 'active' : ''}" data-action="set-tab" data-tab="inbox">
             <span>Inbox</span>
             <span class="tab-count">${inboxLoops.length}</span>
           </div>
@@ -2701,10 +2775,34 @@ a { color: inherit; text-decoration: none; }
       
       <div class="sidebar-section">
         <div class="sidebar-actions">
-          <button class="sidebar-capture-btn" data-action="open-capture">+ Capture</button>
+          <button class="sidebar-capture-btn" data-action="open-capture">+ New loop</button>
         </div>
       </div>
     `;
+  }
+
+  function renderBottomNav() {
+    const nav = document.getElementById('bottom-nav');
+    if (!nav) return;
+    const counts = {
+      now: Math.min(byStatus('active').length, 5),
+      later: byStatus('waiting').length,
+      done: byStatus('released').length,
+      inbox: byStatus('inbox').length
+    };
+    const items = [
+      { key: 'now', label: 'Now', icon: '<path d="M9 3.5A4.5 4.5 0 1 1 5.8 11.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 3.5v3h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' },
+      { key: 'later', label: 'Later', icon: '<circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 6.8v2.6l1.7 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' },
+      { key: 'done', label: 'Done', icon: '<path d="M4.8 9.3 7.4 12l5.8-6.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' },
+      { key: 'inbox', label: 'Inbox', icon: '<path d="M3.5 5.5h11l-1 7h-9l-1-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.5 8.8h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' }
+    ];
+    nav.innerHTML = items.map(item => `
+      <button class="bottom-nav-btn ${view.activeTab === item.key ? 'active' : ''}" type="button" data-action="set-tab" data-tab="${item.key}">
+        ${counts[item.key] ? `<span class="bottom-nav-badge">${counts[item.key]}</span>` : ''}
+        <svg class="bottom-nav-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true">${item.icon}</svg>
+        <span>${item.label}</span>
+      </button>
+    `).join('');
   }
 
   // ── RENDER CONTEXT PANEL ──
@@ -2810,7 +2908,7 @@ a { color: inherit; text-decoration: none; }
           
           <div class="processing-actions">
             <button class="processing-action-btn do" data-action="processing-complete" data-loop-id="${esc(loop.id)}">
-              ${kindMeta.do.label}
+              Done
               <span class="processing-action-label">1</span>
             </button>
             <button class="processing-action-btn decide" data-action="processing-reclassify" data-loop-id="${esc(loop.id)}" data-kind="decide">
@@ -2880,10 +2978,10 @@ a { color: inherit; text-decoration: none; }
   function renderAll() {
     renderHeader();
     renderSidebar();
+    renderBottomNav();
     renderMain();
     renderContextPanel();
     renderOverlay();
-    // Auth + onboarding layers sit on top — always re-evaluate
     if (authReady && !Sync.isLoggedIn()) {
       renderAuthGate();
     } else if (authReady) {
@@ -2895,9 +2993,9 @@ a { color: inherit; text-decoration: none; }
   // ── ACTIONS ──
   // Local-only persistence + re-render. Cross-device sync is handled by
   // the explicit Sync.{create,update,delete}Loop calls at each call site.
-  function persistAndSync() {
+  function persistAndRender() {
     save();
-    renderMain();
+    renderAll();
   }
 
   function moveToNextLoop() {
@@ -2933,11 +3031,11 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── MUTATION GUARD ──
-  // Returns true (and shows toast) if user is not logged in.
+  // App is local-first: all mutations are always allowed.
+  // Sync happens in the background when the user is signed in.
   function requireLogin() {
     if (Sync.isLoggedIn()) return false;
     toast('Sign in to save your loops.');
-    // Bring up auth gate if somehow not visible
     if (authReady) renderAuthGate();
     return true;
   }
@@ -3000,6 +3098,8 @@ a { color: inherit; text-decoration: none; }
       view.activeTab = el.dataset.tab;
       save();
       renderMain();
+      renderSidebar();
+      renderBottomNav();
       return;
     }
 
@@ -3062,12 +3162,12 @@ a { color: inherit; text-decoration: none; }
       if (view.overlay?.type === 'capture') { view.overlay.step = 'kind'; renderOverlay(); }
       return;
     }
-    if (action === 'finish-capture') {
+    if (action === 'finish-capture' || action === 'finish-capture-skip') {
       if (requireLogin()) return;
       const ov = view.overlay;
       if (!ov || ov.type !== 'capture') return;
-      const ans = document.getElementById('detail-input')?.value.trim();
-      if (!ans) return;
+      const ans = action === 'finish-capture-skip' ? '' : (document.getElementById('detail-input')?.value.trim() || '');
+      if (action === 'finish-capture' && !ans) return;
       ov.promptAnswer = ans;
       let _syncAction = null;
       if (ov.sourceId) {
@@ -3084,7 +3184,7 @@ a { color: inherit; text-decoration: none; }
       }
       view.reentryDismissedFor = null;
       closeOverlay();
-      await persistAndSync();
+      await persistAndRender();
       _syncAction();
       toast('Loop saved.');
       return;
@@ -3099,12 +3199,12 @@ a { color: inherit; text-decoration: none; }
         const patch = { rawText: raw, status: 'inbox' };
         updateLoop(ov.sourceId, patch);
         closeOverlay();
-        await persistAndSync();
+        await persistAndRender();
         Sync.updateLoop(ov.sourceId, patch);
       } else {
         const l = createLoop({ rawText: raw, kind: null, promptAnswer: '', status: 'inbox' });
         closeOverlay();
-        await persistAndSync();
+        await persistAndRender();
         Sync.createLoop(l);
       }
       toast('Saved to inbox.');
@@ -3135,7 +3235,7 @@ a { color: inherit; text-decoration: none; }
       updateLoop(loopId, patch);
       closeOverlay();
       view.activeTab = 'now';
-      await persistAndSync();
+      await persistAndRender();
       Sync.updateLoop(loopId, patch);
       toast('Released.');
       return;
@@ -3161,7 +3261,7 @@ a { color: inherit; text-decoration: none; }
       const patch = { status: 'waiting' };
       updateLoop(loopId, patch);
       closeOverlay();
-      await persistAndSync();
+      await persistAndRender();
       Sync.updateLoop(loopId, patch);
       toast('Moved to Waiting.');
       return;
@@ -3172,7 +3272,7 @@ a { color: inherit; text-decoration: none; }
       updateLoop(loopId, patch);
       closeOverlay();
       view.activeTab = 'now';
-      await persistAndSync();
+      await persistAndRender();
       Sync.updateLoop(loopId, patch);
       toast('Released.');
       return;
@@ -3183,7 +3283,7 @@ a { color: inherit; text-decoration: none; }
       updateLoop(loopId, patch);
       closeOverlay();
       view.activeTab = 'now';
-      await persistAndSync();
+      await persistAndRender();
       Sync.updateLoop(loopId, patch);
       toast('Returned to Now.');
       return;
@@ -3197,7 +3297,7 @@ a { color: inherit; text-decoration: none; }
       const wasLast = data.lastLoopId === loopId;
       removeLoop(loopId);
       closeOverlay();
-      await persistAndSync();
+      await persistAndRender();
       Sync.deleteLoop(loopId);
       toast('Loop deleted.', {
         action: 'Undo',
@@ -3207,7 +3307,7 @@ a { color: inherit; text-decoration: none; }
           const insertAt = Math.min(Math.max(originalIndex, 0), data.loops.length);
           data.loops.splice(insertAt, 0, snapshot);
           if (wasLast) data.lastLoopId = snapshot.id;
-          await persistAndSync();
+          await persistAndRender();
           // Undo soft-delete on the server so the row reappears everywhere.
           Sync.undeleteLoop(snapshot.id);
           toast('Restored.');
@@ -3232,7 +3332,7 @@ a { color: inherit; text-decoration: none; }
       updateLoop(loopId, patch);
       closeOverlay();
       if (newKind === 'let_go') view.activeTab = 'now';
-      await persistAndSync();
+      await persistAndRender();
       Sync.updateLoop(loopId, patch);
       toast(newKind === 'let_go' ? 'Released.' : 'Kind updated.');
       return;
@@ -3257,7 +3357,7 @@ a { color: inherit; text-decoration: none; }
       if (val) {
         const patch = { rawText: val };
         updateLoop(loopId, patch);
-        await persistAndSync();
+        await persistAndRender();
         Sync.updateLoop(loopId, patch);
         toast('Updated.');
       }
@@ -3318,7 +3418,7 @@ a { color: inherit; text-decoration: none; }
       if (requireLogin()) return;
       const patch = { status: 'released' };
       updateLoop(loopId, patch);
-      await persistAndSync();
+      await persistAndRender();
       Sync.updateLoop(loopId, patch);
       moveToNextLoop();
       toast('Completed!');
@@ -3330,7 +3430,7 @@ a { color: inherit; text-decoration: none; }
       const newKind = el.dataset.kind;
       const patch = { kind: newKind };
       updateLoop(loopId, patch);
-      await persistAndSync();
+      await persistAndRender();
       Sync.updateLoop(loopId, patch);
       moveToNextLoop();
       toast('Updated!');
@@ -3341,7 +3441,7 @@ a { color: inherit; text-decoration: none; }
       if (requireLogin()) return;
       const patch = { kind: 'let_go', status: 'released' };
       updateLoop(loopId, patch);
-      await persistAndSync();
+      await persistAndRender();
       Sync.updateLoop(loopId, patch);
       moveToNextLoop();
       toast('Released!');
@@ -3354,19 +3454,24 @@ a { color: inherit; text-decoration: none; }
     }
 
     // Sidebar tab switching
-    if (action === 'switch-tab') {
-      view.activeTab = el.dataset.tab;
-      save();
-      renderMain();
-      renderSidebar();
-      return;
-    }
+    // Export / Import
+    if (action === 'export-data') { exportData(); return; }
+    if (action === 'import-data') { document.getElementById('import-file-input')?.click(); return; }
 
     // Dismiss sync error banner
     if (action === 'dismiss-sync-banner') {
       const banner = document.getElementById('sync-error-banner');
       if (banner) banner.style.display = 'none';
       return;
+    }
+  });
+
+  // Import file selection
+  document.addEventListener('change', e => {
+    if (e.target.id === 'import-file-input') {
+      const file = e.target.files[0];
+      if (file) importData(file);
+      e.target.value = ''; // reset so same file can be re-imported if needed
     }
   });
 
@@ -3457,7 +3562,7 @@ a { color: inherit; text-decoration: none; }
         if (requireLogin()) return;
         const patch = { status: 'released' };
         updateLoop(currentLoop.id, patch);
-        persistAndSync();
+        persistAndRender();
         Sync.updateLoop(currentLoop.id, patch);
         moveToNextLoop();
         toast('Completed!');
@@ -3468,7 +3573,7 @@ a { color: inherit; text-decoration: none; }
         if (requireLogin()) return;
         const patch = { kind: 'decide' };
         updateLoop(currentLoop.id, patch);
-        persistAndSync();
+        persistAndRender();
         Sync.updateLoop(currentLoop.id, patch);
         moveToNextLoop();
         toast('Updated!');
@@ -3479,7 +3584,7 @@ a { color: inherit; text-decoration: none; }
         if (requireLogin()) return;
         const patch = { kind: 'ask' };
         updateLoop(currentLoop.id, patch);
-        persistAndSync();
+        persistAndRender();
         Sync.updateLoop(currentLoop.id, patch);
         moveToNextLoop();
         toast('Updated!');
@@ -3490,7 +3595,7 @@ a { color: inherit; text-decoration: none; }
         if (requireLogin()) return;
         const patch = { kind: 'schedule' };
         updateLoop(currentLoop.id, patch);
-        persistAndSync();
+        persistAndRender();
         Sync.updateLoop(currentLoop.id, patch);
         moveToNextLoop();
         toast('Updated!');
@@ -3501,7 +3606,7 @@ a { color: inherit; text-decoration: none; }
         if (requireLogin()) return;
         const patch = { kind: 'let_go', status: 'released' };
         updateLoop(currentLoop.id, patch);
-        persistAndSync();
+        persistAndRender();
         Sync.updateLoop(currentLoop.id, patch);
         moveToNextLoop();
         toast('Released!');
@@ -3527,7 +3632,7 @@ a { color: inherit; text-decoration: none; }
         if (requireLogin()) return;
         const patch = { rawText: val };
         updateLoop(loopId, patch);
-        persistAndSync();
+        persistAndRender();
         Sync.updateLoop(loopId, patch);
         toast('Updated.');
       }
@@ -3876,8 +3981,7 @@ a { color: inherit; text-decoration: none; }
         if (channel) { db.removeChannel(channel); channel = null; }
         setSyncStatus('idle', 'Sync');
         hideSyncErrorBanner();
-        // Re-lock the app
-        renderAll(); // will call renderAuthGate() since isLoggedIn() is false
+        renderAll();
       }
     });
 
@@ -3898,12 +4002,11 @@ a { color: inherit; text-decoration: none; }
           setSyncStatus('error', 'Sync error');
           showSyncErrorBanner();
         }
-        // Auth check complete — now we know whether user is logged in
+        // Auth check complete — app is always usable regardless of login state
         authReady = true;
         if (!currentUser) {
           renderAuthGate();
         } else if (!hasCompletedOnboarding()) {
-          // Already logged in (returning user) but never did onboarding
           startOnboarding();
         }
       },
@@ -3975,18 +4078,16 @@ a { color: inherit; text-decoration: none; }
 
   // ── INIT ──
   load();
-  renderAll(); // First paint (authReady=false → no auth gate flash yet)
+  renderAll(); // First paint
 
-  // Kick off auth check. When Supabase is not configured, Sync.init() is a
-  // no-op so we set authReady manually and show the "not configured" gate.
+  // Kick off auth check. When Supabase is not configured the app works
+  // fully locally — no gate, no requirement to sign in.
   if (!hasSupabaseCfg()) {
-    // No Supabase — show config gate immediately after paint
     setTimeout(() => {
       authReady = true;
       renderAuthGate();
     }, 0);
   } else {
-    // Sync.init() sets authReady = true internally once the session check resolves
     Sync.init();
   }
 
