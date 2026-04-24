@@ -22,18 +22,18 @@
   crossorigin="anonymous"></script>
 <style>
 :root, [data-theme="dark"] {
-  --bg: #111010;
-  --surface: #1b1918;
-  --surface-2: #222020;
-  --surface-3: #2c2a29;
-  --border: rgba(255,248,240,0.09);
-  --border-soft: rgba(255,248,240,0.05);
-  --text: #f5f0ea;
-  --text-2: rgba(245,240,234,0.65);
-  --text-3: rgba(245,240,234,0.50);
-  --accent: #d4793a;
-  --accent-dim: rgba(212,121,58,0.15);
-  --accent-glow: rgba(212,121,58,0.07);
+  --bg: #111315;
+  --surface: #191c1f;
+  --surface-2: #202428;
+  --surface-3: #2a3035;
+  --border: rgba(241,238,231,0.12);
+  --border-soft: rgba(241,238,231,0.07);
+  --text: #f3eee6;
+  --text-2: rgba(243,238,230,0.68);
+  --text-3: rgba(243,238,230,0.48);
+  --accent: #d8a15f;
+  --accent-dim: rgba(216,161,95,0.16);
+  --accent-glow: rgba(216,161,95,0.10);
   --do: #5ec98a;
   --do-dim: rgba(94,201,138,0.12);
   --decide: #e8c547;
@@ -56,28 +56,28 @@
 }
 
 [data-theme="light"] {
-  --bg: #faf7f2;
-  --surface: #ffffff;
-  --surface-2: #f3ede4;
-  --surface-3: #ebe3d6;
-  --border: rgba(26,24,23,0.12);
-  --border-soft: rgba(26,24,23,0.06);
-  --text: #1a1817;
-  --text-2: rgba(26,24,23,0.62);
-  --text-3: rgba(26,24,23,0.42);
-  --accent: #b85e1e;
-  --accent-dim: rgba(184,94,30,0.14);
-  --accent-glow: rgba(184,94,30,0.06);
-  --do: #2f9e5e;
-  --do-dim: rgba(47,158,94,0.12);
-  --decide: #b88a0a;
-  --decide-dim: rgba(184,138,10,0.13);
-  --ask: #2778c4;
-  --ask-dim: rgba(39,120,196,0.12);
-  --schedule: #7a52c4;
-  --schedule-dim: rgba(122,82,196,0.12);
-  --let_go: rgba(26,24,23,0.38);
-  --let_go-dim: rgba(26,24,23,0.06);
+  --bg: #f5f2ec;
+  --surface: #fffdf8;
+  --surface-2: #eee9df;
+  --surface-3: #e5ded2;
+  --border: rgba(48,44,38,0.13);
+  --border-soft: rgba(48,44,38,0.08);
+  --text: #25221e;
+  --text-2: rgba(37,34,30,0.66);
+  --text-3: rgba(37,34,30,0.45);
+  --accent: #9d6636;
+  --accent-dim: rgba(157,102,54,0.14);
+  --accent-glow: rgba(157,102,54,0.09);
+  --do: #327f55;
+  --do-dim: rgba(50,127,85,0.12);
+  --decide: #9c7423;
+  --decide-dim: rgba(156,116,35,0.13);
+  --ask: #326f99;
+  --ask-dim: rgba(50,111,153,0.12);
+  --schedule: #7560a8;
+  --schedule-dim: rgba(117,96,168,0.12);
+  --let_go: rgba(37,34,30,0.42);
+  --let_go-dim: rgba(37,34,30,0.07);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -89,7 +89,9 @@ body {
   font-family: var(--sans);
   font-size: 15px;
   color: var(--text);
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 20% -10%, var(--accent-glow), transparent 30rem),
+    linear-gradient(180deg, var(--bg), var(--bg));
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -162,7 +164,8 @@ a { color: inherit; text-decoration: none; }
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(14px);
   gap: 12px;
 }
 
@@ -428,17 +431,18 @@ a { color: inherit; text-decoration: none; }
 .loop-stack {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 10px;
 }
 
 .loop-card {
-  background: var(--surface);
+  background: linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 82%, var(--surface-2)));
   border: 1px solid var(--border-soft);
   border-left: 3px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 16px 18px 16px 16px;
-  transition: border-color 0.15s, background 0.15s;
-  animation: fadeSlideDown 0.2s ease backwards;
+  border-radius: var(--r-md);
+  padding: 17px 18px 16px 16px;
+  box-shadow: 0 16px 36px rgba(0,0,0,0.10);
+  transition: border-color 0.18s, background 0.18s, transform 0.18s, box-shadow 0.18s, opacity 0.18s;
+  animation: fadeSlideDown 0.22s ease backwards;
   cursor: default;
 }
 .loop-card.kind-do { border-left-color: var(--do); }
@@ -451,11 +455,129 @@ a { color: inherit; text-decoration: none; }
 .loop-card:hover {
   border-color: var(--border);
   background: var(--surface-2);
+  transform: translateY(-1px);
+  box-shadow: 0 18px 42px rgba(0,0,0,0.14);
 }
 
 .loop-card.highlighted {
   border-color: var(--accent);
   background: var(--surface-2);
+}
+
+.loop-card[draggable="true"] {
+  cursor: grab;
+}
+.loop-card.dragging {
+  opacity: 0.52;
+  transform: scale(0.985);
+}
+.loop-card.drag-over {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.drag-handle {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  border-radius: 8px;
+  flex-shrink: 0;
+  cursor: grab;
+}
+.drag-handle:hover { background: var(--surface-3); color: var(--text-2); }
+.loop-card-top-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.active-cap-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  animation: fadeSlideDown 0.18s ease;
+}
+.active-cap-copy {
+  min-width: 0;
+}
+.active-cap-label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.active-cap-main {
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--text);
+  line-height: 1.25;
+}
+.active-cap-controls {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  flex-shrink: 0;
+}
+.active-cap-btn {
+  min-width: 34px;
+  padding: 6px 9px;
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--text-2);
+  transition: all 0.15s;
+}
+.active-cap-btn:hover { color: var(--text); background: var(--surface-3); }
+.active-cap-btn.active {
+  color: #111315;
+  background: var(--accent);
+}
+
+.route-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 16px 0 20px;
+}
+.route-option {
+  border: 1px solid var(--border-soft);
+  background: var(--surface-2);
+  color: var(--text-2);
+  border-radius: var(--r-md);
+  padding: 12px 10px;
+  text-align: left;
+  transition: all 0.15s;
+}
+.route-option:hover { border-color: var(--border); color: var(--text); }
+.route-option.selected {
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--accent-dim);
+}
+.route-option strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 3px;
+  color: inherit;
+}
+.route-option span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-3);
 }
 
 .loop-card-top {
@@ -1218,6 +1340,13 @@ a { color: inherit; text-decoration: none; }
    mobile padding persists until the sidebar layout takes over at 768px) */
 @media (max-width: 767px) {
   .main { padding: 0 14px 100px; }
+  .active-cap-panel {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .route-grid {
+    grid-template-columns: 1fr;
+  }
   .topbar { padding: 12px 16px; }
   .reentry-title { font-size: 1.3rem; }
   .overlay-panel { padding: 12px; align-items: flex-end; }
@@ -1911,7 +2040,7 @@ a { color: inherit; text-decoration: none; }
   // stay as 'inbox' / 'active' / 'waiting' / 'released' for backwards
   // compat with existing localStorage and the Supabase schema.
   const TAB_LABEL = {
-    inbox:    'Captured',
+    inbox:    'Raw loops',
     active:   'Active',
     waiting:  'Parked',
     released: 'Closed',
@@ -1932,7 +2061,7 @@ a { color: inherit; text-decoration: none; }
     ask:      { label: 'Ask',      action: 'Reach out',  question: 'Who do you need something from?',    helper: 'One person, one ask. Nothing more.' },
     schedule: { label: 'Schedule', action: 'Add to cal', question: 'What needs time on a calendar?',     helper: 'Treat time as the missing ingredient.' },
     let_go:   { label: 'Let go',   action: 'Release',    question: 'What are you choosing to release?',  helper: 'The goal is relief, not proving the thought was silly.' },
-    inbox:    { label: 'Captured', action: 'Clarify',    question: '',                                   helper: '' }
+    inbox:    { label: 'Raw', action: 'Define',    question: '',                                   helper: '' }
   };
 
   function nowIso() { return new Date().toISOString(); }
@@ -1975,6 +2104,7 @@ a { color: inherit; text-decoration: none; }
     syncStatus: 'idle',
     syncText: 'Sync',
     inlineEditId: null,
+    draggingLoopId: null,
     // Auth gate state
     authGateSent: false,     // magic link sent confirmation
     authGateEmail: '',       // email being typed
@@ -2082,6 +2212,21 @@ a { color: inherit; text-decoration: none; }
     if (data.lastLoopId === id) data.lastLoopId = suggested()?.id || null;
   }
 
+  function moveActiveLoop(dragId, targetId) {
+    if (!dragId || !targetId || dragId === targetId) return false;
+    const activeIds = data.loops.filter(l => l.status === 'active').map(l => l.id);
+    const from = activeIds.indexOf(dragId);
+    const to = activeIds.indexOf(targetId);
+    if (from < 0 || to < 0) return false;
+    activeIds.splice(to, 0, activeIds.splice(from, 1)[0]);
+    const activeMap = new Map(data.loops.filter(l => l.status === 'active').map(l => [l.id, l]));
+    const reorderedActive = activeIds.map(id => activeMap.get(id)).filter(Boolean);
+    let activeCursor = 0;
+    data.loops = data.loops.map(loop => loop.status === 'active' ? reorderedActive[activeCursor++] : loop);
+    data.lastLoopId = dragId;
+    return true;
+  }
+
   // ── TOAST ──
   function toast(msg, opts) {
     const el = document.getElementById('toast');
@@ -2136,10 +2281,20 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── LOOP CARD ──
-  function cardHtml(loop, idx) {
+  function dragHandleHtml(enabled) {
+    if (!enabled) return '';
+    return `<span class="drag-handle" title="Drag to reorder" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3.2h.1M9 3.2h.1M5 7h.1M9 7h.1M5 10.8h.1M9 10.8h.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </span>`;
+  }
+
+  // â”€â”€ LOOP CARD â”€â”€
+  function cardHtml(loop, idx, opts = {}) {
     const m = kindMeta[loop.kind] || kindMeta.inbox;
     const hl = view.highlightedId === loop.id ? ' highlighted' : '';
     const delay = `animation-delay:${idx*0.04}s`;
+    const draggable = opts.draggable ? ' draggable="true" data-draggable-loop="1"' : '';
+    const handle = dragHandleHtml(opts.draggable);
 
     if (view.inlineEditId === loop.id) {
       const editLen = (loop.rawText || '').length;
@@ -2147,9 +2302,9 @@ a { color: inherit; text-decoration: none; }
         ? ' at-limit'
         : editLen >= MAX_LOOP_TEXT_LEN - 50 ? ' near-limit' : '';
       return `
-        <article class="loop-card kind-${loop.kind || 'inbox'}${hl}" style="${delay}" data-loop-id="${esc(loop.id)}">
+        <article class="loop-card kind-${loop.kind || 'inbox'}${hl}" style="${delay}" data-loop-id="${esc(loop.id)}"${draggable}>
           <div class="loop-card-top">
-            ${chipHtml(loop.kind)}
+            <div class="loop-card-top-left">${handle}${chipHtml(loop.kind)}</div>
             <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg>
             </button>
@@ -2166,9 +2321,9 @@ a { color: inherit; text-decoration: none; }
     }
 
     return `
-      <article class="loop-card kind-${loop.kind || 'inbox'}${hl}" style="${delay}" data-loop-id="${esc(loop.id)}">
+      <article class="loop-card kind-${loop.kind || 'inbox'}${hl}" style="${delay}" data-loop-id="${esc(loop.id)}"${draggable}>
         <div class="loop-card-top">
-          ${chipHtml(loop.kind)}
+          <div class="loop-card-top-left">${handle}${chipHtml(loop.kind)}</div>
           <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg>
           </button>
@@ -2198,7 +2353,6 @@ a { color: inherit; text-decoration: none; }
 
     let html = '';
 
-    // Reentry
     if (showReentry && view.activeTab === 'now') {
       html += `
         <section class="reentry">
@@ -2212,19 +2366,6 @@ a { color: inherit; text-decoration: none; }
         </section>`;
     }
 
-    // Captured nudge — only shown on the Active (Now) tab, as a gentle prompt.
-    if (inbox.length && view.activeTab === 'now') {
-      html += `
-        <div class="inbox-notice">
-          <div class="inbox-notice-left">
-            <div class="inbox-badge">${inbox.length}</div>
-            <span class="inbox-text">${inbox.length} captured loop${inbox.length === 1 ? '' : 's'} waiting to be clarified</span>
-          </div>
-          <button class="btn btn-ghost btn-sm" data-action="clarify-inbox">Clarify</button>
-        </div>`;
-    }
-
-    // Tabs. Captured tab is hidden when empty to reduce noise for clean state.
     html += `
       <div class="tabs">
         <button class="tab ${view.activeTab === 'now' ? 'active' : ''}" data-action="set-tab" data-tab="now">
@@ -2243,21 +2384,29 @@ a { color: inherit; text-decoration: none; }
         ` : ''}
       </div>`;
 
-    // Now tab
     if (view.activeTab === 'now') {
       html += `<div class="tab-panel active" id="tab-now">`;
+      html += `
+        <section class="active-cap-panel" aria-label="Active loop capacity">
+          <div class="active-cap-copy">
+            <div class="active-cap-label">Active capacity</div>
+            <div class="active-cap-main">${active.length}/${cap} loops in focus</div>
+          </div>
+          <div class="active-cap-controls" role="group" aria-label="Active loop cap">
+            ${ALLOWED_LOOP_CAPS.map(n => `<button class="active-cap-btn ${cap === n ? 'active' : ''}" type="button" data-action="set-loop-cap" data-cap="${n}" aria-pressed="${cap === n}">${n}</button>`).join('')}
+          </div>
+        </section>`;
       if (visible.length) {
-        html += `<div class="loop-stack">${visible.map((l,i) => cardHtml(l,i)).join('')}</div>`;
+        html += `<div class="loop-stack" data-active-stack="1">${visible.map((l,i) => cardHtml(l,i, { draggable: true })).join('')}</div>`;
         if (hidden > 0 && !view.expanded) {
           html += `<button class="show-more" data-action="show-more">Show ${hidden} more loop${hidden > 1 ? 's' : ''}</button>`;
         }
       } else {
-        html += `<div class="empty-state"><strong>No active loops — your head is clear</strong>Capture anything that's taking up space.</div>`;
+        html += `<div class="empty-state"><strong>No active loops - your head is clear</strong>Capture a raw loop, then define it when you're ready.</div>`;
       }
       html += `</div>`;
     }
 
-    // Parked tab (status='waiting')
     if (view.activeTab === 'later' || view.activeTab === 'waiting') {
       html += `<div class="tab-panel active" id="tab-later">`;
       if (waiting.length) {
@@ -2267,7 +2416,7 @@ a { color: inherit; text-decoration: none; }
             <article class="loop-card kind-${loop.kind || 'inbox'}" style="animation-delay:${i*0.04}s">
               <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
-              <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '—')}</span></div>
+              <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '-')}</span></div>
               <div class="loop-card-bottom">
                 <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Make active</button>
               </div>
@@ -2275,22 +2424,21 @@ a { color: inherit; text-decoration: none; }
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state"><strong>Nothing parked right now</strong>Park loops here when the next move isn't yours yet — waiting, not forgotten.</div>`;
+        html += `<div class="empty-state"><strong>Nothing parked right now</strong>Park loops here when the next move isn't yours yet.</div>`;
       }
       html += `</div>`;
     }
 
-    // Closed tab (status='released')
     if (view.activeTab === 'done' || view.activeTab === 'released') {
       html += `<div class="tab-panel active" id="tab-done">`;
       if (released.length) {
         html += `<div class="loop-stack">`;
         released.forEach((loop, i) => {
           html += `
-            <article class="loop-card kind-${loop.kind || 'inbox'}" style="animation-delay:${i*0.04}s;opacity:0.7">
+            <article class="loop-card kind-${loop.kind || 'inbox'}" style="animation-delay:${i*0.04}s;opacity:0.72">
               <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title" style="text-decoration:line-through;color:var(--text-2)">${esc(loop.rawText)}</p>
-              <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '—')}</span></div>
+              <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '-')}</span></div>
               <div class="loop-card-bottom">
                 <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Reopen</button>
               </div>
@@ -2298,12 +2446,11 @@ a { color: inherit; text-decoration: none; }
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state"><strong>Nothing closed yet</strong>When a loop is done — whether you did it or let it go — close it here.</div>`;
+        html += `<div class="empty-state"><strong>Nothing closed yet</strong>When a loop is done, close it here.</div>`;
       }
       html += `</div>`;
     }
 
-    // Captured tab (status='inbox')
     if (view.activeTab === 'inbox') {
       html += `<div class="tab-panel active" id="tab-inbox">`;
       if (inbox.length) {
@@ -2314,113 +2461,105 @@ a { color: inherit; text-decoration: none; }
               <div class="loop-card-top">${chipHtml('inbox')}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
               <div class="loop-card-bottom">
-                <button class="btn-action btn-primary" data-action="clarify-inbox">Clarify</button>
+                <button class="btn-action btn-primary" data-action="define-raw" data-loop-id="${esc(loop.id)}">Define</button>
               </div>
             </article>`;
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state"><strong>Nothing captured</strong>Loops you've named but haven't clarified will appear here.</div>`;
+        html += `<div class="empty-state"><strong>No raw loops</strong>Captured loops land here before you define where they belong.</div>`;
       }
       html += `</div>`;
     }
 
-    // FAB
     html += `
       <button class="fab" data-action="open-capture" type="button">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        New loop
+        Capture
       </button>`;
 
     return html;
   }
-
-  // ── OVERLAY RENDERS ──
   function renderCapture(ov) {
     if (!ov) return '';
     const closeBtn = `<button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
-
-    if (ov.step === 'capture') {
-      const len = (ov.rawText || '').length;
-      return `
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="capture-title">
-          <div class="overlay-header">
-            <div class="overlay-meta"><div class="overlay-eyebrow">New loop</div><div class="overlay-step">Step 1 of 3</div></div>
-            ${closeBtn}
-          </div>
-          <h2 class="overlay-title" id="capture-title">What's on your mind?</h2>
-          <p class="overlay-subtitle">Write it down as it arrives. One thought — don't plan, just capture.</p>
-          <textarea class="big-input" id="capture-input" placeholder="One unfinished thing…" maxlength="${MAX_LOOP_TEXT_LEN}" aria-describedby="capture-counter">${esc(ov.rawText)}</textarea>
-          <div class="input-hint-row">
-            <p class="input-hint">One thought. Don't start a project here.</p>
-            <span class="char-counter" id="capture-counter" aria-live="polite">${len}/${MAX_LOOP_TEXT_LEN}</span>
-          </div>
-          <div class="overlay-actions">
-            <button class="btn btn-ghost" data-action="save-for-later">Save as captured</button>
-            <button class="btn btn-primary" data-action="capture-next" ${ov.rawText.trim() ? '' : 'disabled'}>Continue →</button>
-          </div>
-        </div>`;
-    }
-
-    if (ov.step === 'kind') {
-      const kinds = ['do','decide','ask','schedule','let_go'];
-      const opts = kinds.map(k => {
-        const m = kindMeta[k];
-        const sel = ov.kind === k ? ` selected ${k}` : '';
-        return `
-          <button class="kind-option${sel}" data-action="pick-kind" data-kind="${k}" type="button">
-            <div class="kind-option-dot"></div>
-            <div><span class="kind-option-label">${m.label}</span><span class="kind-option-desc">${esc(m.helper)}</span></div>
-          </button>`;
-      }).join('');
-      return `
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="kind-title">
-          <div class="overlay-header">
-            <div class="overlay-meta"><div class="overlay-eyebrow">Clarify</div><div class="overlay-step">Step 2 of 3</div></div>
-            ${closeBtn}
-          </div>
-          <h2 class="overlay-title" id="kind-title">What kind of loop is this?</h2>
-          <div class="kind-grid">${opts}</div>
-          <div class="overlay-actions">
-            <button class="btn btn-ghost" data-action="capture-back">← Back</button>
-            <button class="btn btn-primary" data-action="kind-next" ${ov.kind ? '' : 'disabled'}>Continue →</button>
-          </div>
-        </div>`;
-    }
-
-    if (ov.step === 'detail') {
-      const m = kindMeta[ov.kind] || kindMeta.inbox;
-      const len = (ov.promptAnswer || '').length;
-      return `
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="detail-title">
-          <div class="overlay-header">
-            <div class="overlay-meta"><div class="overlay-eyebrow">${m.label}</div><div class="overlay-step">Step 3 of 3</div></div>
-            ${closeBtn}
-          </div>
-          <h2 class="overlay-title" id="detail-title">${esc(m.question)}</h2>
-          <p class="overlay-subtitle">${esc(m.helper)}</p>
-          <textarea class="big-input" id="detail-input" placeholder="One clear next move…" style="min-height:90px" maxlength="${MAX_LOOP_TEXT_LEN}" aria-describedby="detail-counter">${esc(ov.promptAnswer)}</textarea>
-          <div class="input-hint-row">
-            <p class="input-hint">Optional — you can always add this later.</p>
-            <span class="char-counter" id="detail-counter" aria-live="polite">${len}/${MAX_LOOP_TEXT_LEN}</span>
-          </div>
-          <div class="overlay-actions">
-            <button class="btn btn-ghost" data-action="kind-back">← Back</button>
-            <button class="btn btn-subtle" data-action="finish-capture-skip">Skip</button>
-            <button class="btn btn-primary" data-action="finish-capture">Save loop</button>
-          </div>
-        </div>`;
-    }
-
-    return '';
+    const len = (ov.rawText || '').length;
+    return `
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="capture-title">
+        <div class="overlay-header">
+          <div class="overlay-meta"><div class="overlay-eyebrow">Raw loop</div><div class="overlay-step">Capture only</div></div>
+          ${closeBtn}
+        </div>
+        <h2 class="overlay-title" id="capture-title">Capture the raw loop.</h2>
+        <p class="overlay-subtitle">Write the unfinished thing as it arrives. Defining it happens from Raw loops.</p>
+        <textarea class="big-input" id="capture-input" placeholder="One unfinished thing..." maxlength="${MAX_LOOP_TEXT_LEN}" aria-describedby="capture-counter">${esc(ov.rawText)}</textarea>
+        <div class="input-hint-row">
+          <p class="input-hint">No sorting yet. Just get it out of your head.</p>
+          <span class="char-counter" id="capture-counter" aria-live="polite">${len}/${MAX_LOOP_TEXT_LEN}</span>
+        </div>
+        <div class="overlay-actions">
+          <button class="btn btn-ghost" data-action="close-overlay">Cancel</button>
+          <button class="btn btn-primary" data-action="save-raw-loop" ${ov.rawText.trim() ? '' : 'disabled'}>Save raw loop</button>
+        </div>
+      </div>`;
   }
 
+  function renderDefineRaw(loop) {
+    if (!loop) return '';
+    const ov = view.overlay || {};
+    const selectedKind = ov.kind || loop.kind || null;
+    const selectedStatus = ov.status || 'active';
+    const rawText = ov.rawText ?? loop.rawText;
+    const promptAnswer = ov.promptAnswer ?? loop.promptAnswer ?? '';
+    const kinds = ['do','decide','ask','schedule','let_go'];
+    const opts = kinds.map(k => {
+      const m = kindMeta[k];
+      const sel = selectedKind === k ? ` selected ${k}` : '';
+      return `
+        <button class="kind-option${sel}" data-action="define-pick-kind" data-kind="${k}" type="button">
+          <div class="kind-option-dot"></div>
+          <div><span class="kind-option-label">${m.label}</span><span class="kind-option-desc">${esc(m.helper)}</span></div>
+        </button>`;
+    }).join('');
+    const statusOptions = [
+      { key: 'active', label: 'Active', hint: 'Now focus' },
+      { key: 'waiting', label: 'Parked', hint: 'Later or waiting' },
+      { key: 'released', label: 'Closed', hint: 'Done or let go' },
+    ].map(s => `
+      <button class="route-option ${selectedStatus === s.key ? 'selected' : ''}" type="button" data-action="define-pick-status" data-status="${s.key}" aria-pressed="${selectedStatus === s.key}">
+        <strong>${s.label}</strong><span>${s.hint}</span>
+      </button>`).join('');
+    const detailLabel = selectedKind ? (kindMeta[selectedKind]?.question || 'What is the useful note?') : 'What is the next useful note?';
+    const len = String(promptAnswer || '').length;
+    return `
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="define-title">
+        <div class="overlay-header">
+          <div class="overlay-meta"><div class="overlay-eyebrow">Define raw loop</div><div class="overlay-step">Route it</div></div>
+          <button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        </div>
+        <h2 class="overlay-title" id="define-title">Give this loop a shape.</h2>
+        <textarea class="big-input" id="define-raw-input" style="min-height:76px" maxlength="${MAX_LOOP_TEXT_LEN}">${esc(rawText)}</textarea>
+        <div class="kind-grid" style="margin-top:16px">${opts}</div>
+        <p class="overlay-subtitle" style="margin-bottom:8px">${esc(detailLabel)}</p>
+        <textarea class="big-input" id="define-detail-input" placeholder="One clear next move or note..." style="min-height:84px" maxlength="${MAX_LOOP_TEXT_LEN}" aria-describedby="define-detail-counter">${esc(promptAnswer)}</textarea>
+        <div class="input-hint-row">
+          <p class="input-hint">Optional for Parked and Closed; useful for Active.</p>
+          <span class="char-counter" id="define-detail-counter" aria-live="polite">${len}/${MAX_LOOP_TEXT_LEN}</span>
+        </div>
+        <div class="route-grid" role="group" aria-label="Move defined loop to">${statusOptions}</div>
+        <div class="overlay-actions">
+          <button class="btn btn-ghost" data-action="close-overlay">Cancel</button>
+          <button class="btn btn-primary" data-action="finish-define-raw" data-loop-id="${esc(loop.id)}" ${selectedKind ? '' : 'disabled'}>Define loop</button>
+        </div>
+      </div>`;
+  }
   function renderMenu(loop) {
     if (!loop) return '';
     const m = kindMeta[loop.kind] || kindMeta.inbox;
     const waiting = loop.status === 'waiting';
     const active = loop.status === 'active';
     const released = loop.status === 'released';
+    const inbox = loop.status === 'inbox';
     return `
       <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Loop options">
         <div class="overlay-header">
@@ -2436,10 +2575,14 @@ a { color: inherit; text-decoration: none; }
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10l1.5-1.5 7-7 1.5 1.5-7 7L2 10z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
             Edit text
           </button>
-          <button class="menu-item" data-action="reclarify-kind" data-loop-id="${esc(loop.id)}">
+          ${inbox ? `<button class="menu-item menu-item-primary" data-action="define-raw" data-loop-id="${esc(loop.id)}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            Define and route
+          </button>` : ''}
+          ${!inbox ? `<button class="menu-item" data-action="reclarify-kind" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2a5 5 0 0 1 5 5M7 12a5 5 0 0 1-5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M12 4V7H9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10V7h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Change kind
-          </button>
+          </button>` : ''}
           ${active ? `<button class="menu-item" data-action="move-waiting" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
             Move to Waiting
@@ -2710,9 +2853,9 @@ a { color: inherit; text-decoration: none; }
       body: 'A thought entered your head and won\'t let go. Write it down. That act alone — naming it — quiets it.',
       visual: `
         <div class="onboarding-visual">
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Reply to the contractor quote</span></div>
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Choose a new laptop</span></div>
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Check in with Sarah</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Reply to the contractor quote</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Choose a new laptop</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Check in with Sarah</span></div>
         </div>`,
       next: 'Next',
     },
@@ -2761,9 +2904,9 @@ a { color: inherit; text-decoration: none; }
       body: 'A thought entered your head. Write it down. That act alone quiets it.',
       visual: `
         <div class="onboarding-visual">
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Reply to the contractor quote</span></div>
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Choose a new laptop</span></div>
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Check in with Sarah</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Reply to the contractor quote</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Choose a new laptop</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Check in with Sarah</span></div>
         </div>`,
       next: 'Next',
     },
@@ -3005,7 +3148,7 @@ a { color: inherit; text-decoration: none; }
       { key: 'done',  label: TAB_LABEL.released, icon: '<path d="M4.8 9.3 7.4 12l5.8-6.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' },
       { key: 'inbox', label: TAB_LABEL.inbox,    icon: '<path d="M3.5 5.5h11l-1 7h-9l-1-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.5 8.8h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' }
     ];
-    // Hide the Captured tab when empty — reduces mobile nav noise.
+    // Hide the Raw loops tab when empty — reduces mobile nav noise.
     const items = allItems.filter(item => item.key !== 'inbox' || counts.inbox > 0);
     nav.innerHTML = items.map(item => `
       <button class="bottom-nav-btn ${view.activeTab === item.key ? 'active' : ''}" type="button" data-action="set-tab" data-tab="${item.key}">
@@ -3046,6 +3189,7 @@ a { color: inherit; text-decoration: none; }
 
     let inner = '';
     if      (ov.type === 'capture')        inner = renderCapture(ov);
+    else if (ov.type === 'define-raw')     inner = renderDefineRaw(getLoop(ov.loopId));
     else if (ov.type === 'menu')           inner = renderMenu(getLoop(ov.loopId));
     else if (ov.type === 'change-kind')    inner = renderChangekind(getLoop(ov.loopId));
     else if (ov.type === 'sync')           inner = renderSync();
@@ -3220,13 +3364,69 @@ a { color: inherit; text-decoration: none; }
       const next = byStatus('inbox')[0];
       if (next) {
         rememberOverlayOpener(el);
-        view.overlay = { type: 'capture', step: 'kind', rawText: next.rawText, kind: null, promptAnswer: next.promptAnswer || '', sourceId: next.id };
+        view.overlay = { type: 'define-raw', loopId: next.id, rawText: next.rawText, kind: next.kind || null, promptAnswer: next.promptAnswer || '', status: 'active' };
+        renderOverlay();
+      }
+      return;
+    }
+    if (action === 'define-raw') {
+      const target = getLoop(loopId);
+      if (target) {
+        rememberOverlayOpener(el);
+        view.overlay = { type: 'define-raw', loopId, rawText: target.rawText, kind: target.kind || null, promptAnswer: target.promptAnswer || '', status: target.status === 'inbox' ? 'active' : target.status };
         renderOverlay();
       }
       return;
     }
 
     // Capture flow
+    if (action === 'save-raw-loop') {
+      if (requireLogin()) return;
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'capture') return;
+      const raw = document.getElementById('capture-input')?.value.trim();
+      if (!raw) return;
+      const l = createLoop({ rawText: raw, kind: null, promptAnswer: '', status: 'inbox' });
+      view.activeTab = 'inbox';
+      closeOverlay();
+      await persistAndRender();
+      Sync.createLoop(l);
+      toast('Saved to Raw loops.');
+      return;
+    }
+    if (action === 'define-pick-kind') {
+      if (view.overlay?.type === 'define-raw') {
+        view.overlay.kind = el.dataset.kind;
+        if (view.overlay.kind === 'let_go') view.overlay.status = 'released';
+        renderOverlay();
+      }
+      return;
+    }
+    if (action === 'define-pick-status') {
+      if (view.overlay?.type === 'define-raw') {
+        view.overlay.status = el.dataset.status;
+        renderOverlay();
+      }
+      return;
+    }
+    if (action === 'finish-define-raw') {
+      if (requireLogin()) return;
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'define-raw' || !ov.kind) return;
+      const raw = document.getElementById('define-raw-input')?.value.trim() || ov.rawText;
+      const ans = document.getElementById('define-detail-input')?.value.trim() || '';
+      const status = ov.status || (ov.kind === 'let_go' ? 'released' : 'active');
+      const patch = { rawText: raw, kind: ov.kind, promptAnswer: ans, status };
+      updateLoop(ov.loopId, patch);
+      view.highlightedId = status === 'active' ? ov.loopId : null;
+      view.activeTab = status === 'waiting' ? 'later' : status === 'released' ? 'done' : 'now';
+      saveReentryDismissed(null);
+      closeOverlay();
+      await persistAndRender();
+      Sync.updateLoop(ov.loopId, patch);
+      toast(status === 'active' ? 'Defined and made active.' : status === 'waiting' ? 'Defined and parked.' : 'Defined and closed.');
+      return;
+    }
     if (action === 'capture-next') {
       const ov = view.overlay;
       if (!ov || ov.type !== 'capture') return;
@@ -3342,7 +3542,7 @@ a { color: inherit; text-decoration: none; }
       closeOverlay();
       const l = getLoop(loopId);
       if (l) {
-        view.overlay = { type: 'capture', step: 'detail', rawText: l.rawText, kind: l.kind, promptAnswer: l.promptAnswer, sourceId: loopId };
+        view.overlay = { type: 'define-raw', loopId, rawText: l.rawText, kind: l.kind, promptAnswer: l.promptAnswer, status: l.status };
         renderOverlay();
       }
       return;
@@ -3575,6 +3775,44 @@ a { color: inherit; text-decoration: none; }
     }
   });
 
+  document.addEventListener('dragstart', e => {
+    const card = e.target.closest('[data-draggable-loop="1"]');
+    if (!card) return;
+    view.draggingLoopId = card.dataset.loopId;
+    card.classList.add('dragging');
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', view.draggingLoopId);
+    }
+  });
+
+  document.addEventListener('dragover', e => {
+    const card = e.target.closest('[data-draggable-loop="1"]');
+    if (!card || !view.draggingLoopId || card.dataset.loopId === view.draggingLoopId) return;
+    e.preventDefault();
+    card.classList.add('drag-over');
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  });
+
+  document.addEventListener('dragleave', e => {
+    const card = e.target.closest('[data-draggable-loop="1"]');
+    if (card) card.classList.remove('drag-over');
+  });
+
+  document.addEventListener('drop', e => {
+    const card = e.target.closest('[data-draggable-loop="1"]');
+    if (!card || !view.draggingLoopId) return;
+    e.preventDefault();
+    const moved = moveActiveLoop(view.draggingLoopId, card.dataset.loopId);
+    view.draggingLoopId = null;
+    if (moved) persistAndRender();
+  });
+
+  document.addEventListener('dragend', () => {
+    view.draggingLoopId = null;
+    document.querySelectorAll('.loop-card.dragging, .loop-card.drag-over').forEach(el => el.classList.remove('dragging', 'drag-over'));
+  });
+
   // Live char-counter helper. Tints the counter yellow near the limit,
   // red at exactly the limit, and falls back to default otherwise.
   function updateCounter(counterId, len) {
@@ -3598,11 +3836,22 @@ a { color: inherit; text-decoration: none; }
       return;
     }
     const ov = view.overlay;
+    if (ov && ov.type === 'define-raw') {
+      if (e.target.id === 'define-raw-input') {
+        ov.rawText = e.target.value;
+        return;
+      }
+      if (e.target.id === 'define-detail-input') {
+        ov.promptAnswer = e.target.value;
+        updateCounter('define-detail-counter', e.target.value.length);
+        return;
+      }
+    }
     if (!ov || ov.type !== 'capture') return;
     if (e.target.id === 'capture-input') {
       ov.rawText = e.target.value;
       updateCounter('capture-counter', e.target.value.length);
-      const btn = document.querySelector('[data-action="capture-next"]');
+      const btn = document.querySelector('[data-action="save-raw-loop"], [data-action="capture-next"]');
       if (btn) btn.disabled = !e.target.value.trim();
     }
     if (e.target.id === 'detail-input') {
