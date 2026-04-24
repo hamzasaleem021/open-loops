@@ -12,7 +12,7 @@ Open Loops is a PWA for capturing the thoughts that occupy headspace — the hal
 
 Most productivity tools want you to manage everything. Open Loops does one thing: it helps you stop holding things in your head.
 
-You capture a thought. You clarify it into one of five kinds. You keep only five things in active focus. That's it.
+You sign in, capture a thought, clarify it into one of five kinds, and keep only a few things in active focus. Supabase is the source of truth, so the same account shows the same loops across devices.
 
 **Five kinds of loop:**
 
@@ -33,9 +33,9 @@ You capture a thought. You clarify it into one of five kinds. You keep only five
 - **Inline editing** — Click any loop title to edit it in place.
 - **Primary actions** — Each loop kind has a contextual check-in: done, still in progress, or update the next step.
 - **Waiting & Released** — Park things without losing them. Let go of things without deleting them.
-- **Drag to reorder** — Reorder active loops by dragging. Order syncs across all your devices.
-- **Cross-device sync** — Sign in with a magic link. Your loops sync across all your devices in real time.
-- **Offline-first** — Edits work offline and sync automatically when you're back online.
+- **Reorder active loops** — Drag on desktop, or use the up/down controls on mobile and keyboard. Order syncs across all your devices.
+- **Sign-in required** — Sign in with a magic link before using the app. This keeps every device on the same source of truth.
+- **Offline queue** — Signed-in edits made during brief connection drops are queued locally and sync automatically when you're back online.
 - **Dark & light themes** — Toggle from the top bar. Preference persists across sessions.
 - **PWA** — Installable on desktop and mobile. Works like a native app.
 
@@ -51,7 +51,7 @@ python -m http.server 8000
 
 Then open: [http://localhost:8000/open-loops.html](http://localhost:8000/open-loops.html)
 
-No build step. No dependencies. One HTML file.
+No build step. Sign-in requires Supabase configuration before the app can be used.
 
 ### Deploy to GitHub Pages
 
@@ -64,7 +64,7 @@ No build step. No dependencies. One HTML file.
 
 ## Sync setup
 
-Open Loops uses Supabase for authentication and cross-device sync. You'll need your own Supabase project (the free tier is comfortable for dozens of users).
+Open Loops uses Supabase for authentication and cross-device sync. Sign-in is required, and Supabase is the source of truth for loop data. You'll need your own Supabase project (the free tier is comfortable for dozens of users).
 
 ### 1. Create a Supabase project
 
@@ -121,13 +121,13 @@ The service worker detects updates automatically — existing users will see an 
 
 ## How sync works
 
-Every edit is a single-row write to Supabase, protected by row-level security so users can only see and modify their own loops. The client uses Postgres realtime to broadcast changes to every device logged into the same account.
+Every edit is a single-row write to Supabase, protected by row-level security so users can only see and modify their own loops. The client keeps a signed-in local cache for speed and offline queueing, but Supabase is the shared source of truth. Postgres realtime broadcasts changes to every device logged into the same account.
 
 Key pieces:
 
 - **One row per loop.** Concurrent edits on different loops never collide. Concurrent edits on the same loop serialize at the database level.
-- **Offline queue.** Edits made offline are queued in `localStorage` and drained automatically when the device comes back online or the tab regains focus. Repeated edits to the same loop are coalesced so one typing burst doesn't become one hundred writes.
-- **Position column for ordering.** Drag-reorder assigns a fractional `position` value (midpoint between neighbors), so only the moved row needs a database update. Order syncs everywhere.
+- **Offline queue.** Signed-in edits made during connection drops are queued in `localStorage` and drained automatically when the device comes back online or the tab regains focus. Repeated edits to the same loop are coalesced so one typing burst doesn't become one hundred writes.
+- **Position column for ordering.** Drag reorder and up/down move controls assign a fractional `position` value (midpoint between neighbors), so only the moved row needs a database update. Order syncs everywhere.
 - **Realtime reconnection.** The realtime channel monitors its own connection state. On any drop (network blip, device sleep, token refresh, idle disconnect) the client re-subscribes and pulls to catch up on missed events.
 - **Poison-pill handling.** If a single queued write fails repeatedly (bad data, permissions issue, etc.), after five attempts it's moved to a dead-letter queue so it can't block every edit behind it.
 - **Echo suppression.** The client knows not to treat its own recent writes as incoming updates.
@@ -165,7 +165,7 @@ README.md                ← This file
 - **One file.** The entire app is `open-loops.html`. No framework, no bundler, no node_modules.
 - **Intentional constraints.** Five loops in active focus (by default). Five kinds. Four statuses. The limits are features.
 - **No noise.** No notifications, no streaks, no gamification. Calm is the aesthetic and the function.
-- **Local-first, cloud-synced.** Your edits land instantly and work offline. Sync is best-effort and recoverable — the app never feels like it's waiting on the network.
+- **Sync-first, locally resilient.** Sign-in is required and Supabase is the source of truth. The local cache keeps the UI fast and protects pending edits during brief offline periods.
 
 ---
 

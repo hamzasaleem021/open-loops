@@ -128,35 +128,24 @@ a { color: inherit; text-decoration: none; }
   display: none !important;
 }
 
-/* Tablet (768px+): sidebar + main */
+/* Tablet/desktop: keep the calmer mobile-inspired single column. */
 @media (min-width: 768px) {
   .app-body {
-    flex-direction: row;
-  }
-  
-  .sidebar {
-    display: flex;
     flex-direction: column;
-    width: var(--sidebar-width);
-    border-right: 1px solid var(--border-soft);
-    background: var(--bg);
-    position: sticky;
-    top: 61px; /* Below topbar */
-    height: calc(100vh - 61px);
-    overflow-y: auto;
+    align-items: center;
   }
   
   .main {
-    flex: 1;
-    min-width: 0; /* Prevent overflow */
+    max-width: 720px;
+    padding: 0 24px 112px;
   }
 }
 
-/* Desktop (1024px+): sidebar + main */
+/* Wider screens get a little breathing room without becoming a dashboard. */
 @media (min-width: 1024px) {
   .main {
-    max-width: none;
-    padding: 0 40px 100px;
+    max-width: 760px;
+    padding: 0 28px 112px;
   }
 }
 
@@ -503,6 +492,34 @@ a { color: inherit; text-decoration: none; }
   gap: 8px;
   min-width: 0;
 }
+.loop-card-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.reorder-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border-soft);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
+}
+.reorder-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  transition: color 0.15s, background 0.15s, opacity 0.15s;
+}
+.reorder-btn:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+.reorder-btn:disabled { opacity: 0.28; cursor: not-allowed; }
+.reorder-btn svg { width: 13px; height: 13px; }
 
 .active-cap-panel {
   display: flex;
@@ -1366,7 +1383,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ── MOBILE ── (max-width matches the bottom-nav breakpoint below, so
-   mobile padding persists until the sidebar layout takes over at 768px) */
+   mobile padding keeps room for the fixed bottom navigation) */
 @media (max-width: 767px) {
   .main { padding: 0 14px 100px; }
   .active-cap-panel {
@@ -1382,9 +1399,9 @@ a { color: inherit; text-decoration: none; }
   .overlay-card { width: 100%; max-height: 85vh; border-radius: 20px 20px 0 0; }
 }
 
-/* Bottom-nav shows only on narrow screens where we also hide the sidebar. */
+/* Bottom navigation stays available on desktop too; only the floating
+   mobile capture button hides because desktop has a top-bar action. */
 @media (min-width: 768px) {
-  .bottom-nav { display: none; }
   .fab { display: none; }
 }
 
@@ -1651,7 +1668,7 @@ a { color: inherit; text-decoration: none; }
 /* ── RESPONSIVE TABS ── */
 @media (min-width: 768px) {
   .tabs {
-    display: none; /* Hidden on tablet+, use sidebar instead */
+    display: none;
   }
 }
 
@@ -2079,10 +2096,37 @@ a { color: inherit; text-decoration: none; }
     released: 'Closed',
   };
 
+  function supabaseConfigIssue() {
+    const url = String(CFG.SUPABASE_URL || '').trim();
+    const key = String(CFG.SUPABASE_KEY || '').trim();
+    const placeholders = ['YOUR_PROJECT', 'YOUR_PUBLISHABLE_KEY', 'YOUR_SUPABASE', 'YOUR_ANON_KEY'];
+
+    if (!url || !key) return 'Supabase URL and publishable key are required before anyone can sign in.';
+    if (placeholders.some(token => url.includes(token) || key.includes(token))) {
+      return 'open-loops-config.js still contains placeholder Supabase values.';
+    }
+
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:' || !parsed.hostname.endsWith('.supabase.co')) {
+        return 'Supabase URL should look like https://your-project.supabase.co.';
+      }
+    } catch (_) {
+      return 'Supabase URL is not a valid URL.';
+    }
+
+    if (key.length < 20) return 'Supabase publishable key looks incomplete.';
+    return null;
+  }
+
   function hasSupabaseCfg() {
-    return !!(CFG.SUPABASE_URL && CFG.SUPABASE_KEY &&
-      !CFG.SUPABASE_URL.includes('YOUR_PROJECT') &&
-      !CFG.SUPABASE_KEY.includes('YOUR_SUPABASE'));
+    return !supabaseConfigIssue();
+  }
+
+  function supabaseClientIssue() {
+    if (!hasSupabaseCfg()) return supabaseConfigIssue();
+    if (!window.supabase) return 'The Supabase sign-in library could not load. Check your connection and reload.';
+    return null;
   }
 
   const VALID_KINDS = new Set(['do', 'decide', 'ask', 'schedule', 'let_go']);
@@ -2371,6 +2415,24 @@ a { color: inherit; text-decoration: none; }
     return { ok: true, rebalance: false, changes: [{ id: dragId, position: newPosition }] };
   }
 
+  function moveActiveLoopByOffset(loopId, offset) {
+    if (!loopId || !offset) return { ok: false };
+    const active = data.loops
+      .filter(l => l.status === 'active')
+      .sort((a, b) => (b.position || 0) - (a.position || 0));
+    const idx = active.findIndex(l => l.id === loopId);
+    const target = idx >= 0 ? active[idx + offset] : null;
+    if (!target) return { ok: false };
+    return moveActiveLoop(loopId, target.id);
+  }
+
+  function syncPositionChanges(result) {
+    if (!result || !result.ok || !Array.isArray(result.changes)) return;
+    for (const change of result.changes) {
+      Sync.updateLoop(change.id, { position: change.position });
+    }
+  }
+
   // ── TOAST ──
   function toast(msg, opts) {
     const el = document.getElementById('toast');
@@ -2439,6 +2501,17 @@ a { color: inherit; text-decoration: none; }
     const delay = `animation-delay:${idx*0.04}s`;
     const draggable = opts.draggable ? ' draggable="true" data-draggable-loop="1"' : '';
     const handle = dragHandleHtml(opts.draggable);
+    const canMoveUp = opts.draggable && idx > 0;
+    const canMoveDown = opts.draggable && idx < (opts.total || 0) - 1;
+    const reorderControls = opts.draggable ? `
+      <span class="reorder-controls" aria-label="Reorder loop">
+        <button class="reorder-btn" type="button" data-action="move-loop-up" data-loop-id="${esc(loop.id)}" title="Move up" aria-label="Move loop up" ${canMoveUp ? '' : 'disabled'}>
+          <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 3.2 3.8 6.4M7 3.2l3.2 3.2M7 3.2v7.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="reorder-btn" type="button" data-action="move-loop-down" data-loop-id="${esc(loop.id)}" title="Move down" aria-label="Move loop down" ${canMoveDown ? '' : 'disabled'}>
+          <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 10.8 3.8 7.6M7 10.8l3.2-3.2M7 10.8V3.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </span>` : '';
 
     if (view.inlineEditId === loop.id) {
       const editLen = (loop.rawText || '').length;
@@ -2449,9 +2522,11 @@ a { color: inherit; text-decoration: none; }
         <article class="loop-card kind-${loop.kind || 'inbox'}${hl}" style="${delay}" data-loop-id="${esc(loop.id)}"${draggable}>
           <div class="loop-card-top">
             <div class="loop-card-top-left">${handle}${chipHtml(loop.kind)}</div>
-            <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg>
-            </button>
+            <div class="loop-card-tools">
+              <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg>
+              </button>
+            </div>
           </div>
           <textarea class="inline-edit-input" id="inline-edit-${esc(loop.id)}" rows="2" maxlength="${MAX_LOOP_TEXT_LEN}">${esc(loop.rawText)}</textarea>
           <div class="inline-edit-meta">
@@ -2468,9 +2543,12 @@ a { color: inherit; text-decoration: none; }
       <article class="loop-card kind-${loop.kind || 'inbox'}${hl}" style="${delay}" data-loop-id="${esc(loop.id)}"${draggable}>
         <div class="loop-card-top">
           <div class="loop-card-top-left">${handle}${chipHtml(loop.kind)}</div>
-          <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg>
-          </button>
+          <div class="loop-card-tools">
+            ${reorderControls}
+            <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg>
+            </button>
+          </div>
         </div>
         <p class="loop-title" data-action="inline-edit-start" data-loop-id="${esc(loop.id)}" title="Click to edit" style="cursor:text">${esc(loop.rawText)}</p>
         <div class="loop-next">
@@ -2524,7 +2602,7 @@ a { color: inherit; text-decoration: none; }
           </div>
         </section>`;
       if (visible.length) {
-        html += `<div class="loop-stack" data-active-stack="1">${visible.map((l,i) => cardHtml(l,i, { draggable: true })).join('')}</div>`;
+        html += `<div class="loop-stack" data-active-stack="1">${visible.map((l,i) => cardHtml(l,i, { draggable: true, total: visible.length })).join('')}</div>`;
         if (hidden > 0 && !view.expanded) {
           html += `<button class="show-more" data-action="show-more">Show ${hidden} more loop${hidden > 1 ? 's' : ''}</button>`;
         }
@@ -2772,6 +2850,7 @@ a { color: inherit; text-decoration: none; }
     const loggedIn = Sync.isLoggedIn();
     const hasError = view.syncStatus === 'error';
     const isSyncing = view.syncStatus === 'syncing';
+    const clientIssue = supabaseClientIssue();
     return `
       <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="sync-title">
         <div class="overlay-header">
@@ -2780,8 +2859,8 @@ a { color: inherit; text-decoration: none; }
         </div>
         <h2 class="overlay-title" id="sync-title">Keep loops everywhere.</h2>
         <p class="overlay-subtitle">Sign in with your email. Your loops will sync automatically across devices.</p>
-        ${!hasSupabaseCfg() ? `
-          <div class="sync-info">To enable sync, edit <code>open-loops-config.js</code> with your Supabase project URL and publishable key, then run <code>open-loops-supabase.sql</code> in the Supabase SQL editor. See the README for full setup instructions.</div>
+        ${clientIssue ? `
+          <div class="sync-info">Sign-in is required before using Open Loops. ${esc(clientIssue)} Check <code>open-loops-config.js</code> and run <code>open-loops-supabase.sql</code> in Supabase.</div>
         ` : loggedIn ? `
           ${hasError ? `
             <div class="sync-info" style="color:#f88;border-color:rgba(255,68,119,0.15);background:rgba(255,68,119,0.06)">Last sync didn't go through. Your changes are safe on this device.</div>
@@ -2852,7 +2931,7 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── AUTH GATE ──
-  // Used for opt-in sign-in display. No longer shown automatically on load.
+  // Settings stay behind the sign-in gate because the app is sync-first.
   function renderSettings() {
     const cap = view.loopCap || DEFAULT_LOOP_CAP;
     return `
@@ -2900,7 +2979,8 @@ a { color: inherit; text-decoration: none; }
     const app = document.getElementById('app');
     if (app) app.classList.add('app-locked');
 
-    if (!hasSupabaseCfg()) {
+    const clientIssue = supabaseClientIssue();
+    if (clientIssue) {
       root.innerHTML = `
         <div class="auth-gate">
           <div class="auth-gate-card">
@@ -2913,8 +2993,9 @@ a { color: inherit; text-decoration: none; }
               </div>
               <span class="auth-gate-logo-name">Open Loops</span>
             </div>
-            <h1 class="auth-gate-headline">Supabase not configured.</h1>
-            <p class="auth-gate-sub">Edit <code>open-loops-config.js</code> with your Supabase URL and key, then run <code>open-loops-supabase.sql</code> in the SQL editor. Reload the page when done.</p>
+            <h1 class="auth-gate-headline">Sign-in setup needed.</h1>
+            <p class="auth-gate-sub">${esc(clientIssue)} Open Loops requires sign-in so your loops stay the same across devices.</p>
+            <p class="auth-gate-hint">Edit <code>open-loops-config.js</code>, run <code>open-loops-supabase.sql</code> in Supabase, then reload.</p>
           </div>
         </div>`;
       return;
@@ -2958,8 +3039,8 @@ a { color: inherit; text-decoration: none; }
             </div>
             <span class="auth-gate-logo-name">Open Loops</span>
           </div>
-          <h1 class="auth-gate-headline">Clear your head.</h1>
-          <p class="auth-gate-sub">Write down what's unfinished. Sort it. Let it go when it's done.</p>
+          <h1 class="auth-gate-headline">Clear your head everywhere.</h1>
+          <p class="auth-gate-sub">Sign in first. Your loops live in Supabase so every device sees the same state.</p>
           <div class="auth-gate-email-row">
             <input type="email" class="auth-gate-input" id="auth-gate-email" placeholder="your@email.com" autocomplete="email" value="${esc(view.authGateEmail)}">
             <button class="auth-gate-btn" id="auth-gate-btn" data-action="auth-gate-send">Send link</button>
@@ -3211,6 +3292,8 @@ a { color: inherit; text-decoration: none; }
   function renderSidebar() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
+    sidebar.innerHTML = '';
+    return;
 
     const nowLoops = byStatus('active');
     const typedNowLoops = nowLoops.filter(l => l.kind);
@@ -3372,8 +3455,8 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── ACTIONS ──
-  // Local-only persistence + re-render. Cross-device sync is handled by
-  // the explicit Sync.{create,update,delete}Loop calls at each call site.
+  // Signed-in local cache + re-render. Supabase remains the source of truth;
+  // localStorage only keeps the UI fast and protects queued offline writes.
   function persistAndRender() {
     save();
     renderAll();
@@ -3874,6 +3957,17 @@ a { color: inherit; text-decoration: none; }
       return;
     }
 
+    if (action === 'move-loop-up' || action === 'move-loop-down') {
+      if (requireLogin()) return;
+      const offset = action === 'move-loop-up' ? -1 : 1;
+      const result = moveActiveLoopByOffset(loopId, offset);
+      if (!result.ok) return;
+      await persistAndRender();
+      syncPositionChanges(result);
+      toast(action === 'move-loop-up' ? 'Moved up.' : 'Moved down.');
+      return;
+    }
+
     // Theme toggle
     if (action === 'toggle-theme') {
       setTheme(view.theme === 'dark' ? 'light' : 'dark');
@@ -3977,9 +4071,7 @@ a { color: inherit; text-decoration: none; }
     // (rebalance fired): many rows. Either way we enqueue a position-only
     // patch per changed row — the queue's coalescing means consecutive
     // drags of the same loop merge into a single update.
-    for (const change of result.changes) {
-      Sync.updateLoop(change.id, { position: change.position });
-    }
+    syncPositionChanges(result);
   });
 
   document.addEventListener('dragend', () => {
@@ -4128,7 +4220,7 @@ a { color: inherit; text-decoration: none; }
   const Sync = (() => {
     if (!window.supabase || !hasSupabaseCfg()) {
       return {
-        init:          async () => {},
+        init:          async () => { authReady = true; renderAuthGate(); },
         createLoop:    () => {},
         updateLoop:    () => {},
         deleteLoop:    () => {},
@@ -4136,7 +4228,7 @@ a { color: inherit; text-decoration: none; }
         processQueue:  async () => ({ ok: true, pending: true }),
         retry:         async () => ({ ok: true, pending: true }),
         ensureRealtime: () => {},
-        sendMagicLink: async () => { throw new Error('Supabase is not configured in open-loops-config.js.'); },
+        sendMagicLink: async () => { throw new Error(supabaseClientIssue() || 'Supabase sign-in is not ready.'); },
         signOut:       async () => {},
         isLoggedIn:    () => false
       };
@@ -4616,7 +4708,7 @@ a { color: inherit; text-decoration: none; }
           setSyncStatus('error', 'Sync issue');
           showSyncErrorBanner();
         }
-        // Auth check complete — app is always usable regardless of login state
+        // Auth check complete. The app remains locked until a user signs in.
         authReady = true;
         if (!currentUser) {
           renderAuthGate();
@@ -4756,8 +4848,8 @@ a { color: inherit; text-decoration: none; }
   load();
   renderAll(); // First paint
 
-  // Kick off auth check. When Supabase is not configured the app works
-  // fully locally — no gate, no requirement to sign in.
+  // Kick off auth check. Sign-in is required because Supabase is the
+  // cross-device source of truth for loop data.
   if (!hasSupabaseCfg()) {
     setTimeout(() => {
       authReady = true;
