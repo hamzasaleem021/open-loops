@@ -2099,6 +2099,12 @@ a { color: inherit; text-decoration: none; }
 
   function nowIso() { return new Date().toISOString(); }
   function uid(p) { return `${p}-${Math.random().toString(36).slice(2,9)}`; }
+  // Position is a double precision ordering value: bigger = higher in the
+  // list. New rows get the current epoch-seconds so they land at the top.
+  // Reorder computes midpoints between neighbors, so we rarely need to
+  // rebalance (at millisecond resolution, ~50 drops between the same two
+  // items before we run out of float headroom — still fine in practice).
+  function nowPosition() { return Date.now() / 1000; }
 
   function seedState() {
     return {
@@ -2111,16 +2117,22 @@ a { color: inherit; text-decoration: none; }
 
   function mk(id, rawText, kind, status, promptAnswer) {
     const t = nowIso();
-    return { id, rawText, kind, status, promptAnswer, createdAt: t, updatedAt: t };
+    return { id, rawText, kind, status, promptAnswer, position: nowPosition(), createdAt: t, updatedAt: t };
   }
 
   function sanitize(loop) {
+    // Fall back to epoch-of-createdAt so existing localStorage data from
+    // before the position column gets a deterministic order on first load.
+    let pos = typeof loop.position === 'number' && isFinite(loop.position)
+      ? loop.position
+      : (loop.createdAt ? new Date(loop.createdAt).getTime() / 1000 : nowPosition());
     return {
       id: loop.id || uid('l'),
       rawText: (loop.rawText || 'Untitled').trim().slice(0, MAX_LOOP_TEXT_LEN),
       kind: VALID_KINDS.has(loop.kind) ? loop.kind : null,
       status: VALID_STATUSES.has(loop.status) ? loop.status : 'active',
       promptAnswer: (loop.promptAnswer || '').trim().slice(0, MAX_LOOP_TEXT_LEN),
+      position: pos,
       createdAt: loop.createdAt || nowIso(),
       updatedAt: loop.updatedAt || nowIso()
     };
@@ -2155,6 +2167,11 @@ a { color: inherit; text-decoration: none; }
   // Set to true once Sync.init() resolves so we don't flash the lock screen
   // during the async auth check on cold start.
   let authReady = false;
+  // Magic-link cooldown: Supabase rate-limits magic link sends (3/hour/email
+  // on free tier). A user tapping "Send link" repeatedly can lock themselves
+  // out. Enforce a 60s client-side cooldown between sends.
+  const MAGIC_LINK_COOLDOWN_MS = 60000;
+  let lastMagicLinkAt = 0;
 
   // ── PERSIST ──
   function load() {
@@ -2201,7 +2218,15 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── QUERIES ──
-  function byStatus(s) { return data.loops.filter(l => l.status === s); }
+  // Display order is position desc (highest = top). Array order in
+  // data.loops is kept roughly in sync but realtime updates and createLoop
+  // can reorder it; byStatus sorts defensively on every call so render
+  // functions always see the same order.
+  function byStatus(s) {
+    return data.loops
+      .filter(l => l.status === s)
+      .sort((a, b) => (b.position || 0) - (a.position || 0));
+  }
   function getLoop(id) { return data.loops.find(l => l.id === id) || null; }
   function suggested() {
     if (data.lastLoopId) {
@@ -2212,8 +2237,23 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── MUTATIONS ──
+  // Return a position value strictly greater than every existing loop's
+  // position — used when creating a new loop (it should land at the top).
+  function topPosition() {
+    if (!data.loops.length) return nowPosition();
+    const max = data.loops.reduce((m, l) => (l.position > m ? l.position : m), -Infinity);
+    // Step by 1s so newly-created loops within the same second don't tie.
+    return Math.max(max, nowPosition()) + 1;
+  }
+
   function createLoop({rawText, kind, promptAnswer, status}) {
-    const l = sanitize({ id: uid('l'), rawText, kind, promptAnswer, status, createdAt: nowIso(), updatedAt: nowIso() });
+    const l = sanitize({
+      id: uid('l'),
+      rawText, kind, promptAnswer, status,
+      position: topPosition(),
+      createdAt: nowIso(),
+      updatedAt: nowIso()
+    });
     data.loops.unshift(l);
     if (l.status === 'active') data.lastLoopId = l.id;
     return l;
@@ -2245,19 +2285,90 @@ a { color: inherit; text-decoration: none; }
     if (data.lastLoopId === id) data.lastLoopId = suggested()?.id || null;
   }
 
+  // Move dragId to the slot occupied by targetId (among active loops, in
+  // display order = position desc). Computes a new `position` for dragId as
+  // the midpoint between its new neighbours so no other row needs to change.
+  //
+  // Returns { ok: true, newPosition } on success so the caller can sync a
+  // single-row UPDATE for the moved loop. Returns { ok: false } if the move
+  // is a no-op (same spot, missing ids, etc).
+  //
+  // Float-space rebalancing note: double precision gives us ~15-17 decimal
+  // digits. If a user drags the *same* pair of neighbours repeatedly (which
+  // halves the gap each time), we lose precision after ~50 drops. Detected
+  // via an MIN_GAP threshold — below that we trigger a per-user rebalance
+  // that spreads all active positions out evenly. Cheap, local, rare.
+  const POSITION_MIN_GAP = 1e-9;
+
+  function rebalanceActivePositions() {
+    // Reassign positions on active loops in their current display order,
+    // spaced by 1.0. Returns a list of { id, position } for sync.
+    const active = data.loops
+      .filter(l => l.status === 'active')
+      .sort((a, b) => (b.position || 0) - (a.position || 0));
+    const base = nowPosition();
+    const changes = [];
+    active.forEach((l, i) => {
+      // Largest position at the top of the list → descending by index.
+      const p = base + (active.length - i);
+      if (l.position !== p) {
+        l.position = p;
+        l.updatedAt = nowIso();
+        changes.push({ id: l.id, position: p });
+      }
+    });
+    return changes;
+  }
+
   function moveActiveLoop(dragId, targetId) {
-    if (!dragId || !targetId || dragId === targetId) return false;
-    const activeIds = data.loops.filter(l => l.status === 'active').map(l => l.id);
-    const from = activeIds.indexOf(dragId);
-    const to = activeIds.indexOf(targetId);
-    if (from < 0 || to < 0) return false;
-    activeIds.splice(to, 0, activeIds.splice(from, 1)[0]);
-    const activeMap = new Map(data.loops.filter(l => l.status === 'active').map(l => [l.id, l]));
-    const reorderedActive = activeIds.map(id => activeMap.get(id)).filter(Boolean);
-    let activeCursor = 0;
-    data.loops = data.loops.map(loop => loop.status === 'active' ? reorderedActive[activeCursor++] : loop);
+    if (!dragId || !targetId || dragId === targetId) return { ok: false };
+    // Build the active list in display order (highest position first).
+    const active = data.loops
+      .filter(l => l.status === 'active')
+      .sort((a, b) => (b.position || 0) - (a.position || 0));
+    const fromIdx = active.findIndex(l => l.id === dragId);
+    const toIdx   = active.findIndex(l => l.id === targetId);
+    if (fromIdx < 0 || toIdx < 0) return { ok: false };
+
+    // Simulate the move to figure out dragId's new neighbours.
+    const reordered = active.slice();
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+    const newIdx = reordered.indexOf(moved);
+
+    // Compute new position from neighbours (positions sort descending, so
+    // "above" = higher position, "below" = lower position).
+    const above = newIdx > 0 ? reordered[newIdx - 1].position : null;
+    const below = newIdx < reordered.length - 1 ? reordered[newIdx + 1].position : null;
+
+    let newPosition;
+    if (above != null && below != null) {
+      newPosition = (above + below) / 2;
+    } else if (above != null) {
+      // Dragged to the bottom.
+      newPosition = below != null ? (above + below) / 2 : above - 1;
+    } else if (below != null) {
+      // Dragged to the top.
+      newPosition = above != null ? (above + below) / 2 : below + 1;
+    } else {
+      newPosition = nowPosition();
+    }
+
+    // Detect float-precision exhaustion and rebalance if needed.
+    const gapAbove = above != null ? Math.abs(above - newPosition) : Infinity;
+    const gapBelow = below != null ? Math.abs(newPosition - below) : Infinity;
+    if (gapAbove < POSITION_MIN_GAP || gapBelow < POSITION_MIN_GAP) {
+      moved.position = newPosition; // apply the move first
+      moved.updatedAt = nowIso();
+      const changes = rebalanceActivePositions();
+      data.lastLoopId = dragId;
+      return { ok: true, rebalance: true, changes };
+    }
+
+    moved.position = newPosition;
+    moved.updatedAt = nowIso();
     data.lastLoopId = dragId;
-    return true;
+    return { ok: true, rebalance: false, changes: [{ id: dragId, position: newPosition }] };
   }
 
   // ── TOAST ──
@@ -3311,11 +3422,18 @@ a { color: inherit; text-decoration: none; }
       const input = document.getElementById('auth-gate-email');
       const email = input ? input.value.trim() : view.authGateEmail;
       if (!email) { toast('Enter your email.'); return; }
+      const sinceLast = Date.now() - lastMagicLinkAt;
+      if (sinceLast < MAGIC_LINK_COOLDOWN_MS) {
+        const wait = Math.ceil((MAGIC_LINK_COOLDOWN_MS - sinceLast) / 1000);
+        toast(`Please wait ${wait}s before requesting another link.`);
+        return;
+      }
       view.authGateEmail = email;
       const btn = document.getElementById('auth-gate-btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
       try {
         await Sync.sendMagicLink(email);
+        lastMagicLinkAt = Date.now();
         view.authGateSent = true;
         renderAuthGate();
       } catch(err) {
@@ -3608,7 +3726,10 @@ a { color: inherit; text-decoration: none; }
     if (action === 'restore-active') {
       if (requireLogin()) return;
       const current = getLoop(loopId);
-      const patch = { status: 'active' };
+      // Restoring from waiting/released should land the loop back on top
+      // of the active list, not at its old position slot (which is likely
+      // long-stale and below everything else active right now).
+      const patch = { status: 'active', position: topPosition() };
       updateLoop(loopId, patch);
       closeOverlay();
       view.activeTab = 'now';
@@ -3720,9 +3841,16 @@ a { color: inherit; text-decoration: none; }
       const input = document.getElementById('sync-email');
       const email = input ? input.value.trim() : '';
       if (!email) { toast('Enter your email first.'); return; }
+      const sinceLast = Date.now() - lastMagicLinkAt;
+      if (sinceLast < MAGIC_LINK_COOLDOWN_MS) {
+        const wait = Math.ceil((MAGIC_LINK_COOLDOWN_MS - sinceLast) / 1000);
+        toast(`Please wait ${wait}s before requesting another link.`);
+        return;
+      }
       try {
         setSyncStatus('syncing', 'Sending…');
         await Sync.sendMagicLink(email);
+        lastMagicLinkAt = Date.now();
         setSyncStatus('idle', 'Check email');
         toast('Magic link sent — check your email.');
       } catch(e) {
@@ -3834,13 +3962,24 @@ a { color: inherit; text-decoration: none; }
     if (card) card.classList.remove('drag-over');
   });
 
-  document.addEventListener('drop', e => {
+  document.addEventListener('drop', async e => {
     const card = e.target.closest('[data-draggable-loop="1"]');
     if (!card || !view.draggingLoopId) return;
     e.preventDefault();
-    const moved = moveActiveLoop(view.draggingLoopId, card.dataset.loopId);
+    // Mutation guard: if the user isn't signed in, don't reorder (matches
+    // how every other mutation path behaves).
+    if (requireLogin()) { view.draggingLoopId = null; return; }
+    const result = moveActiveLoop(view.draggingLoopId, card.dataset.loopId);
     view.draggingLoopId = null;
-    if (moved) persistAndRender();
+    if (!result.ok) return;
+    await persistAndRender();
+    // Sync the position change(s). Common case: one row updated. Rare case
+    // (rebalance fired): many rows. Either way we enqueue a position-only
+    // patch per changed row — the queue's coalescing means consecutive
+    // drags of the same loop merge into a single update.
+    for (const change of result.changes) {
+      Sync.updateLoop(change.id, { position: change.position });
+    }
   });
 
   document.addEventListener('dragend', () => {
@@ -3933,18 +4072,34 @@ a { color: inherit; text-decoration: none; }
     }
   });
 
-  // ── AUTO-RETRY ON NETWORK EVENTS ──
+  // ── AUTO-RETRY ON NETWORK / VISIBILITY EVENTS ──
   // When we come back online or refocus the tab, drain any queued offline
   // operations. Individual edits already sync immediately when online.
   window.addEventListener('online', async () => {
     if (Sync.isLoggedIn()) {
       await Sync.processQueue();
+      // Network just came back — the realtime channel may have died during
+      // the outage. Ask Sync to verify/repair it.
+      Sync.ensureRealtime();
     }
+  });
+
+  // Fix 3: 'focus' is unreliable on mobile PWAs — returning from background
+  // often fires visibilitychange without firing focus. Use visibilitychange
+  // as the primary trigger and keep 'focus' as a belt-and-suspenders fallback
+  // for desktop. When the tab becomes visible again, drain the queue and
+  // verify the realtime channel is still alive.
+  document.addEventListener('visibilitychange', async () => {
+    if (document.hidden) return;
+    if (!Sync.isLoggedIn()) return;
+    await Sync.processQueue();
+    Sync.ensureRealtime();
   });
 
   window.addEventListener('focus', async () => {
     if (Sync.isLoggedIn()) {
       await Sync.processQueue();
+      Sync.ensureRealtime();
     }
   });
 
@@ -3954,7 +4109,20 @@ a { color: inherit; text-decoration: none; }
   // conflict, and two devices editing the same loop serialize rather than
   // overwriting each other's whole state.
   //
-  // Offline edits are queued in localStorage and drained on reconnect.
+  // Reliability features:
+  //   - Offline edits queue in localStorage; drained on reconnect.
+  //   - Queue uses exponential backoff (4s → 60s cap) and moves poison-pill
+  //     entries to a dead-letter queue after MAX_QUEUE_ATTEMPTS so one bad
+  //     write can't block every subsequent edit.
+  //   - Realtime subscription monitors its own connection status; on drop it
+  //     tears down and re-subscribes, then does a pullAll() to catch up.
+  //   - visibilitychange / online handlers verify the channel and drain the
+  //     queue whenever the user returns to the tab or comes back online.
+  //   - TOKEN_REFRESHED updates realtime's JWT so the channel doesn't silently
+  //     die after token rotation.
+  //   - Incoming realtime updates compare updated_at vs local; a remote row
+  //     older than our local copy doesn't clobber (prevents late echoes from
+  //     overwriting newer state).
   const OFFLINE_QUEUE_KEY = 'open_loops_offline_queue';
 
   const Sync = (() => {
@@ -3967,6 +4135,7 @@ a { color: inherit; text-decoration: none; }
         undeleteLoop:  () => {},
         processQueue:  async () => ({ ok: true, pending: true }),
         retry:         async () => ({ ok: true, pending: true }),
+        ensureRealtime: () => {},
         sendMagicLink: async () => { throw new Error('Supabase is not configured in open-loops-config.js.'); },
         signOut:       async () => {},
         isLoggedIn:    () => false
@@ -4052,6 +4221,7 @@ a { color: inherit; text-decoration: none; }
         kind:          VALID_KINDS.has(loop.kind) ? loop.kind : null,
         status:        loop.status || 'active',
         prompt_answer: loop.promptAnswer || '',
+        position:      typeof loop.position === 'number' ? loop.position : nowPosition(),
         created_at:    loop.createdAt || nowIso()
         // updated_at is set by the DB trigger.
       };
@@ -4063,6 +4233,7 @@ a { color: inherit; text-decoration: none; }
         kind:         row.kind,
         status:       row.status,
         promptAnswer: row.prompt_answer || '',
+        position:     row.position,
         createdAt:    row.created_at,
         updatedAt:    row.updated_at
       });
@@ -4073,6 +4244,7 @@ a { color: inherit; text-decoration: none; }
       if ('kind'         in patch) out.kind          = VALID_KINDS.has(patch.kind) ? patch.kind : null;
       if ('status'       in patch) out.status        = patch.status;
       if ('promptAnswer' in patch) out.prompt_answer = patch.promptAnswer;
+      if ('position'     in patch) out.position      = patch.position;
       if ('deleted_at'   in patch) out.deleted_at    = patch.deleted_at;
       if ('completed_at' in patch) out.completed_at  = patch.completed_at;
       return out;
@@ -4106,18 +4278,37 @@ a { color: inherit; text-decoration: none; }
       if (error) throw error;
     }
 
+    // Max attempts per queue entry before moving it to a dead-letter queue.
+    // Prevents a single poison-pill entry from blocking every edit behind it.
+    const MAX_QUEUE_ATTEMPTS = 5;
+    const DEAD_QUEUE_KEY = 'open_loops_dead_queue';
+
+    function moveToDeadQueue(entry, error) {
+      try {
+        const dead = JSON.parse(localStorage.getItem(DEAD_QUEUE_KEY) || '[]');
+        dead.push({
+          ...entry,
+          lastError: String(error && error.message ? error.message : error),
+          droppedAt: Date.now()
+        });
+        // Keep the last 50 dead entries — enough for debugging, not enough to
+        // bloat localStorage if something is spamming failures.
+        localStorage.setItem(DEAD_QUEUE_KEY, JSON.stringify(dead.slice(-50)));
+      } catch(_) {}
+    }
+
     async function processQueue() {
       if (!currentUser) return { ok: true, pending: true };
       if (draining) return { ok: true, pending: loadQueue().length > 0 };
       if (!loadQueue().length) { setSyncStatus('synced', 'Synced'); return { ok: true }; }
       draining = true;
-      let failed = false;
+      let lastAttempts = 1;
       setSyncStatus(navigator.onLine ? 'syncing' : 'offline', navigator.onLine ? 'Saving…' : 'Saved offline');
       try {
         while (true) {
           if (!navigator.onLine) {
             setSyncStatus('offline', 'Saved offline');
-            scheduleRetry();
+            scheduleRetry(1);
             return { ok: true, pending: true };
           }
           const q = loadQueue();
@@ -4127,40 +4318,66 @@ a { color: inherit; text-decoration: none; }
             return { ok: true };
           }
           const entry = q[0];
+          entry.attempts = (entry.attempts || 0) + 1;
           try {
             if      (entry.op === 'create')   await netCreate(entry.payload);
             else if (entry.op === 'update')   await netUpdate(entry.id, entry.payload);
             else if (entry.op === 'delete')   await netDelete(entry.id);
             else if (entry.op === 'undelete') await netUndelete(entry.id);
+            // Success — pop the head.
+            const latest = loadQueue();
+            latest.shift();
+            saveQueue(latest);
           } catch(e) {
-            console.error('Queue drain error:', e, entry);
-            failed = true;
-            saveQueue(loadQueue()); // keep the failing entry at the head
+            console.error(`Queue drain error (attempt ${entry.attempts}):`, e, entry);
+            lastAttempts = entry.attempts;
+
+            // Poison-pill: after MAX_QUEUE_ATTEMPTS, move this entry to the
+            // dead-letter queue so it stops blocking everything behind it.
+            if (entry.attempts >= MAX_QUEUE_ATTEMPTS) {
+              const latest = loadQueue();
+              const skipped = latest.shift();
+              saveQueue(latest);
+              moveToDeadQueue(skipped, e);
+              console.warn('[open-loops] Moved poison-pill entry to dead queue:', skipped);
+              // Keep draining — the next entry might succeed.
+              continue;
+            }
+
+            // Persist the bumped attempt counter so it survives a reload.
+            const latest = loadQueue();
+            if (latest[0] && latest[0].id === entry.id && latest[0].op === entry.op) {
+              latest[0] = entry;
+              saveQueue(latest);
+            }
             setSyncStatus('error', 'Sync issue');
             showSyncErrorBanner();
-            scheduleRetry();
+            scheduleRetry(entry.attempts);
             return { ok: false, error: e };
           }
-          const latest = loadQueue();
-          latest.shift();
-          saveQueue(latest);
         }
       } finally {
         draining = false;
-        if (!failed && currentUser && navigator.onLine && loadQueue().length) {
-          processQueue();
+        if (currentUser && navigator.onLine && loadQueue().length) {
+          // More work showed up while we were draining — chain another pass
+          // without awaiting so we don't deepen the call stack.
+          Promise.resolve().then(processQueue);
         }
       }
     }
 
-    function scheduleRetry() {
+    // Exponential backoff: 4s, 8s, 16s, 32s, capped at 60s. Prevents
+    // hammering Supabase when the server is flaky or rate-limiting us.
+    function scheduleRetry(attempts) {
       if (retryTimer) return;
+      const n = Math.max(1, attempts || 1);
+      const delay = Math.min(60000, 4000 * Math.pow(2, n - 1));
       retryTimer = setTimeout(async () => {
         retryTimer = null;
         if (currentUser && navigator.onLine && loadQueue().length) {
           await processQueue();
         }
-      }, 8000);
+      }, delay);
     }
 
     // ── Full pull (on login / init) ──
@@ -4172,23 +4389,46 @@ a { color: inherit; text-decoration: none; }
           .from('loops')
           .select('*')
           .is('deleted_at', null)
-          .order('created_at', { ascending: false });
+          .order('position', { ascending: false });
         if (error) throw error;
 
         if (!rows || !rows.length) {
-          // Empty server. If local has loops (e.g. first sync after a
-          // local-only period, or post-migration), seed the server.
-          if (data.loops && data.loops.length) {
+          // Empty visible server. But don't blindly re-seed — the server
+          // might just have everything soft-deleted. If there are ANY rows
+          // (including deleted) we treat the server as "initialized" and
+          // trust it. Only seed if the server has genuinely never seen
+          // this user's data.
+          const { count, error: countErr } = await db
+            .from('loops')
+            .select('id', { count: 'exact', head: true });
+          if (countErr) throw countErr;
+
+          const serverTrulyEmpty = (count || 0) === 0;
+
+          if (serverTrulyEmpty && data.loops && data.loops.length) {
             const payload = data.loops.map(l => ({
               id:           l.id,
               rawText:      l.rawText,
               kind:         l.kind,
               status:       l.status,
               promptAnswer: l.promptAnswer,
+              position:     l.position,
               createdAt:    l.createdAt
             }));
             const { error: upErr } = await db.rpc('batch_upsert_loops', { p_loops: payload });
             if (upErr) throw upErr;
+          } else if (!serverTrulyEmpty) {
+            // Server has data, but it's all soft-deleted. Trust the server:
+            // clear local state so we don't silently resurrect rows the
+            // user deleted on another device.
+            data = {
+              version:    2,
+              lastLoopId: null,
+              activeTab:  view.activeTab || 'now',
+              loops:      []
+            };
+            save();
+            renderMain();
           }
           setSyncStatus('synced', 'Synced');
           hideSyncErrorBanner();
@@ -4216,8 +4456,36 @@ a { color: inherit; text-decoration: none; }
     }
 
     // ── Realtime: apply per-row changes from other devices ──
-    function setupRealtime() {
-      if (!currentUser || channel) return;
+    // Tracks state for reconnection logic. Supabase realtime channels can drop
+    // for many reasons (network blip, sleep, JWT expiry, free-tier idle cuts),
+    // and without a status callback we'd never notice. When a channel drops we
+    // tear it down, re-subscribe, and do a pullAll() to catch up on anything
+    // we missed while disconnected.
+    let realtimeReconnectTimer = null;
+    // When setupRealtime is called right after an explicit pullAll (during
+    // init or SIGNED_IN), we don't need to pull again on the first SUBSCRIBED
+    // event. Subsequent SUBSCRIBEDs (from reconnects) still pull to catch up.
+    let skipNextSubscribePull = false;
+
+    function scheduleRealtimeReconnect() {
+      if (realtimeReconnectTimer) return;
+      realtimeReconnectTimer = setTimeout(() => {
+        realtimeReconnectTimer = null;
+        if (currentUser && navigator.onLine && !document.hidden) {
+          setupRealtime();
+        }
+      }, 3000);
+    }
+
+    function setupRealtime(opts) {
+      if (!currentUser) return;
+      if (opts && opts.skipInitialPull) skipNextSubscribePull = true;
+      // Tear down any existing channel before creating a new one. Re-using a
+      // dead channel is how we end up silently missing events.
+      if (channel) {
+        try { db.removeChannel(channel); } catch(_) {}
+        channel = null;
+      }
       channel = db.channel(`loops:${currentUser.id}`)
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'loops', filter: `user_id=eq.${currentUser.id}` },
@@ -4256,12 +4524,37 @@ a { color: inherit; text-decoration: none; }
               // New row from another device — insert at top (matches createLoop).
               data.loops.unshift(mapped);
             } else {
+              // Fix 5: if our local copy is newer than what realtime is
+              // sending us, don't clobber. This handles the case where we
+              // just wrote locally and haven't gotten our own echo yet, or
+              // the case where a stale queued write from another device
+              // arrives late.
+              const existing = data.loops[idx];
+              const localTs  = existing && existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
+              const remoteTs = mapped.updatedAt ? new Date(mapped.updatedAt).getTime() : 0;
+              if (localTs && remoteTs && localTs > remoteTs) return;
               data.loops[idx] = mapped;
             }
             save();
             renderMain();
           })
-        .subscribe();
+        .subscribe(async (status, err) => {
+          if (status === 'SUBSCRIBED') {
+            // Fresh subscription — we may have missed events while we were
+            // disconnected (or during initial setup). Pull to catch up —
+            // unless the caller told us a pullAll just ran.
+            if (skipNextSubscribePull) {
+              skipNextSubscribePull = false;
+              return;
+            }
+            try { await pullAll(); } catch(_) {}
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.warn('[open-loops] Realtime channel dropped:', status, err);
+            try { if (channel) db.removeChannel(channel); } catch(_) {}
+            channel = null;
+            scheduleRealtimeReconnect();
+          }
+        });
     }
 
     db.auth.onAuthStateChange(async (event, session) => {
@@ -4272,7 +4565,7 @@ a { color: inherit; text-decoration: none; }
         // Drain anything captured while signed-out/offline first, then pull.
         if (loadQueue().length) await processQueue();
         await pullAll();
-        setupRealtime();
+        setupRealtime({ skipInitialPull: true });
         // Auth gate → hide; reveal app
         authReady = true;
         hideAuthGate();
@@ -4282,9 +4575,24 @@ a { color: inherit; text-decoration: none; }
           startOnboarding();
         }
         renderAll();
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        // Fix 4: the JWT was refreshed. Realtime uses this token — if we
+        // don't tell it about the new one, the channel will die the next
+        // time the old token expires at the server. Also re-subscribe so
+        // any silently-dropped channel gets rebuilt.
+        currentUser = session.user;
+        try {
+          if (db.realtime && typeof db.realtime.setAuth === 'function') {
+            db.realtime.setAuth(session.access_token);
+          }
+        } catch(_) {}
+        setupRealtime();
       } else if (event === 'SIGNED_OUT') {
         currentUser = null;
         if (channel) { db.removeChannel(channel); channel = null; }
+        // Clean up any pending retry timers so they don't fire stale.
+        if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+        if (realtimeReconnectTimer) { clearTimeout(realtimeReconnectTimer); realtimeReconnectTimer = null; }
         setSyncStatus('idle', 'Sync');
         hideSyncErrorBanner();
         renderAll();
@@ -4301,7 +4609,7 @@ a { color: inherit; text-decoration: none; }
             setSyncStatus('syncing', 'Syncing…');
             if (loadQueue().length) await processQueue();
             await pullAll();
-            setupRealtime();
+            setupRealtime({ skipInitialPull: true });
           }
         } catch(e) {
           console.error('Sync init error:', e);
@@ -4356,12 +4664,20 @@ a { color: inherit; text-decoration: none; }
           const r = await processQueue();
           if (!r.ok) return r;
           await pullAll();
-          setupRealtime();
+          setupRealtime({ skipInitialPull: true });
           return { ok: true };
         } catch(e) {
           setSyncStatus('error', 'Sync issue');
           return { ok: false, error: e };
         }
+      },
+
+      // Called from visibilitychange / focus / online handlers. Verifies the
+      // realtime channel is still alive — if not, rebuilds it (which does a
+      // pullAll on SUBSCRIBED to catch up on missed events).
+      ensureRealtime() {
+        if (!currentUser) return;
+        if (!channel) setupRealtime();
       },
 
       async sendMagicLink(email) {
@@ -4450,6 +4766,32 @@ a { color: inherit; text-decoration: none; }
   } else {
     Sync.init();
   }
+
+  // ── DEBUG HELPERS ──
+  // Exposed on window for troubleshooting from the browser console.
+  // Not used by the app itself.
+  //   window.openLoopsDebug.queue()      → show pending (not-yet-synced) ops
+  //   window.openLoopsDebug.dead()       → show ops that failed > 5 times
+  //   window.openLoopsDebug.clearDead()  → clear the dead-letter queue
+  //   window.openLoopsDebug.retry()      → force a queue drain + pull
+  window.openLoopsDebug = {
+    queue() {
+      try { return JSON.parse(localStorage.getItem('open_loops_offline_queue') || '[]'); }
+      catch(_) { return []; }
+    },
+    dead() {
+      try { return JSON.parse(localStorage.getItem('open_loops_dead_queue') || '[]'); }
+      catch(_) { return []; }
+    },
+    clearDead() {
+      localStorage.removeItem('open_loops_dead_queue');
+      return 'cleared';
+    },
+    async retry() {
+      if (!Sync.isLoggedIn()) return 'not signed in';
+      return await Sync.retry();
+    }
+  };
 
   // ── SERVICE WORKER ──
   // Install handler in open-loops-sw.js calls skipWaiting(), so a new worker

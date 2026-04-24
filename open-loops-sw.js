@@ -1,4 +1,4 @@
-const CACHE = 'open-loops-v5-brand-polish';
+const CACHE = 'open-loops-v7-position-sync';
 
 const ASSETS = [
   './open-loops.html',
