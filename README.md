@@ -29,11 +29,13 @@ You capture a thought. You clarify it into one of five kinds. You keep only five
 ## Features
 
 - **Capture** — Drop a thought as it arrives. Shape it later, or clarify it immediately.
-- **5-loop focus cap** — Only 5 active loops visible at once. The constraint is the feature.
+- **Focus cap** — Only a handful of active loops are visible at once. Configurable (3, 5, or 7). The constraint is the feature.
 - **Inline editing** — Click any loop title to edit it in place.
 - **Primary actions** — Each loop kind has a contextual check-in: done, still in progress, or update the next step.
 - **Waiting & Released** — Park things without losing them. Let go of things without deleting them.
-- **Cross-device sync** — Sign in with a magic link. Your loops sync across all your devices.
+- **Drag to reorder** — Reorder active loops by dragging. Order syncs across all your devices.
+- **Cross-device sync** — Sign in with a magic link. Your loops sync across all your devices in real time.
+- **Offline-first** — Edits work offline and sync automatically when you're back online.
 - **Dark & light themes** — Toggle from the top bar. Preference persists across sessions.
 - **PWA** — Installable on desktop and mobile. Works like a native app.
 
@@ -62,7 +64,7 @@ No build step. No dependencies. One HTML file.
 
 ## Sync setup
 
-Open Loops uses Supabase for authentication and cross-device sync. You'll need your own Supabase project (the free tier is more than enough).
+Open Loops uses Supabase for authentication and cross-device sync. You'll need your own Supabase project (the free tier is comfortable for dozens of users).
 
 ### 1. Create a Supabase project
 
@@ -70,7 +72,9 @@ Go to [supabase.com](https://supabase.com) → New project.
 
 ### 2. Run the SQL
 
-In the Supabase SQL editor, paste and run the contents of `open-loops-supabase.sql`. This creates the `loops` table, row-level security policies, and realtime subscriptions.
+In the Supabase SQL editor, paste and run the contents of `open-loops-supabase.sql`. This creates the `loops` table, row-level security policies, the `batch_upsert_loops` RPC, and registers the table for realtime subscriptions.
+
+The SQL is idempotent — you can re-run it safely after pulling updates (it uses `if not exists` for columns and indexes, and `create or replace` for the trigger and RPC).
 
 ### 3. Configure the app
 
@@ -102,17 +106,56 @@ Open the app, enter your email on the sign-in screen, and check your inbox for a
 
 ---
 
+## Upgrading an existing deployment
+
+If you've already deployed Open Loops and are pulling updates, **run the SQL migration first, then deploy the new client**. Deploying the client before the migration will cause every write to fail until the schema catches up.
+
+```
+1. Supabase SQL editor → run open-loops-supabase.sql
+2. Push open-loops.html + open-loops-sw.js to your host
+```
+
+The service worker detects updates automatically — existing users will see an "Updated — reloading…" toast on their next visit and land on the new version.
+
+---
+
+## How sync works
+
+Every edit is a single-row write to Supabase, protected by row-level security so users can only see and modify their own loops. The client uses Postgres realtime to broadcast changes to every device logged into the same account.
+
+Key pieces:
+
+- **One row per loop.** Concurrent edits on different loops never collide. Concurrent edits on the same loop serialize at the database level.
+- **Offline queue.** Edits made offline are queued in `localStorage` and drained automatically when the device comes back online or the tab regains focus. Repeated edits to the same loop are coalesced so one typing burst doesn't become one hundred writes.
+- **Position column for ordering.** Drag-reorder assigns a fractional `position` value (midpoint between neighbors), so only the moved row needs a database update. Order syncs everywhere.
+- **Realtime reconnection.** The realtime channel monitors its own connection state. On any drop (network blip, device sleep, token refresh, idle disconnect) the client re-subscribes and pulls to catch up on missed events.
+- **Poison-pill handling.** If a single queued write fails repeatedly (bad data, permissions issue, etc.), after five attempts it's moved to a dead-letter queue so it can't block every edit behind it.
+- **Echo suppression.** The client knows not to treat its own recent writes as incoming updates.
+- **Timestamp-based last-writer-wins.** Incoming updates older than the local copy don't clobber newer state.
+
+If something looks wrong, open the browser DevTools console and use:
+
+```js
+openLoopsDebug.queue()     // pending (not-yet-synced) operations
+openLoopsDebug.dead()      // operations that failed more than 5 times
+openLoopsDebug.clearDead() // clear the dead-letter queue
+openLoopsDebug.retry()     // force a queue drain + full pull
+```
+
+---
+
 ## File structure
 
 ```
 open-loops.html          ← The entire app (HTML + CSS + JS, single file)
 open-loops-config.js     ← Supabase credentials and app config
-open-loops-supabase.sql  ← Database schema + RLS policies
+open-loops-supabase.sql  ← Database schema, RLS policies, RPC, realtime setup
 open-loops-sw.js         ← Service worker (offline cache, updates)
 open-loops-manifest.json ← PWA manifest
 open-loops-icon-192.png  ← App icon
 open-loops-icon-512.png  ← App icon (large)
 index.html               ← Marketing landing page
+README.md                ← This file
 ```
 
 ---
@@ -120,8 +163,9 @@ index.html               ← Marketing landing page
 ## Design principles
 
 - **One file.** The entire app is `open-loops.html`. No framework, no bundler, no node_modules.
-- **Intentional constraints.** Five loops in active focus. Five kinds. Three statuses. The limits are features.
+- **Intentional constraints.** Five loops in active focus (by default). Five kinds. Four statuses. The limits are features.
 - **No noise.** No notifications, no streaks, no gamification. Calm is the aesthetic and the function.
+- **Local-first, cloud-synced.** Your edits land instantly and work offline. Sync is best-effort and recoverable — the app never feels like it's waiting on the network.
 
 ---
 
