@@ -5,8 +5,8 @@
   "start_url": "./open-loops.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0f0f0f",
-  "theme_color": "#0f0f0f",
+  "background_color": "#111010",
+  "theme_color": "#111010",
   "orientation": "portrait-primary",
   "categories": ["productivity", "lifestyle", "utilities"],
   "icons": [

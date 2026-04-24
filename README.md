@@ -2,7 +2,7 @@
 
 **A calm place for unfinished things.**
 
-Open Loops is a local-first PWA for capturing the thoughts that occupy headspace — the half-decisions, the pending asks, the things you keep meaning to do. It gives each one a shape, surfaces only a few at a time, and gets out of the way.
+Open Loops is a PWA for capturing the thoughts that occupy headspace — the half-decisions, the pending asks, the things you keep meaning to do. It gives each one a shape, surfaces only a few at a time, and gets out of the way.
 
 ![Open Loops](open-loops-icon-192.png)
 
@@ -33,8 +33,8 @@ You capture a thought. You clarify it into one of five kinds. You keep only five
 - **Inline editing** — Click any loop title to edit it in place.
 - **Primary actions** — Each loop kind has a contextual check-in: done, still in progress, or update the next step.
 - **Waiting & Released** — Park things without losing them. Let go of things without deleting them.
-- **Local-first** — Works entirely offline. No account required.
-- **Cross-device sync** — Optional Supabase backend for sync across devices via magic link.
+- **Cross-device sync** — Sign in with a magic link. Your loops sync across all your devices.
+- **Dark & light themes** — Toggle from the top bar. Preference persists across sessions.
 - **PWA** — Installable on desktop and mobile. Works like a native app.
 
 ---
@@ -60,31 +60,34 @@ No build step. No dependencies. One HTML file.
 
 ---
 
-## Sync setup (optional)
+## Sync setup
 
-Open Loops works fully without sync. If you want your loops on every device:
+Open Loops uses Supabase for authentication and cross-device sync. You'll need your own Supabase project (the free tier is more than enough).
 
 ### 1. Create a Supabase project
 
-[supabase.com](https://supabase.com) → New project.
+Go to [supabase.com](https://supabase.com) → New project.
 
 ### 2. Run the SQL
 
-In the Supabase SQL editor, run `open-loops-supabase.sql`.
+In the Supabase SQL editor, paste and run the contents of `open-loops-supabase.sql`. This creates the `loops` table, row-level security policies, and realtime subscriptions.
 
 ### 3. Configure the app
 
 Edit `open-loops-config.js`:
 
 ```js
-window.OL_CONFIG = {
+window.OL_CONFIG = Object.freeze({
   SUPABASE_URL: 'https://YOUR_PROJECT.supabase.co',
   SUPABASE_KEY: 'YOUR_PUBLISHABLE_KEY',
-  EMAIL_REDIRECT_TO: null, // null = uses current page URL automatically
-};
+  EMAIL_REDIRECT_TO: null, // auto-detects current URL — leave as null
+  // ...
+});
 ```
 
-### 4. Add redirect URLs
+Leaving `EMAIL_REDIRECT_TO` as `null` is the right choice for most deployments. It auto-detects the current page URL, so magic links work correctly whether you're running locally or on your own GitHub Pages deployment.
+
+### 4. Add redirect URLs in Supabase
 
 In Supabase → **Authentication → URL Configuration**, add:
 
@@ -95,7 +98,7 @@ https://YOUR_USERNAME.github.io/REPO_NAME/open-loops.html
 
 ### 5. Sign in
 
-Open the app, tap **Sync** in the top bar, enter your email. You'll receive a magic link — no password needed.
+Open the app, enter your email on the sign-in screen, and check your inbox for a magic link. No password needed.
 
 ---
 
@@ -103,14 +106,13 @@ Open the app, tap **Sync** in the top bar, enter your email. You'll receive a ma
 
 ```
 open-loops.html          ← The entire app (HTML + CSS + JS, single file)
-open-loops-config.js     ← Supabase credentials (edit this for sync)
+open-loops-config.js     ← Supabase credentials and app config
 open-loops-supabase.sql  ← Database schema + RLS policies
-open-loops-sw.js         ← Service worker (offline support)
+open-loops-sw.js         ← Service worker (offline cache, updates)
 open-loops-manifest.json ← PWA manifest
 open-loops-icon-192.png  ← App icon
 open-loops-icon-512.png  ← App icon (large)
-open-loops-setup.md      ← Quick setup reference
-index.html               ← Redirects to open-loops.html
+index.html               ← Marketing landing page
 ```
 
 ---
@@ -118,9 +120,14 @@ index.html               ← Redirects to open-loops.html
 ## Design principles
 
 - **One file.** The entire app is `open-loops.html`. No framework, no bundler, no node_modules.
-- **Local-first.** Data lives in `localStorage`. Supabase is an optional layer on top.
 - **Intentional constraints.** Five loops in active focus. Five kinds. Three statuses. The limits are features.
 - **No noise.** No notifications, no streaks, no gamification. Calm is the aesthetic and the function.
+
+---
+
+## Accessibility
+
+Open Loops is designed for visual users. Screen-reader support is limited at present. Contributions that improve accessibility are welcome.
 
 ---
 

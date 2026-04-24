@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Open Loops">
-<meta name="theme-color" content="#0f0f0f">
+<meta name="theme-color" content="#111010">
 <meta name="description" content="A calm place for unfinished things.">
 <title>Open Loops</title>
 <link rel="manifest" href="./open-loops-manifest.json">
@@ -17,9 +17,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <script src="./open-loops-config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.103.3/dist/umd/supabase.js"
+  integrity="sha384-hCWGwlkWlatZlBB+xRL7caQ0wei4AIvA80dQT3CEhafaMinAJQdfdb99y48Oai+Q"
+  crossorigin="anonymous"></script>
 <style>
-:root {
+:root, [data-theme="dark"] {
   --bg: #111010;
   --surface: #1b1918;
   --surface-2: #222020;
@@ -27,8 +29,8 @@
   --border: rgba(255,248,240,0.09);
   --border-soft: rgba(255,248,240,0.05);
   --text: #f5f0ea;
-  --text-2: rgba(245,240,234,0.55);
-  --text-3: rgba(245,240,234,0.28);
+  --text-2: rgba(245,240,234,0.65);
+  --text-3: rgba(245,240,234,0.50);
   --accent: #d4793a;
   --accent-dim: rgba(212,121,58,0.15);
   --accent-glow: rgba(212,121,58,0.07);
@@ -48,9 +50,34 @@
   --r-xl: 22px;
   --serif: "Playfair Display", Georgia, serif;
   --sans: "DM Sans", system-ui, sans-serif;
-  
+
   /* Responsive breakpoints */
   --sidebar-width: 220px;
+}
+
+[data-theme="light"] {
+  --bg: #faf7f2;
+  --surface: #ffffff;
+  --surface-2: #f3ede4;
+  --surface-3: #ebe3d6;
+  --border: rgba(26,24,23,0.12);
+  --border-soft: rgba(26,24,23,0.06);
+  --text: #1a1817;
+  --text-2: rgba(26,24,23,0.62);
+  --text-3: rgba(26,24,23,0.42);
+  --accent: #b85e1e;
+  --accent-dim: rgba(184,94,30,0.14);
+  --accent-glow: rgba(184,94,30,0.06);
+  --do: #2f9e5e;
+  --do-dim: rgba(47,158,94,0.12);
+  --decide: #b88a0a;
+  --decide-dim: rgba(184,138,10,0.13);
+  --ask: #2778c4;
+  --ask-dim: rgba(39,120,196,0.12);
+  --schedule: #7a52c4;
+  --schedule-dim: rgba(122,82,196,0.12);
+  --let_go: rgba(26,24,23,0.38);
+  --let_go-dim: rgba(26,24,23,0.06);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -64,6 +91,7 @@ body {
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 button, input, textarea { font: inherit; }
@@ -124,24 +152,6 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
-/* Processing mode: centered single loop */
-.app.processing-mode .main {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.app.processing-mode .loop-list {
-  display: none;
-}
-
-.app.processing-mode .processing-view {
-  display: block;
-}
-
-.processing-view {
-  display: none;
-}
-
 
 .topbar {
   display: flex;
@@ -155,19 +165,6 @@ a { color: inherit; text-decoration: none; }
   background: var(--bg);
   gap: 12px;
 }
-
-.topbar-center {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .topbar-center {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-}
-
 
 .brand {
   display: flex;
@@ -227,10 +224,31 @@ a { color: inherit; text-decoration: none; }
   transition: all 0.15s;
   background: transparent;
 }
-.pill-btn:hover { border-color: rgba(255,255,255,0.14); color: var(--text); }
+.pill-btn:hover { border-color: var(--text-3); color: var(--text); }
 .pill-btn.synced { color: var(--do); border-color: rgba(111,207,151,0.2); }
 .pill-btn.syncing { color: var(--decide); border-color: rgba(232,197,71,0.2); }
 .pill-btn.error { color: #f47; border-color: rgba(255,68,119,0.2); }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  background: transparent;
+  transition: all 0.15s;
+  padding: 0;
+}
+.icon-btn:hover {
+  border-color: var(--text-3);
+  color: var(--text);
+  background: var(--surface-2);
+}
+.icon-btn svg { width: 15px; height: 15px; }
+#install-btn[hidden] { display: none !important; }
 
 .dot {
   width: 6px;
@@ -828,6 +846,30 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.5;
 }
 
+.input-hint-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.input-hint-row .input-hint { margin-top: 8px; flex: 1; }
+
+.char-counter {
+  font-size: 11px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+.char-counter.near-limit { color: var(--decide); }
+.char-counter.at-limit { color: #e85a5a; }
+
+.inline-edit-meta {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
 /* ── KIND CHOICES ── */
 .kind-grid {
   display: flex;
@@ -981,6 +1023,95 @@ a { color: inherit; text-decoration: none; }
 .email-input:focus { outline: none; border-color: rgba(232,197,71,0.35); }
 .email-input::placeholder { color: var(--text-3); }
 
+/* ── SETTINGS ROWS ── */
+.settings-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border-soft);
+}
+.settings-row:first-of-type { border-top: none; }
+.settings-row-label { flex: 1; min-width: 0; }
+.settings-row-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.settings-row-help {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.settings-cap-group {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.settings-cap-btn {
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-right: 1px solid var(--border);
+  transition: all 0.15s;
+}
+.settings-cap-btn:last-child { border-right: none; }
+.settings-cap-btn:hover { color: var(--text); background: var(--surface-2); }
+.settings-cap-btn.selected {
+  background: var(--accent);
+  color: #111010;
+}
+.settings-cap-btn.selected:hover { background: var(--accent); }
+
+.settings-section {
+  padding: 16px 0;
+  border-top: 1px solid var(--border-soft);
+}
+.settings-section:first-of-type { border-top: none; }
+.settings-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.settings-helper {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+.seg-row {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-2);
+  padding: 3px;
+  border-radius: 10px;
+}
+.seg-row button {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-2);
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.seg-row button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.seg-row button:hover:not(.active) { color: var(--text); }
+
 /* ── EMPTY ── */
 .empty-state {
   padding: 48px 20px;
@@ -1083,8 +1214,9 @@ a { color: inherit; text-decoration: none; }
   margin-top: 20px;
 }
 
-/* ── MOBILE ── */
-@media (max-width: 600px) {
+/* ── MOBILE ── (max-width matches the bottom-nav breakpoint below, so
+   mobile padding persists until the sidebar layout takes over at 768px) */
+@media (max-width: 767px) {
   .main { padding: 0 14px 100px; }
   .topbar { padding: 12px 16px; }
   .reentry-title { font-size: 1.3rem; }
@@ -1092,6 +1224,7 @@ a { color: inherit; text-decoration: none; }
   .overlay-card { width: 100%; max-height: 85vh; border-radius: 20px 20px 0 0; }
 }
 
+/* Bottom-nav shows only on narrow screens where we also hide the sidebar. */
 @media (min-width: 768px) {
   .bottom-nav { display: none; }
   .fab { display: none; }
@@ -1356,144 +1489,6 @@ a { color: inherit; text-decoration: none; }
   border-radius: 4px;
   background: var(--surface-3);
   font-family: monospace;
-}
-
-.kbd-shortcuts {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.kbd-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--text-2);
-}
-
-.kbd {
-  padding: 3px 7px;
-  border-radius: 4px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  font-family: monospace;
-  font-size: 11px;
-  color: var(--text);
-}
-
-/* ── PROCESSING MODE ── */
-.processing-view {
-  padding: 40px 0;
-}
-
-.processing-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.processing-count {
-  font-size: 12px;
-  color: var(--text-3);
-  margin-bottom: 8px;
-}
-
-.processing-title {
-  font-family: var(--serif);
-  font-size: 2rem;
-  color: var(--text);
-  margin-bottom: 16px;
-}
-
-.processing-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-xl);
-  padding: 32px;
-  margin-bottom: 24px;
-}
-
-.processing-loop-text {
-  font-size: 18px;
-  line-height: 1.6;
-  color: var(--text);
-  margin-bottom: 24px;
-  font-family: var(--serif);
-}
-
-.processing-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-}
-
-.processing-action-btn {
-  padding: 16px 20px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.processing-action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-.processing-action-btn.do { border-color: var(--do); background: var(--do-dim); }
-.processing-action-btn.do:hover { background: rgba(111,207,151,0.15); }
-
-.processing-action-btn.decide { border-color: var(--decide); background: var(--decide-dim); }
-.processing-action-btn.decide:hover { background: rgba(232,197,71,0.15); }
-
-.processing-action-btn.ask { border-color: var(--ask); background: var(--ask-dim); }
-.processing-action-btn.ask:hover { background: rgba(126,184,247,0.15); }
-
-.processing-action-btn.schedule { border-color: var(--schedule); background: var(--schedule-dim); }
-.processing-action-btn.schedule:hover { background: rgba(180,142,247,0.15); }
-
-.processing-action-btn.let_go { border-color: var(--let_go); background: var(--let_go-dim); }
-.processing-action-btn.let_go:hover { background: rgba(240,237,232,0.1); }
-
-.processing-action-label {
-  font-size: 11px;
-  color: var(--text-3);
-  font-family: monospace;
-}
-
-.processing-skip {
-  text-align: center;
-  margin-top: 16px;
-}
-
-.processing-skip-btn {
-  color: var(--text-3);
-  font-size: 13px;
-  padding: 8px 16px;
-  border-radius: var(--r-sm);
-  transition: all 0.15s;
-}
-
-.processing-skip-btn:hover {
-  color: var(--text-2);
-  background: var(--surface);
-}
-
-.mode-toggle-btn {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .mode-toggle-btn {
-    display: inline-flex;
-  }
 }
 
 /* ── RESPONSIVE TABS ── */
@@ -1807,17 +1802,27 @@ a { color: inherit; text-decoration: none; }
   color: var(--text-3);
 }
 
-.onboarding-skip a {
-  color: var(--text-3);
+/* Text button styled as a link. Use for minor inline actions like
+   "Skip tutorial" and "Try again" that should look subtle but are
+   fully keyboard-accessible real <button>s. */
+.inline-link {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  color: var(--text-2);
   text-decoration: underline;
+  font: inherit;
   cursor: pointer;
+  border-radius: 4px;
+}
+.inline-link:hover { color: var(--text); }
+.inline-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-.onboarding-skip a:hover { color: var(--text-2); }
-
 /* ── APP LOCKED STATE ── */
-.app-locked .app-body,
-.app-locked .topbar-center {
+.app-locked .app-body {
   pointer-events: none;
   filter: blur(2px);
   opacity: 0.25;
@@ -1844,13 +1849,17 @@ a { color: inherit; text-decoration: none; }
       </div>
       <span class="brand-name">Open Loops</span>
     </div>
-    <div class="topbar-center">
-      <button class="pill-btn mode-toggle-btn" id="mode-toggle" type="button" data-action="toggle-processing-mode">
-        <span>Processing Mode</span>
-      </button>
-    </div>
     <div class="topbar-right">
       <button class="btn btn-primary btn-sm new-loop-btn" type="button" data-action="open-capture">+ New loop</button>
+      <button class="icon-btn" id="install-btn" type="button" data-action="install-app" title="Install app" aria-label="Install app" hidden>
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="icon-btn" id="theme-toggle" type="button" data-action="toggle-theme" title="Toggle theme" aria-label="Toggle theme">
+        <svg id="theme-icon-dark" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="icon-btn" id="settings-btn" type="button" data-action="open-settings" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4"/><path d="M12.5 8c0-.3 0-.7-.1-1l1.4-1.1-1-1.7-1.7.7c-.5-.4-1-.7-1.6-.9L9.2 2H6.8l-.3 2c-.6.2-1.1.5-1.6.9l-1.7-.7-1 1.7L3.6 7C3.5 7.3 3.5 7.7 3.5 8s0 .7.1 1l-1.4 1.1 1 1.7 1.7-.7c.5.4 1 .7 1.6.9l.3 2h2.4l.3-2c.6-.2 1.1-.5 1.6-.9l1.7.7 1-1.7L12.4 9c.1-.3.1-.7.1-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      </button>
       <button class="pill-btn" id="sync-pill" type="button" data-action="open-sync">
         <span class="dot"></span>
         <span id="sync-label">Sync</span>
@@ -1870,8 +1879,7 @@ a { color: inherit; text-decoration: none; }
 <div class="overlay-root" id="overlay-root"></div>
 <div id="auth-gate-root"></div>
 <div id="onboarding-root"></div>
-<div class="toast" id="toast"></div>
-<input type="file" id="import-file-input" accept=".json" style="display:none">
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <!-- Sync error banner (Morning Brief pattern) -->
 <div class="sync-error-banner" id="sync-error-banner" style="display:none;">
@@ -1885,10 +1893,29 @@ a { color: inherit; text-decoration: none; }
 <script>
 (() => {
   const CFG = window.OL_CONFIG || {};
-  const STORAGE_KEY = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_v2' : 'open_loops_data_v2';
-  const ONBOARDING_KEY = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_onboarded' : 'open_loops_onboarded';
-  const CLIENT_NONCE = crypto.randomUUID ? crypto.randomUUID() : `ol-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const STORAGE_KEY   = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_v2'          : 'open_loops_data_v2';
+  const ONBOARDING_KEY = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_onboarded'  : 'open_loops_onboarded';
+  const THEME_KEY      = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_theme'      : 'open_loops_theme';
+  const LOOP_CAP_KEY   = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_cap'        : 'open_loops_cap';
+  const REENTRY_KEY    = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_reentry_dismissed' : 'open_loops_reentry_dismissed';
   const IS_FILE = location.protocol === 'file:';
+
+  // UX constraints
+  const MAX_LOOP_TEXT_LEN = 500;
+  const ALLOWED_LOOP_CAPS = [3, 5, 7];
+  const DEFAULT_LOOP_CAP  = 5;
+  const DEFAULT_TOAST_MS  = 4000;
+
+  // Display labels — drive all user-visible copy from one map so they stay
+  // consistent across tabs, empty states, and chips. Internal status keys
+  // stay as 'inbox' / 'active' / 'waiting' / 'released' for backwards
+  // compat with existing localStorage and the Supabase schema.
+  const TAB_LABEL = {
+    inbox:    'Captured',
+    active:   'Active',
+    waiting:  'Parked',
+    released: 'Closed',
+  };
 
   function hasSupabaseCfg() {
     return !!(CFG.SUPABASE_URL && CFG.SUPABASE_KEY &&
@@ -1905,7 +1932,7 @@ a { color: inherit; text-decoration: none; }
     ask:      { label: 'Ask',      action: 'Reach out',  question: 'Who do you need something from?',    helper: 'One person, one ask. Nothing more.' },
     schedule: { label: 'Schedule', action: 'Add to cal', question: 'What needs time on a calendar?',     helper: 'Treat time as the missing ingredient.' },
     let_go:   { label: 'Let go',   action: 'Release',    question: 'What are you choosing to release?',  helper: 'The goal is relief, not proving the thought was silly.' },
-    inbox:    { label: 'Inbox',    action: 'Clarify',    question: '',                                   helper: '' }
+    inbox:    { label: 'Captured', action: 'Clarify',    question: '',                                   helper: '' }
   };
 
   function nowIso() { return new Date().toISOString(); }
@@ -1928,10 +1955,10 @@ a { color: inherit; text-decoration: none; }
   function sanitize(loop) {
     return {
       id: loop.id || uid('l'),
-      rawText: (loop.rawText || 'Untitled').trim(),
+      rawText: (loop.rawText || 'Untitled').trim().slice(0, MAX_LOOP_TEXT_LEN),
       kind: VALID_KINDS.has(loop.kind) ? loop.kind : null,
       status: VALID_STATUSES.has(loop.status) ? loop.status : 'active',
-      promptAnswer: (loop.promptAnswer || '').trim(),
+      promptAnswer: (loop.promptAnswer || '').trim().slice(0, MAX_LOOP_TEXT_LEN),
       createdAt: loop.createdAt || nowIso(),
       updatedAt: loop.updatedAt || nowIso()
     };
@@ -1948,15 +1975,20 @@ a { color: inherit; text-decoration: none; }
     syncStatus: 'idle',
     syncText: 'Sync',
     inlineEditId: null,
-    processingMode: false,
-    currentLoopIndex: 0,
     // Auth gate state
     authGateSent: false,     // magic link sent confirmation
     authGateEmail: '',       // email being typed
     // Onboarding state
     onboardingStep: -1,      // -1 = hidden; 0-3 = active step
+    // Theme: 'dark' | 'light'. Persisted in localStorage.
+    theme: 'dark',
+    // How many Active loops to show before "Show more". User-configurable.
+    loopCap: DEFAULT_LOOP_CAP,
+    // Element to restore focus to when current overlay closes.
+    overlayOpenerEl: null,
   };
   let toastTimer = null;
+  let deferredInstallPrompt = null; // set by 'beforeinstallprompt' event
   // Set to true once Sync.init() resolves so we don't flash the lock screen
   // during the async auth check on cold start.
   let authReady = false;
@@ -1965,12 +1997,23 @@ a { color: inherit; text-decoration: none; }
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.loops)) {
-        data = { version: 2, lastLoopId: parsed.lastLoopId || null, activeTab: 'now', loops: parsed.loops.map(sanitize) };
-        view.activeTab = parsed.activeTab || 'now';
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.loops)) {
+          data = { version: 2, lastLoopId: parsed.lastLoopId || null, activeTab: 'now', loops: parsed.loops.map(sanitize) };
+          view.activeTab = parsed.activeTab || 'now';
+        }
       }
+    } catch(e) {}
+    // Reentry dismissal (survives reload)
+    try {
+      const r = localStorage.getItem(REENTRY_KEY);
+      if (r) view.reentryDismissedFor = r;
+    } catch(e) {}
+    // Loop cap
+    try {
+      const c = parseInt(localStorage.getItem(LOOP_CAP_KEY) || '', 10);
+      if (ALLOWED_LOOP_CAPS.includes(c)) view.loopCap = c;
     } catch(e) {}
   }
 
@@ -1978,6 +2021,20 @@ a { color: inherit; text-decoration: none; }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, lastLoopId: data.lastLoopId, activeTab: view.activeTab, loops: data.loops }));
     } catch(e) {}
+  }
+
+  function saveReentryDismissed(id) {
+    view.reentryDismissedFor = id || null;
+    try {
+      if (id) localStorage.setItem(REENTRY_KEY, id);
+      else    localStorage.removeItem(REENTRY_KEY);
+    } catch(e) {}
+  }
+
+  function saveLoopCap(n) {
+    if (!ALLOWED_LOOP_CAPS.includes(n)) return;
+    view.loopCap = n;
+    try { localStorage.setItem(LOOP_CAP_KEY, String(n)); } catch(e) {}
   }
 
   // ── QUERIES ──
@@ -2003,8 +2060,19 @@ a { color: inherit; text-decoration: none; }
     const l = getLoop(id);
     if (!l) return null;
     Object.assign(l, patch, { updatedAt: nowIso() });
-    if (!VALID_KINDS.has(l.kind)) l.kind = null;
-    if (!VALID_STATUSES.has(l.status)) l.status = 'active';
+    // Warn rather than silently coerce: a bad value here usually means a
+    // schema drift, a future feature flag, or a corrupted sync payload.
+    if (l.kind !== null && l.kind !== undefined && !VALID_KINDS.has(l.kind)) {
+      console.warn(`[open-loops] Coercing invalid kind "${l.kind}" to null on loop ${l.id}`);
+      l.kind = null;
+    }
+    if (!VALID_STATUSES.has(l.status)) {
+      console.warn(`[open-loops] Coercing invalid status "${l.status}" to "active" on loop ${l.id}`);
+      l.status = 'active';
+    }
+    if (typeof l.rawText === 'string' && l.rawText.length > MAX_LOOP_TEXT_LEN) {
+      l.rawText = l.rawText.slice(0, MAX_LOOP_TEXT_LEN);
+    }
     if (l.status === 'active') data.lastLoopId = l.id;
     return l;
   }
@@ -2023,7 +2091,7 @@ a { color: inherit; text-decoration: none; }
     const span = document.createElement('span');
     span.textContent = msg;
     el.appendChild(span);
-    const dur = (opts && opts.duration) || 2500;
+    const dur = (opts && opts.duration) || DEFAULT_TOAST_MS;
     if (opts && opts.action && typeof opts.onAction === 'function') {
       el.classList.add('has-action');
       const btn = document.createElement('button');
@@ -2047,8 +2115,17 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── ESCAPE HTML ──
+  // Escape all five XML special chars (incl. both quote types) for safe
+  // interpolation into attributes or text. Defensive: current callers use
+  // double-quoted attrs, but escaping ' too lets us relax that if we ever
+  // switch to single-quoted attributes.
   function esc(s) {
-    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s||'')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
   }
 
   // ── KIND CHIP HTML ──
@@ -2065,15 +2142,22 @@ a { color: inherit; text-decoration: none; }
     const delay = `animation-delay:${idx*0.04}s`;
 
     if (view.inlineEditId === loop.id) {
+      const editLen = (loop.rawText || '').length;
+      const editCounterClass = editLen >= MAX_LOOP_TEXT_LEN
+        ? ' at-limit'
+        : editLen >= MAX_LOOP_TEXT_LEN - 50 ? ' near-limit' : '';
       return `
         <article class="loop-card kind-${loop.kind || 'inbox'}${hl}" style="${delay}" data-loop-id="${esc(loop.id)}">
           <div class="loop-card-top">
             ${chipHtml(loop.kind)}
-            <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg>
+            <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg>
             </button>
           </div>
-          <textarea class="inline-edit-input" id="inline-edit-${esc(loop.id)}" rows="2">${esc(loop.rawText)}</textarea>
+          <textarea class="inline-edit-input" id="inline-edit-${esc(loop.id)}" rows="2" maxlength="${MAX_LOOP_TEXT_LEN}">${esc(loop.rawText)}</textarea>
+          <div class="inline-edit-meta">
+            <span class="char-counter${editCounterClass}" id="inline-edit-counter-${esc(loop.id)}" aria-live="polite">${editLen}/${MAX_LOOP_TEXT_LEN}</span>
+          </div>
           <div class="loop-card-bottom">
             <button class="btn-action btn btn-sm" data-action="inline-edit-save" data-loop-id="${esc(loop.id)}">Save</button>
             <button class="btn-ghost btn btn-sm" data-action="inline-edit-cancel">Cancel</button>
@@ -2085,8 +2169,8 @@ a { color: inherit; text-decoration: none; }
       <article class="loop-card kind-${loop.kind || 'inbox'}${hl}" style="${delay}" data-loop-id="${esc(loop.id)}">
         <div class="loop-card-top">
           ${chipHtml(loop.kind)}
-          <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg>
+          <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg>
           </button>
         </div>
         <p class="loop-title" data-action="inline-edit-start" data-loop-id="${esc(loop.id)}" title="Click to edit" style="cursor:text">${esc(loop.rawText)}</p>
@@ -2103,7 +2187,8 @@ a { color: inherit; text-decoration: none; }
   // ── HOME RENDER ──
   function renderHome() {
     const active = byStatus('active');
-    const visible = view.expanded ? active : active.slice(0, 5);
+    const cap = view.loopCap || DEFAULT_LOOP_CAP;
+    const visible = view.expanded ? active : active.slice(0, cap);
     const waiting = byStatus('waiting');
     const released = byStatus('released');
     const inbox = byStatus('inbox');
@@ -2127,33 +2212,35 @@ a { color: inherit; text-decoration: none; }
         </section>`;
     }
 
-    // Inbox notice
+    // Captured nudge — only shown on the Active (Now) tab, as a gentle prompt.
     if (inbox.length && view.activeTab === 'now') {
       html += `
         <div class="inbox-notice">
           <div class="inbox-notice-left">
             <div class="inbox-badge">${inbox.length}</div>
-            <span class="inbox-text">${inbox.length} unclarified loop${inbox.length === 1 ? '' : 's'}</span>
+            <span class="inbox-text">${inbox.length} captured loop${inbox.length === 1 ? '' : 's'} waiting to be clarified</span>
           </div>
           <button class="btn btn-ghost btn-sm" data-action="clarify-inbox">Clarify</button>
         </div>`;
     }
 
-    // Tabs
+    // Tabs. Captured tab is hidden when empty to reduce noise for clean state.
     html += `
       <div class="tabs">
         <button class="tab ${view.activeTab === 'now' ? 'active' : ''}" data-action="set-tab" data-tab="now">
-          Now <span class="tab-count">${Math.min(active.length,5)}</span>
+          ${TAB_LABEL.active} <span class="tab-count">${active.length}</span>
         </button>
         <button class="tab ${view.activeTab === 'later' ? 'active' : ''}" data-action="set-tab" data-tab="later">
-          Later <span class="tab-count">${waiting.length}</span>
+          ${TAB_LABEL.waiting} <span class="tab-count">${waiting.length}</span>
         </button>
         <button class="tab ${view.activeTab === 'done' ? 'active' : ''}" data-action="set-tab" data-tab="done">
-          Done <span class="tab-count">${released.length}</span>
+          ${TAB_LABEL.released} <span class="tab-count">${released.length}</span>
         </button>
-        <button class="tab ${view.activeTab === 'inbox' ? 'active' : ''}" data-action="set-tab" data-tab="inbox">
-          Inbox <span class="tab-count">${inbox.length}</span>
-        </button>
+        ${inbox.length ? `
+          <button class="tab ${view.activeTab === 'inbox' ? 'active' : ''}" data-action="set-tab" data-tab="inbox">
+            ${TAB_LABEL.inbox} <span class="tab-count">${inbox.length}</span>
+          </button>
+        ` : ''}
       </div>`;
 
     // Now tab
@@ -2165,36 +2252,35 @@ a { color: inherit; text-decoration: none; }
           html += `<button class="show-more" data-action="show-more">Show ${hidden} more loop${hidden > 1 ? 's' : ''}</button>`;
         }
       } else {
-        html += `<div class="empty-state"><strong>Your list is clear</strong>Capture anything that's taking up space in your head.</div>`;
+        html += `<div class="empty-state"><strong>No active loops — your head is clear</strong>Capture anything that's taking up space.</div>`;
       }
       html += `</div>`;
     }
 
-    // Waiting/Later tab
+    // Parked tab (status='waiting')
     if (view.activeTab === 'later' || view.activeTab === 'waiting') {
       html += `<div class="tab-panel active" id="tab-later">`;
       if (waiting.length) {
         html += `<div class="loop-stack">`;
         waiting.forEach((loop, i) => {
-          const m = kindMeta[loop.kind] || kindMeta.inbox;
           html += `
             <article class="loop-card kind-${loop.kind || 'inbox'}" style="animation-delay:${i*0.04}s">
-              <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
+              <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
               <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '—')}</span></div>
               <div class="loop-card-bottom">
-                <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Return to Now</button>
+                <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Make active</button>
               </div>
             </article>`;
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state"><strong>Nothing waiting</strong>Park things here when the next move isn't yours yet.</div>`;
+        html += `<div class="empty-state"><strong>Nothing parked right now</strong>Park loops here when the next move isn't yours yet — waiting, not forgotten.</div>`;
       }
       html += `</div>`;
     }
 
-    // Released/Done tab
+    // Closed tab (status='released')
     if (view.activeTab === 'done' || view.activeTab === 'released') {
       html += `<div class="tab-panel active" id="tab-done">`;
       if (released.length) {
@@ -2202,22 +2288,22 @@ a { color: inherit; text-decoration: none; }
         released.forEach((loop, i) => {
           html += `
             <article class="loop-card kind-${loop.kind || 'inbox'}" style="animation-delay:${i*0.04}s;opacity:0.7">
-              <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
+              <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title" style="text-decoration:line-through;color:var(--text-2)">${esc(loop.rawText)}</p>
               <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '—')}</span></div>
               <div class="loop-card-bottom">
-                <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Restore</button>
+                <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Reopen</button>
               </div>
             </article>`;
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state"><strong>Nothing released yet</strong>When you close a loop, it rests here.</div>`;
+        html += `<div class="empty-state"><strong>Nothing closed yet</strong>When a loop is done — whether you did it or let it go — close it here.</div>`;
       }
       html += `</div>`;
     }
 
-    // Inbox tab
+    // Captured tab (status='inbox')
     if (view.activeTab === 'inbox') {
       html += `<div class="tab-panel active" id="tab-inbox">`;
       if (inbox.length) {
@@ -2225,7 +2311,7 @@ a { color: inherit; text-decoration: none; }
         inbox.forEach((loop, i) => {
           html += `
             <article class="loop-card kind-inbox" style="animation-delay:${i*0.04}s">
-              <div class="loop-card-top">${chipHtml('inbox')}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
+              <div class="loop-card-top">${chipHtml('inbox')}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
               <div class="loop-card-bottom">
                 <button class="btn-action btn-primary" data-action="clarify-inbox">Clarify</button>
@@ -2234,7 +2320,7 @@ a { color: inherit; text-decoration: none; }
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state"><strong>Inbox is clear</strong>New captures appear here until you clarify them.</div>`;
+        html += `<div class="empty-state"><strong>Nothing captured</strong>Loops you've named but haven't clarified will appear here.</div>`;
       }
       html += `</div>`;
     }
@@ -2255,18 +2341,22 @@ a { color: inherit; text-decoration: none; }
     const closeBtn = `<button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
 
     if (ov.step === 'capture') {
+      const len = (ov.rawText || '').length;
       return `
-        <div class="overlay-card">
+        <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="capture-title">
           <div class="overlay-header">
             <div class="overlay-meta"><div class="overlay-eyebrow">New loop</div><div class="overlay-step">Step 1 of 3</div></div>
             ${closeBtn}
           </div>
-          <h2 class="overlay-title">What's on your mind?</h2>
+          <h2 class="overlay-title" id="capture-title">What's on your mind?</h2>
           <p class="overlay-subtitle">Write it down as it arrives. One thought — don't plan, just capture.</p>
-          <textarea class="big-input" id="capture-input" placeholder="One unfinished thing…" autofocus>${esc(ov.rawText)}</textarea>
-          <p class="input-hint">One thought. Don't start a project here.</p>
+          <textarea class="big-input" id="capture-input" placeholder="One unfinished thing…" maxlength="${MAX_LOOP_TEXT_LEN}" aria-describedby="capture-counter">${esc(ov.rawText)}</textarea>
+          <div class="input-hint-row">
+            <p class="input-hint">One thought. Don't start a project here.</p>
+            <span class="char-counter" id="capture-counter" aria-live="polite">${len}/${MAX_LOOP_TEXT_LEN}</span>
+          </div>
           <div class="overlay-actions">
-            <button class="btn btn-ghost" data-action="save-for-later">Save to inbox</button>
+            <button class="btn btn-ghost" data-action="save-for-later">Save as captured</button>
             <button class="btn btn-primary" data-action="capture-next" ${ov.rawText.trim() ? '' : 'disabled'}>Continue →</button>
           </div>
         </div>`;
@@ -2284,12 +2374,12 @@ a { color: inherit; text-decoration: none; }
           </button>`;
       }).join('');
       return `
-        <div class="overlay-card">
+        <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="kind-title">
           <div class="overlay-header">
             <div class="overlay-meta"><div class="overlay-eyebrow">Clarify</div><div class="overlay-step">Step 2 of 3</div></div>
             ${closeBtn}
           </div>
-          <h2 class="overlay-title">What kind of loop is this?</h2>
+          <h2 class="overlay-title" id="kind-title">What kind of loop is this?</h2>
           <div class="kind-grid">${opts}</div>
           <div class="overlay-actions">
             <button class="btn btn-ghost" data-action="capture-back">← Back</button>
@@ -2300,16 +2390,20 @@ a { color: inherit; text-decoration: none; }
 
     if (ov.step === 'detail') {
       const m = kindMeta[ov.kind] || kindMeta.inbox;
+      const len = (ov.promptAnswer || '').length;
       return `
-        <div class="overlay-card">
+        <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="detail-title">
           <div class="overlay-header">
             <div class="overlay-meta"><div class="overlay-eyebrow">${m.label}</div><div class="overlay-step">Step 3 of 3</div></div>
             ${closeBtn}
           </div>
-          <h2 class="overlay-title">${esc(m.question)}</h2>
+          <h2 class="overlay-title" id="detail-title">${esc(m.question)}</h2>
           <p class="overlay-subtitle">${esc(m.helper)}</p>
-          <textarea class="big-input" id="detail-input" placeholder="One clear next move…" style="min-height:90px">${esc(ov.promptAnswer)}</textarea>
-          <p class="input-hint">Optional — you can always add this later.</p>
+          <textarea class="big-input" id="detail-input" placeholder="One clear next move…" style="min-height:90px" maxlength="${MAX_LOOP_TEXT_LEN}" aria-describedby="detail-counter">${esc(ov.promptAnswer)}</textarea>
+          <div class="input-hint-row">
+            <p class="input-hint">Optional — you can always add this later.</p>
+            <span class="char-counter" id="detail-counter" aria-live="polite">${len}/${MAX_LOOP_TEXT_LEN}</span>
+          </div>
           <div class="overlay-actions">
             <button class="btn btn-ghost" data-action="kind-back">← Back</button>
             <button class="btn btn-subtle" data-action="finish-capture-skip">Skip</button>
@@ -2328,7 +2422,7 @@ a { color: inherit; text-decoration: none; }
     const active = loop.status === 'active';
     const released = loop.status === 'released';
     return `
-      <div class="overlay-card">
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Loop options">
         <div class="overlay-header">
           <div class="overlay-meta">
             <div class="overlay-eyebrow">Loop</div>
@@ -2352,7 +2446,7 @@ a { color: inherit; text-decoration: none; }
           </button>` : ''}
           ${waiting || released ? `<button class="menu-item" data-action="restore-active" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Return to Now
+            ${released ? 'Reopen' : 'Make active'}
           </button>` : ''}
           ${active ? `<button class="menu-item" data-action="move-released" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 3l-4 4 4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2381,7 +2475,7 @@ a { color: inherit; text-decoration: none; }
       </button>`;
     }).join('');
     return `
-      <div class="overlay-card">
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Change kind">
         <div class="overlay-header">
           <div class="overlay-meta"><div class="overlay-eyebrow">Change kind</div></div>
           <button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
@@ -2391,57 +2485,20 @@ a { color: inherit; text-decoration: none; }
       </div>`;
   }
 
-  // ── EXPORT / IMPORT ──
-  function exportData() {
-    const exportObj = { version: 2, exportedAt: nowIso(), loops: data.loops };
-    const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `open-loops-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast('Exported.');
-  }
-
-  function importData(file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const parsed = JSON.parse(e.target.result);
-        if (!parsed || !Array.isArray(parsed.loops)) throw new Error('Invalid format');
-        const existingIds = new Set(data.loops.map(l => l.id));
-        const incoming = parsed.loops.map(sanitize);
-        let added = 0;
-        incoming.forEach(l => {
-          if (!existingIds.has(l.id)) { data.loops.unshift(l); added++; }
-        });
-        save();
-        renderAll();
-        toast(`Imported ${added} loop${added !== 1 ? 's' : ''}.`);
-      } catch(err) {
-        toast('Import failed: invalid or unrecognised file.');
-      }
-    };
-    reader.readAsText(file);
-  }
-
   function renderSync() {
     const loggedIn = Sync.isLoggedIn();
     const hasError = view.syncStatus === 'error';
     const isSyncing = view.syncStatus === 'syncing';
     return `
-      <div class="overlay-card">
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="sync-title">
         <div class="overlay-header">
           <div class="overlay-meta"><div class="overlay-eyebrow">Sync</div><div class="overlay-step">Cross-device</div></div>
-          <button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+          <button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
-        <h2 class="overlay-title">Keep loops everywhere.</h2>
-        <p class="overlay-subtitle">Your loops save on this device first. Add an email to keep them in sync everywhere.</p>
+        <h2 class="overlay-title" id="sync-title">Keep loops everywhere.</h2>
+        <p class="overlay-subtitle">Sign in with your email. Your loops will sync automatically across devices.</p>
         ${!hasSupabaseCfg() ? `
-          <div class="sync-info">To enable sync, edit <code>open-loops-config.js</code> with your Supabase project URL and anon key, then run <code>open-loops-supabase.sql</code> in the Supabase SQL editor. See <strong>SYNC-SETUP.md</strong> for step-by-step instructions.</div>
+          <div class="sync-info">To enable sync, edit <code>open-loops-config.js</code> with your Supabase project URL and publishable key, then run <code>open-loops-supabase.sql</code> in the Supabase SQL editor. See the README for full setup instructions.</div>
         ` : loggedIn ? `
           ${hasError ? `
             <div class="sync-info" style="color:#f88;border-color:rgba(255,68,119,0.15);background:rgba(255,68,119,0.06)">Last sync didn't go through. Your changes are safe on this device.</div>
@@ -2456,26 +2513,104 @@ a { color: inherit; text-decoration: none; }
             <button class="btn btn-ghost" data-action="close-overlay">Close</button>
           </div>
         ` : `
-          <div class="sync-info">Enter your email — you'll receive a magic link. No password needed.</div>
+          <div class="sync-info">Enter your email — we'll send a magic link. No password needed.</div>
           <div class="email-row">
             <input type="email" class="email-input" id="sync-email" placeholder="you@example.com" autocomplete="email">
             <button class="btn btn-primary" data-action="send-magic-link">Send link</button>
           </div>
+          <div class="overlay-actions"><button class="btn btn-ghost" data-action="close-overlay">Close</button></div>
         `}
-        ${!loggedIn ? `<div class="overlay-actions"><button class="btn btn-ghost" data-action="close-overlay">Close</button></div>` : ''}
-        <div style="border-top:1px solid var(--border-soft);margin-top:16px;padding-top:16px;">
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);margin-bottom:10px;font-weight:500;">Local data</div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-ghost btn-sm" data-action="export-data" style="flex:1;">↓ Export JSON</button>
-            <button class="btn btn-ghost btn-sm" data-action="import-data" style="flex:1;">↑ Import JSON</button>
+      </div>`;
+  }
+
+  function renderSettingsLegacy() {
+    const cap = view.loopCap || DEFAULT_LOOP_CAP;
+    return `
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="overlay-header">
+          <div class="overlay-meta"><div class="overlay-eyebrow">Settings</div></div>
+          <button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        </div>
+        <h2 class="overlay-title" id="settings-title">Settings</h2>
+
+        <section class="settings-section">
+          <div class="settings-label">Theme</div>
+          <div class="settings-helper">Choose the view that feels calmest right now.</div>
+          <div class="seg-row" role="group" aria-label="Theme">
+            <button type="button" data-action="set-theme" data-theme="dark" class="${view.theme === 'dark' ? 'active' : ''}" aria-pressed="${view.theme === 'dark'}">Dark</button>
+            <button type="button" data-action="set-theme" data-theme="light" class="${view.theme === 'light' ? 'active' : ''}" aria-pressed="${view.theme === 'light'}">Light</button>
           </div>
-          <p style="font-size:11px;color:var(--text-3);margin:8px 0 0;line-height:1.5;">Export saves all your loops to a JSON file. Import merges loops from a previously exported file.</p>
+        </section>
+
+        <div class="settings-row">
+          <div class="settings-row-label">
+            <div class="settings-row-title">Active loop cap</div>
+            <div class="settings-row-help">How many loops to show at once before "Show more". The constraint is the feature — keep it small.</div>
+          </div>
+          <div class="settings-cap-group" role="group" aria-label="Active loop cap">
+            ${ALLOWED_LOOP_CAPS.map(n => `
+              <button class="settings-cap-btn ${cap === n ? 'selected' : ''}" type="button" data-action="set-loop-cap" data-cap="${n}" aria-pressed="${cap === n}">${n}</button>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-row-label">
+            <div class="settings-row-title">Tutorial</div>
+            <div class="settings-row-help">${onboarded ? 'Show the four-step intro again.' : 'Walk through the four-step intro.'}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" data-action="replay-onboarding">Show tutorial</button>
+        </div>
+
+        <div class="overlay-actions">
+          <button class="btn btn-ghost" data-action="close-overlay">Done</button>
         </div>
       </div>`;
   }
 
   // ── AUTH GATE ──
   // Used for opt-in sign-in display. No longer shown automatically on load.
+  function renderSettings() {
+    const cap = view.loopCap || DEFAULT_LOOP_CAP;
+    return `
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="overlay-header">
+          <div class="overlay-meta"><div class="overlay-eyebrow">Settings</div></div>
+          <button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        </div>
+        <h2 class="overlay-title" id="settings-title">Settings</h2>
+
+        <section class="settings-section">
+          <div class="settings-label">Theme</div>
+          <div class="settings-helper">Choose the view that feels calmest right now.</div>
+          <div class="seg-row" role="group" aria-label="Theme">
+            <button type="button" data-action="set-theme" data-theme="dark" class="${view.theme === 'dark' ? 'active' : ''}" aria-pressed="${view.theme === 'dark'}">Dark</button>
+            <button type="button" data-action="set-theme" data-theme="light" class="${view.theme === 'light' ? 'active' : ''}" aria-pressed="${view.theme === 'light'}">Light</button>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <div class="settings-label">Active loop cap</div>
+          <p class="settings-helper">How many loops to show in the Active view before "Show more".</p>
+          <div class="seg-row" role="group" aria-label="Active loop cap">
+            ${ALLOWED_LOOP_CAPS.map(n => `
+              <button type="button" data-action="set-loop-cap" data-cap="${n}" class="${cap === n ? 'active' : ''}" aria-pressed="${cap === n}">${n}</button>
+            `).join('')}
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <div class="settings-label">Tutorial</div>
+          <p class="settings-helper">Show the four-step intro again whenever you want a reset.</p>
+          <button class="btn btn-ghost" data-action="reset-onboarding">Show tutorial again</button>
+        </section>
+
+        <div class="overlay-actions">
+          <button class="btn btn-ghost" data-action="close-overlay">Done</button>
+        </div>
+      </div>`;
+  }
+
   function renderAuthGate() {
     const root = document.getElementById('auth-gate-root');
     if (!root) return;
@@ -2521,7 +2656,7 @@ a { color: inherit; text-decoration: none; }
               <div class="auth-gate-sent-body">We sent a magic link to <strong>${esc(view.authGateEmail)}</strong>.<br>Tap the link to sign in — no password needed.</div>
             </div>
             <div class="auth-gate-hint" style="margin-top:24px">
-              Wrong email? <span style="color:var(--text-2);text-decoration:underline;cursor:pointer" data-action="auth-gate-reset">Try again.</span>
+              Wrong email? <button type="button" class="inline-link" data-action="auth-gate-reset">Try again</button>
             </div>
           </div>
         </div>`;
@@ -2544,7 +2679,7 @@ a { color: inherit; text-decoration: none; }
           <p class="auth-gate-sub">Write down what's unfinished. Sort it. Let it go when it's done.</p>
           <div class="auth-gate-email-row">
             <input type="email" class="auth-gate-input" id="auth-gate-email" placeholder="your@email.com" autocomplete="email" value="${esc(view.authGateEmail)}">
-            <button class="auth-gate-btn" id="auth-gate-btn" data-action="auth-gate-send">Sign in</button>
+            <button class="auth-gate-btn" id="auth-gate-btn" data-action="auth-gate-send">Send link</button>
           </div>
           <p class="auth-gate-hint">We'll email you a sign-in link. No password.</p>
         </div>
@@ -2565,27 +2700,29 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── ONBOARDING ──
-  // 4-step micro guided tutorial shown once after first sign-in.
-  const ONBOARDING_STEPS = [
+  // 4-step micro guided tutorial shown once after first sign-in and
+  // replayable from Settings. Each step maps to one stage in the loop
+  // lifecycle: Capture → Activate → Park → Close.
+  const ONBOARDING_STEPS_OLD = [
     {
       eyebrow: '1 of 4',
-      title: 'Name what\'s unfinished.',
-      body: 'An open loop is anything your brain won\'t let go of — a task, a decision, a conversation you need to have. Write it down. That\'s step one.',
+      title: 'Capture.',
+      body: 'A thought entered your head and won\'t let go. Write it down. That act alone — naming it — quiets it.',
       visual: `
         <div class="onboarding-visual">
-          <div class="onboarding-visual-row"><span class="kind-chip do"><span class="kind-dot"></span>Do</span><span>Reply to the client email</span></div>
-          <div class="onboarding-visual-row"><span class="kind-chip decide"><span class="kind-dot"></span>Decide</span><span>Choose the new laptop</span></div>
-          <div class="onboarding-visual-row"><span class="kind-chip ask"><span class="kind-dot"></span>Ask</span><span>Check in with the team</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Reply to the contractor quote</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Choose a new laptop</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Check in with Sarah</span></div>
         </div>`,
       next: 'Next',
     },
     {
       eyebrow: '2 of 4',
-      title: 'Give it a type.',
-      body: 'Every loop needs one thing from you. Pick what fits — Do, Decide, Ask, Schedule, or Let go. That one word makes it actionable.',
+      title: 'Activate.',
+      body: 'Give it a kind — Do, Decide, Ask, Schedule, or Let go. Naming the kind of attention it needs is half the work.',
       visual: `
         <div class="onboarding-visual">
-          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
             <span class="kind-chip do"><span class="kind-dot"></span>Do</span>
             <span class="kind-chip decide"><span class="kind-dot"></span>Decide</span>
             <span class="kind-chip ask"><span class="kind-dot"></span>Ask</span>
@@ -2597,21 +2734,72 @@ a { color: inherit; text-decoration: none; }
     },
     {
       eyebrow: '3 of 4',
-      title: 'Work through them.',
-      body: 'Press P to enter Processing Mode. One loop at a time — act on it, reclassify it, or release it. No more juggling everything at once.',
+      title: 'Park what isn\'t yours.',
+      body: 'If the next move belongs to someone else — or to a later day — park it. It\'s waiting, not forgotten. Your head doesn\'t have to hold it.',
       visual: `
         <div class="onboarding-visual" style="text-align:center;padding:18px 20px;">
-          <div style="font-size:13px;color:var(--text-2);line-height:1.8;"><kbd style="background:var(--surface-3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;">P</kbd> &nbsp;process &nbsp;&nbsp; <kbd style="background:var(--surface-3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;">C</kbd> &nbsp;capture &nbsp;&nbsp; <kbd style="background:var(--surface-3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;">Esc</kbd> &nbsp;close</div>
+          <div style="font-size:13px;color:var(--text-2);line-height:1.7;">Parked loops stay ready.<br>They come back when the move becomes yours again.</div>
         </div>`,
       next: 'Next',
     },
     {
       eyebrow: '4 of 4',
-      title: 'Release it when it\'s done.',
-      body: 'Loops don\'t disappear — they move to Released. Fewer things open means less weight. That\'s the whole point.',
+      title: 'Close.',
+      body: 'When a loop is done — whether you did it or let it go — close it. The point isn\'t the record. The point is relief.',
       visual: `
         <div class="onboarding-visual" style="text-align:center;padding:18px 20px;">
-          <div style="font-size:13px;color:var(--text-2);">Released loops are archived, not deleted.<br>You can always look back.</div>
+          <div style="font-size:13px;color:var(--text-2);line-height:1.7;">Closed loops stay searchable but quiet.<br>Your head gets the space back.</div>
+        </div>`,
+      next: 'Start capturing',
+    },
+  ];
+
+  const ONBOARDING_STEPS = [
+    {
+      eyebrow: '1 of 4',
+      title: 'Capture.',
+      body: 'A thought entered your head. Write it down. That act alone quiets it.',
+      visual: `
+        <div class="onboarding-visual">
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Reply to the contractor quote</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Choose a new laptop</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Captured</span><span>Check in with Sarah</span></div>
+        </div>`,
+      next: 'Next',
+    },
+    {
+      eyebrow: '2 of 4',
+      title: 'Activate.',
+      body: 'Give it a kind — Do, Decide, Ask, Schedule, Let go. Naming the attention is half the work.',
+      visual: `
+        <div class="onboarding-visual">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+            <span class="kind-chip do"><span class="kind-dot"></span>Do</span>
+            <span class="kind-chip decide"><span class="kind-dot"></span>Decide</span>
+            <span class="kind-chip ask"><span class="kind-dot"></span>Ask</span>
+            <span class="kind-chip schedule"><span class="kind-dot"></span>Schedule</span>
+            <span class="kind-chip let_go"><span class="kind-dot"></span>Let go</span>
+          </div>
+        </div>`,
+      next: 'Next',
+    },
+    {
+      eyebrow: '3 of 4',
+      title: 'Park what isn\'t yours.',
+      body: 'If the next move belongs to someone else, or to a later day, park it. It\'s waiting, not forgotten.',
+      visual: `
+        <div class="onboarding-visual" style="text-align:center;padding:18px 20px;">
+          <div style="font-size:13px;color:var(--text-2);line-height:1.7;">Parked loops sit quietly until they're yours again.</div>
+        </div>`,
+      next: 'Next',
+    },
+    {
+      eyebrow: '4 of 4',
+      title: 'Close.',
+      body: 'When a loop is done — whether you did it or let it go — close it. The point is relief.',
+      visual: `
+        <div class="onboarding-visual" style="text-align:center;padding:18px 20px;">
+          <div style="font-size:13px;color:var(--text-2);line-height:1.7;">Closed loops are kept, not deleted.<br>You can always look back.</div>
         </div>`,
       next: 'Start capturing',
     },
@@ -2647,7 +2835,7 @@ a { color: inherit; text-decoration: none; }
             <button class="onboarding-btn-primary" data-action="onboarding-next">${s.next}</button>
             ${step > 0 ? `<button class="onboarding-btn-ghost" data-action="onboarding-prev">Back</button>` : ''}
           </div>
-          ${!isLast ? `<div class="onboarding-skip"><a data-action="onboarding-skip">Skip tutorial</a></div>` : ''}
+          ${!isLast ? `<div class="onboarding-skip"><button type="button" class="inline-link" data-action="onboarding-skip">Skip tutorial</button></div>` : ''}
         </div>
       </div>`;
   }
@@ -2705,16 +2893,34 @@ a { color: inherit; text-decoration: none; }
         ${o.label}
       </button>`).join('');
     return `
-      <div class="overlay-card">
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="primary-action-title">
         <div class="overlay-header">
           <div class="overlay-meta"><div class="overlay-eyebrow">${m.label}</div></div>
           <button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
-        <h2 class="overlay-title" style="font-size:1.4rem">${esc(cfg.q)}</h2>
+        <h2 class="overlay-title" id="primary-action-title" style="font-size:1.4rem">${esc(cfg.q)}</h2>
         <p class="overlay-subtitle">${esc(cfg.hint)}</p>
         <p style="font-size:13px;color:var(--text-2);margin:0 0 16px;padding:10px 12px;background:var(--surface-2);border-radius:8px;line-height:1.5">${esc(loop.rawText)}</p>
         <div class="menu-list">${opts}</div>
         <div class="overlay-actions"><button class="btn btn-ghost" data-action="close-overlay">Cancel</button></div>
+      </div>`;
+  }
+
+  function renderConfirmDelete(loop) {
+    if (!loop) return '';
+    return `
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-title">
+        <div class="overlay-header">
+          <div class="overlay-meta"><div class="overlay-eyebrow">Delete loop</div></div>
+          <button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        </div>
+        <h2 class="overlay-title" id="confirm-delete-title" style="font-size:1.4rem">Delete this loop?</h2>
+        <p class="overlay-subtitle">You can undo for a few seconds after. If you'd rather keep it archived, close it instead.</p>
+        <p style="font-size:13px;color:var(--text-2);margin:0 0 20px;padding:10px 12px;background:var(--surface-2);border-radius:8px;line-height:1.5">${esc(loop.rawText)}</p>
+        <div class="overlay-actions">
+          <button class="btn btn-ghost" data-action="close-overlay">Cancel</button>
+          <button class="btn btn-primary" data-action="confirm-delete" data-loop-id="${esc(loop.id)}" style="background:#e85a5a;color:#fff">Delete</button>
+        </div>
       </div>`;
   }
 
@@ -2723,16 +2929,17 @@ a { color: inherit; text-decoration: none; }
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
 
-    const nowLoops = byStatus('active').filter(l => l.kind);
+    const nowLoops = byStatus('active');
+    const typedNowLoops = nowLoops.filter(l => l.kind);
     const laterLoops = byStatus('waiting');
     const doneLoops = byStatus('released');
     const inboxLoops = byStatus('inbox');
 
     const stats = [
-      { label: 'Do', count: nowLoops.filter(l => l.kind === 'do').length, color: 'var(--do)' },
-      { label: 'Decide', count: nowLoops.filter(l => l.kind === 'decide').length, color: 'var(--decide)' },
-      { label: 'Ask', count: nowLoops.filter(l => l.kind === 'ask').length, color: 'var(--ask)' },
-      { label: 'Schedule', count: nowLoops.filter(l => l.kind === 'schedule').length, color: 'var(--schedule)' },
+      { label: 'Do', count: typedNowLoops.filter(l => l.kind === 'do').length, color: 'var(--do)' },
+      { label: 'Decide', count: typedNowLoops.filter(l => l.kind === 'decide').length, color: 'var(--decide)' },
+      { label: 'Ask', count: typedNowLoops.filter(l => l.kind === 'ask').length, color: 'var(--ask)' },
+      { label: 'Schedule', count: typedNowLoops.filter(l => l.kind === 'schedule').length, color: 'var(--schedule)' },
     ];
 
     sidebar.innerHTML = `
@@ -2755,21 +2962,23 @@ a { color: inherit; text-decoration: none; }
         <div class="sidebar-title">Views</div>
         <div class="sidebar-tabs">
           <div class="sidebar-tab ${view.activeTab === 'now' ? 'active' : ''}" data-action="set-tab" data-tab="now">
-            <span>Now</span>
+            <span>${TAB_LABEL.active}</span>
             <span class="tab-count">${nowLoops.length}</span>
           </div>
           <div class="sidebar-tab ${view.activeTab === 'later' ? 'active' : ''}" data-action="set-tab" data-tab="later">
-            <span>Later</span>
+            <span>${TAB_LABEL.waiting}</span>
             <span class="tab-count">${laterLoops.length}</span>
           </div>
           <div class="sidebar-tab ${view.activeTab === 'done' ? 'active' : ''}" data-action="set-tab" data-tab="done">
-            <span>Done</span>
+            <span>${TAB_LABEL.released}</span>
             <span class="tab-count">${doneLoops.length}</span>
           </div>
-          <div class="sidebar-tab ${view.activeTab === 'inbox' ? 'active' : ''}" data-action="set-tab" data-tab="inbox">
-            <span>Inbox</span>
-            <span class="tab-count">${inboxLoops.length}</span>
-          </div>
+          ${inboxLoops.length ? `
+            <div class="sidebar-tab ${view.activeTab === 'inbox' ? 'active' : ''}" data-action="set-tab" data-tab="inbox">
+              <span>${TAB_LABEL.inbox}</span>
+              <span class="tab-count">${inboxLoops.length}</span>
+            </div>
+          ` : ''}
         </div>
       </div>
       
@@ -2785,17 +2994,19 @@ a { color: inherit; text-decoration: none; }
     const nav = document.getElementById('bottom-nav');
     if (!nav) return;
     const counts = {
-      now: Math.min(byStatus('active').length, 5),
+      now: byStatus('active').length,
       later: byStatus('waiting').length,
       done: byStatus('released').length,
       inbox: byStatus('inbox').length
     };
-    const items = [
-      { key: 'now', label: 'Now', icon: '<path d="M9 3.5A4.5 4.5 0 1 1 5.8 11.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 3.5v3h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' },
-      { key: 'later', label: 'Later', icon: '<circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 6.8v2.6l1.7 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' },
-      { key: 'done', label: 'Done', icon: '<path d="M4.8 9.3 7.4 12l5.8-6.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' },
-      { key: 'inbox', label: 'Inbox', icon: '<path d="M3.5 5.5h11l-1 7h-9l-1-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.5 8.8h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' }
+    const allItems = [
+      { key: 'now',   label: TAB_LABEL.active,   icon: '<path d="M9 3.5A4.5 4.5 0 1 1 5.8 11.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 3.5v3h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' },
+      { key: 'later', label: TAB_LABEL.waiting,  icon: '<circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 6.8v2.6l1.7 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' },
+      { key: 'done',  label: TAB_LABEL.released, icon: '<path d="M4.8 9.3 7.4 12l5.8-6.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' },
+      { key: 'inbox', label: TAB_LABEL.inbox,    icon: '<path d="M3.5 5.5h11l-1 7h-9l-1-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.5 8.8h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' }
     ];
+    // Hide the Captured tab when empty — reduces mobile nav noise.
+    const items = allItems.filter(item => item.key !== 'inbox' || counts.inbox > 0);
     nav.innerHTML = items.map(item => `
       <button class="bottom-nav-btn ${view.activeTab === item.key ? 'active' : ''}" type="button" data-action="set-tab" data-tab="${item.key}">
         ${counts[item.key] ? `<span class="bottom-nav-badge">${counts[item.key]}</span>` : ''}
@@ -2806,137 +3017,19 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── RENDER CONTEXT PANEL ──
+  // The context panel previously showed keyboard shortcuts. With shortcuts
+  // removed it has no content, and its container is hidden via CSS.
   function renderContextPanel() {
     const panel = document.getElementById('context-panel');
-    if (!panel) return;
-
-    if (view.processingMode) {
-      panel.innerHTML = `
-        <div class="context-panel-section">
-          <div class="context-panel-title">Processing Mode</div>
-          <p style="font-size:12px;color:var(--text-2);line-height:1.6;margin-bottom:16px;">
-            Focus on one loop at a time. Use keyboard shortcuts for quick actions.
-          </p>
-        </div>
-        
-        <div class="context-panel-section">
-          <div class="context-panel-title">Shortcuts</div>
-          <div class="kbd-shortcuts">
-            <div class="kbd-row"><span>Next loop</span><span class="kbd">J</span></div>
-            <div class="kbd-row"><span>Previous loop</span><span class="kbd">K</span></div>
-            <div class="kbd-row"><span>Do</span><span class="kbd">1</span></div>
-            <div class="kbd-row"><span>Decide</span><span class="kbd">2</span></div>
-            <div class="kbd-row"><span>Ask</span><span class="kbd">3</span></div>
-            <div class="kbd-row"><span>Schedule</span><span class="kbd">4</span></div>
-            <div class="kbd-row"><span>Let go</span><span class="kbd">5</span></div>
-            <div class="kbd-row"><span>Edit</span><span class="kbd">E</span></div>
-            <div class="kbd-row"><span>Exit mode</span><span class="kbd">P</span></div>
-          </div>
-        </div>
-      `;
-    } else {
-      panel.innerHTML = `
-        <div class="context-panel-section">
-          <div class="context-panel-title">Keyboard Shortcuts</div>
-          <div class="kbd-shortcuts">
-            <div class="kbd-row"><span>Capture</span><span class="kbd">C</span></div>
-            <div class="kbd-row"><span>Processing mode</span><span class="kbd">P</span></div>
-            <div class="kbd-row"><span>Close overlay</span><span class="kbd">Esc</span></div>
-          </div>
-        </div>
-        
-        <div class="context-panel-section">
-          <div class="context-panel-title">Quick Tips</div>
-          <p style="font-size:12px;color:var(--text-2);line-height:1.6;">
-            Press <span class="kbd" style="display:inline-block;padding:2px 6px;margin:0 2px;">P</span> to enter processing mode for focused loop review.
-          </p>
-        </div>
-      `;
-    }
+    if (panel) panel.innerHTML = '';
   }
 
   // ── RENDER MAIN ──
   function renderMain() {
     const main = document.getElementById('app-main');
-    const app = document.getElementById('app');
-    
-    if (view.processingMode) {
-      if (app) app.classList.add('processing-mode');
-      if (main) main.innerHTML = renderProcessing();
-    } else {
-      if (app) app.classList.remove('processing-mode');
-      if (main) main.innerHTML = renderHome();
-    }
-    
+    if (main) main.innerHTML = renderHome();
     focusInlineEdit();
   }
-
-  function renderProcessing() {
-    const loops = byStatus('active').filter(l => l.kind);
-    
-    if (!loops.length) {
-      return `
-        <div class="processing-view">
-          <div class="processing-header">
-            <div class="processing-title">No loops to process</div>
-            <p style="text-align:center;color:var(--text-2);font-size:14px;">
-              Capture something to get started.
-            </p>
-          </div>
-        </div>
-      `;
-    }
-    
-    // Ensure current index is valid
-    if (view.currentLoopIndex >= loops.length) view.currentLoopIndex = 0;
-    if (view.currentLoopIndex < 0) view.currentLoopIndex = loops.length - 1;
-    
-    const loop = loops[view.currentLoopIndex];
-    const m = kindMeta[loop.kind] || kindMeta.inbox;
-    
-    return `
-      <div class="processing-view">
-        <div class="processing-header">
-          <div class="processing-count">Loop ${view.currentLoopIndex + 1} of ${loops.length}</div>
-          <div class="processing-title">Processing Mode</div>
-        </div>
-        
-        <div class="processing-card">
-          <div style="margin-bottom:16px;">${chipHtml(loop.kind)}</div>
-          <div class="processing-loop-text">${esc(loop.rawText)}</div>
-          ${loop.promptAnswer ? `<p style="font-size:13px;color:var(--text-2);margin-bottom:20px;padding:12px;background:var(--surface-2);border-radius:8px;">${esc(loop.promptAnswer)}</p>` : ''}
-          
-          <div class="processing-actions">
-            <button class="processing-action-btn do" data-action="processing-complete" data-loop-id="${esc(loop.id)}">
-              Done
-              <span class="processing-action-label">1</span>
-            </button>
-            <button class="processing-action-btn decide" data-action="processing-reclassify" data-loop-id="${esc(loop.id)}" data-kind="decide">
-              ${kindMeta.decide.label}
-              <span class="processing-action-label">2</span>
-            </button>
-            <button class="processing-action-btn ask" data-action="processing-reclassify" data-loop-id="${esc(loop.id)}" data-kind="ask">
-              ${kindMeta.ask.label}
-              <span class="processing-action-label">3</span>
-            </button>
-            <button class="processing-action-btn schedule" data-action="processing-reclassify" data-loop-id="${esc(loop.id)}" data-kind="schedule">
-              ${kindMeta.schedule.label}
-              <span class="processing-action-label">4</span>
-            </button>
-            <button class="processing-action-btn let_go" data-action="processing-release" data-loop-id="${esc(loop.id)}">
-              ${kindMeta.let_go.label}
-              <span class="processing-action-label">5</span>
-            </button>
-          </div>
-        </div>
-        
-        <div class="processing-skip">
-          <button class="processing-skip-btn" data-action="processing-skip">Skip this loop</button>
-        </div>
-      </div>
-    `;
-  }
-
 
   function focusInlineEdit() {
     if (view.inlineEditId) {
@@ -2952,19 +3045,27 @@ a { color: inherit; text-decoration: none; }
     if (!ov) { root.innerHTML = ''; return; }
 
     let inner = '';
-    if (ov.type === 'capture') inner = renderCapture(ov);
-    else if (ov.type === 'menu') inner = renderMenu(getLoop(ov.loopId));
-    else if (ov.type === 'change-kind') inner = renderChangekind(getLoop(ov.loopId));
-    else if (ov.type === 'sync') inner = renderSync();
+    if      (ov.type === 'capture')        inner = renderCapture(ov);
+    else if (ov.type === 'menu')           inner = renderMenu(getLoop(ov.loopId));
+    else if (ov.type === 'change-kind')    inner = renderChangekind(getLoop(ov.loopId));
+    else if (ov.type === 'sync')           inner = renderSync();
+    else if (ov.type === 'settings')       inner = renderSettings();
     else if (ov.type === 'primary-action') inner = renderPrimaryAction(getLoop(ov.loopId));
+    else if (ov.type === 'confirm-delete') inner = renderConfirmDelete(getLoop(ov.loopId));
 
     root.innerHTML = `
       <div class="overlay-backdrop" data-action="close-overlay"></div>
       <div class="overlay-panel">${inner}</div>`;
 
-    // Focus first input
-    const firstInput = root.querySelector('textarea, input[type="email"]');
-    if (firstInput) setTimeout(() => firstInput.focus(), 50);
+    // Focus first input/button so keyboard users don't have to hunt.
+    const firstInput = root.querySelector('textarea, input[type="email"], input[type="text"]');
+    if (firstInput) {
+      setTimeout(() => firstInput.focus(), 50);
+    } else {
+      // No text input — focus the first actionable button instead.
+      const firstBtn = root.querySelector('.overlay-card button:not([data-action="close-overlay"])');
+      if (firstBtn) setTimeout(() => firstBtn.focus(), 50);
+    }
   }
 
   function renderHeader() {
@@ -2998,41 +3099,27 @@ a { color: inherit; text-decoration: none; }
     renderAll();
   }
 
-  function moveToNextLoop() {
-    const loops = byStatus('active').filter(l => l.kind);
-    if (!loops.length) {
-      view.processingMode = false;
-      renderAll();
-      return;
-    }
-    view.currentLoopIndex++;
-    if (view.currentLoopIndex >= loops.length) {
-      view.currentLoopIndex = 0;
-    }
-    renderMain();
-    renderContextPanel();
-  }
-
-  function moveToPrevLoop() {
-    const loops = byStatus('active').filter(l => l.kind);
-    if (!loops.length) return;
-    view.currentLoopIndex--;
-    if (view.currentLoopIndex < 0) {
-      view.currentLoopIndex = loops.length - 1;
-    }
-    renderMain();
-    renderContextPanel();
-  }
-
-
   function closeOverlay() {
+    const opener = view.overlayOpenerEl;
     view.overlay = null;
     renderOverlay();
+    view.overlayOpenerEl = null;
+    if (opener && document.contains(opener)) {
+      setTimeout(() => {
+        if (document.contains(opener)) opener.focus();
+      }, 0);
+    }
+  }
+
+  function rememberOverlayOpener(el) {
+    if (!view.overlay && el && typeof el.focus === 'function') {
+      view.overlayOpenerEl = el;
+    }
   }
 
   // ── MUTATION GUARD ──
-  // App is local-first: all mutations are always allowed.
-  // Sync happens in the background when the user is signed in.
+  // Sign-in is required to capture or modify loops. Unauthenticated users
+  // see the auth gate and cannot mutate state.
   function requireLogin() {
     if (Sync.isLoggedIn()) return false;
     toast('Sign in to save your loops.');
@@ -3063,7 +3150,9 @@ a { color: inherit; text-decoration: none; }
         view.authGateSent = true;
         renderAuthGate();
       } catch(err) {
-        if (btn) { btn.disabled = false; btn.textContent = 'Send magic link'; }
+        // Keep label consistent with initial state ("Send link") so repeated
+        // attempts don't look like a different button.
+        if (btn) { btn.disabled = false; btn.textContent = 'Send link'; }
         toast(err.message || 'Could not send link. Try again.');
       }
       return;
@@ -3106,6 +3195,7 @@ a { color: inherit; text-decoration: none; }
     // FAB
     if (action === 'open-capture') {
       if (requireLogin()) return;
+      rememberOverlayOpener(el);
       view.overlay = { type: 'capture', step: 'capture', rawText: '', kind: null, promptAnswer: '', sourceId: null };
       renderOverlay();
       return;
@@ -3115,12 +3205,12 @@ a { color: inherit; text-decoration: none; }
     if (action === 'continue-reentry') {
       const l = suggested();
       if (l) { view.highlightedId = l.id; data.lastLoopId = l.id; }
-      view.reentryDismissedFor = l?.id || null;
+      saveReentryDismissed(l?.id || null);
       renderMain();
       return;
     }
     if (action === 'dismiss-reentry') {
-      view.reentryDismissedFor = suggested()?.id || null;
+      saveReentryDismissed(suggested()?.id || null);
       renderMain();
       return;
     }
@@ -3129,6 +3219,7 @@ a { color: inherit; text-decoration: none; }
     if (action === 'clarify-inbox') {
       const next = byStatus('inbox')[0];
       if (next) {
+        rememberOverlayOpener(el);
         view.overlay = { type: 'capture', step: 'kind', rawText: next.rawText, kind: null, promptAnswer: next.promptAnswer || '', sourceId: next.id };
         renderOverlay();
       }
@@ -3182,7 +3273,7 @@ a { color: inherit; text-decoration: none; }
         else view.activeTab = 'now';
         _syncAction = () => Sync.createLoop(l);
       }
-      view.reentryDismissedFor = null;
+      saveReentryDismissed(null);
       closeOverlay();
       await persistAndRender();
       _syncAction();
@@ -3216,6 +3307,7 @@ a { color: inherit; text-decoration: none; }
 
     // Menu open
     if (action === 'open-menu') {
+      rememberOverlayOpener(el);
       view.overlay = { type: 'menu', loopId };
       renderOverlay();
       return;
@@ -3223,6 +3315,7 @@ a { color: inherit; text-decoration: none; }
 
     // Primary action
     if (action === 'primary-action') {
+      rememberOverlayOpener(el);
       view.overlay = { type: 'primary-action', loopId };
       renderOverlay();
       return;
@@ -3279,16 +3372,27 @@ a { color: inherit; text-decoration: none; }
     }
     if (action === 'restore-active') {
       if (requireLogin()) return;
+      const current = getLoop(loopId);
       const patch = { status: 'active' };
       updateLoop(loopId, patch);
       closeOverlay();
       view.activeTab = 'now';
       await persistAndRender();
       Sync.updateLoop(loopId, patch);
-      toast('Returned to Now.');
+      toast(current?.status === 'released' ? 'Reopened.' : 'Made active.');
       return;
     }
     if (action === 'delete-loop') {
+      if (!loopId) return;
+      if (!getLoop(loopId)) { closeOverlay(); return; }
+      // Don't require login here — the confirm-delete handler re-checks.
+      // Open the confirm dialog with the current opener preserved so focus
+      // returns properly when the user hits Cancel.
+      view.overlay = { type: 'confirm-delete', loopId };
+      renderOverlay();
+      return;
+    }
+    if (action === 'confirm-delete') {
       if (requireLogin()) return;
       const target = getLoop(loopId);
       if (!target) { closeOverlay(); return; }
@@ -3318,7 +3422,6 @@ a { color: inherit; text-decoration: none; }
 
     // Change kind
     if (action === 'reclarify-kind') {
-      closeOverlay();
       view.overlay = { type: 'change-kind', loopId };
       renderOverlay();
       return;
@@ -3373,6 +3476,7 @@ a { color: inherit; text-decoration: none; }
 
     // Sync
     if (action === 'open-sync') {
+      rememberOverlayOpener(el);
       view.overlay = { type: 'sync' };
       renderOverlay();
       return;
@@ -3398,65 +3502,70 @@ a { color: inherit; text-decoration: none; }
       return;
     }
     if (action === 'sync-retry') {
-      renderOverlay();
+      const fromBanner = !!el.closest('.sync-error-banner');
+      if (!fromBanner) renderOverlay();
       const result = await Sync.retry();
       if (result?.ok) toast('Sync restored.');
       else toast('Still having trouble syncing.');
+      if (!fromBanner && view.overlay?.type === 'sync') renderOverlay();
+      return;
+    }
+
+    // Theme toggle
+    if (action === 'toggle-theme') {
+      setTheme(view.theme === 'dark' ? 'light' : 'dark');
+      // If the Settings overlay is currently open, re-render it so the
+      // "Dark/Light" label updates in place.
+      if (view.overlay && view.overlay.type === 'settings') renderOverlay();
+      return;
+    }
+
+    // PWA install
+    if (action === 'install-app') {
+      if (!deferredInstallPrompt) return;
+      const promptEvent = deferredInstallPrompt;
+      deferredInstallPrompt = null;
+      try {
+        await promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+          toast('Installing Open Loops…');
+        }
+      } catch (err) {
+        /* ignore — some browsers throw on re-prompt */
+      }
+      const btn = document.getElementById('install-btn');
+      if (btn) btn.hidden = true;
+      return;
+    }
+
+    // Settings overlay
+    if (action === 'open-settings') {
+      rememberOverlayOpener(el);
+      view.overlay = { type: 'settings' };
       renderOverlay();
       return;
     }
-
-    // Processing mode
-    if (action === 'toggle-processing-mode') {
-      view.processingMode = !view.processingMode;
-      view.currentLoopIndex = 0;
-      renderAll();
+    if (action === 'set-theme') {
+      setTheme(el.dataset.theme);
+      if (view.overlay && view.overlay.type === 'settings') renderOverlay();
       return;
     }
-
-    if (action === 'processing-complete') {
-      if (requireLogin()) return;
-      const patch = { status: 'released' };
-      updateLoop(loopId, patch);
-      await persistAndRender();
-      Sync.updateLoop(loopId, patch);
-      moveToNextLoop();
-      toast('Completed!');
+    if (action === 'set-loop-cap') {
+      const n = parseInt(el.dataset.cap, 10);
+      saveLoopCap(n);
+      // Re-render the settings overlay (to update selected button) and the
+      // main view (visible loop count may change immediately).
+      if (view.overlay && view.overlay.type === 'settings') renderOverlay();
+      renderMain();
       return;
     }
-
-    if (action === 'processing-reclassify') {
-      if (requireLogin()) return;
-      const newKind = el.dataset.kind;
-      const patch = { kind: newKind };
-      updateLoop(loopId, patch);
-      await persistAndRender();
-      Sync.updateLoop(loopId, patch);
-      moveToNextLoop();
-      toast('Updated!');
+    if (action === 'reset-onboarding' || action === 'replay-onboarding') {
+      try { localStorage.removeItem(ONBOARDING_KEY); } catch(e) {}
+      closeOverlay();
+      startOnboarding();
       return;
     }
-
-    if (action === 'processing-release') {
-      if (requireLogin()) return;
-      const patch = { kind: 'let_go', status: 'released' };
-      updateLoop(loopId, patch);
-      await persistAndRender();
-      Sync.updateLoop(loopId, patch);
-      moveToNextLoop();
-      toast('Released!');
-      return;
-    }
-
-    if (action === 'processing-skip') {
-      moveToNextLoop();
-      return;
-    }
-
-    // Sidebar tab switching
-    // Export / Import
-    if (action === 'export-data') { exportData(); return; }
-    if (action === 'import-data') { document.getElementById('import-file-input')?.click(); return; }
 
     // Dismiss sync error banner
     if (action === 'dismiss-sync-banner') {
@@ -3466,14 +3575,15 @@ a { color: inherit; text-decoration: none; }
     }
   });
 
-  // Import file selection
-  document.addEventListener('change', e => {
-    if (e.target.id === 'import-file-input') {
-      const file = e.target.files[0];
-      if (file) importData(file);
-      e.target.value = ''; // reset so same file can be re-imported if needed
-    }
-  });
+  // Live char-counter helper. Tints the counter yellow near the limit,
+  // red at exactly the limit, and falls back to default otherwise.
+  function updateCounter(counterId, len) {
+    const c = document.getElementById(counterId);
+    if (!c) return;
+    c.textContent = `${len}/${MAX_LOOP_TEXT_LEN}`;
+    c.classList.toggle('near-limit', len >= MAX_LOOP_TEXT_LEN - 50 && len < MAX_LOOP_TEXT_LEN);
+    c.classList.toggle('at-limit', len >= MAX_LOOP_TEXT_LEN);
+  }
 
   // Input binding for capture + auth gate email tracking
   document.addEventListener('input', e => {
@@ -3482,15 +3592,22 @@ a { color: inherit; text-decoration: none; }
       view.authGateEmail = e.target.value;
       return;
     }
+    if (e.target.classList.contains('inline-edit-input')) {
+      const counterId = e.target.id.replace('inline-edit-', 'inline-edit-counter-');
+      updateCounter(counterId, e.target.value.length);
+      return;
+    }
     const ov = view.overlay;
     if (!ov || ov.type !== 'capture') return;
     if (e.target.id === 'capture-input') {
       ov.rawText = e.target.value;
+      updateCounter('capture-counter', e.target.value.length);
       const btn = document.querySelector('[data-action="capture-next"]');
       if (btn) btn.disabled = !e.target.value.trim();
     }
     if (e.target.id === 'detail-input') {
       ov.promptAnswer = e.target.value;
+      updateCounter('detail-counter', e.target.value.length);
       const btn = document.querySelector('[data-action="finish-capture"]');
       if (btn) btn.disabled = !e.target.value.trim();
     }
@@ -3505,125 +3622,16 @@ a { color: inherit; text-decoration: none; }
     }
   }, true); // capture phase so it fires before the main keydown handler
 
-  // Keyboard: Escape closes overlays, Enter saves inline edit, c opens capture
+  // Minimal keyboard handling:
+  //   Escape               → exit inline edit or close overlay
+  //   Enter in inline edit → save (Shift+Enter inserts a newline)
   document.addEventListener('keydown', e => {
-    // Ignore if typing in input fields (except for specific cases)
-    const isTyping = ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName);
-    
-    // Escape key
     if (e.key === 'Escape') {
       if (view.inlineEditId) { view.inlineEditId = null; renderMain(); }
-      else if (view.processingMode) { view.processingMode = false; renderAll(); }
       else closeOverlay();
       return;
     }
-    
-    // Processing mode toggle (p)
-    if ((e.key === 'p' || e.key === 'P') && !view.overlay && !view.inlineEditId && !isTyping) {
-      e.preventDefault();
-      view.processingMode = !view.processingMode;
-      view.currentLoopIndex = 0;
-      renderAll();
-      return;
-    }
-    
-    // Capture (c)
-    if (e.key === 'c' && !view.overlay && !view.inlineEditId && !isTyping) {
-      e.preventDefault();
-      if (requireLogin()) return;
-      view.overlay = { type: 'capture', step: 'capture', rawText: '', kind: null, promptAnswer: '', sourceId: null };
-      renderOverlay();
-      return;
-    }
-    
-    // Processing mode shortcuts
-    if (view.processingMode && !view.overlay && !isTyping) {
-      const loops = byStatus('active').filter(l => l.kind);
-      if (!loops.length) return;
-      
-      const currentLoop = loops[view.currentLoopIndex];
-      if (!currentLoop) return;
-      
-      // Navigation: j (next), k (previous)
-      if (e.key === 'j' || e.key === 'J') {
-        e.preventDefault();
-        moveToNextLoop();
-        return;
-      }
-      if (e.key === 'k' || e.key === 'K') {
-        e.preventDefault();
-        moveToPrevLoop();
-        return;
-      }
-      
-      // Quick actions: 1-5
-      if (e.key === '1') {
-        e.preventDefault();
-        if (requireLogin()) return;
-        const patch = { status: 'released' };
-        updateLoop(currentLoop.id, patch);
-        persistAndRender();
-        Sync.updateLoop(currentLoop.id, patch);
-        moveToNextLoop();
-        toast('Completed!');
-        return;
-      }
-      if (e.key === '2') {
-        e.preventDefault();
-        if (requireLogin()) return;
-        const patch = { kind: 'decide' };
-        updateLoop(currentLoop.id, patch);
-        persistAndRender();
-        Sync.updateLoop(currentLoop.id, patch);
-        moveToNextLoop();
-        toast('Updated!');
-        return;
-      }
-      if (e.key === '3') {
-        e.preventDefault();
-        if (requireLogin()) return;
-        const patch = { kind: 'ask' };
-        updateLoop(currentLoop.id, patch);
-        persistAndRender();
-        Sync.updateLoop(currentLoop.id, patch);
-        moveToNextLoop();
-        toast('Updated!');
-        return;
-      }
-      if (e.key === '4') {
-        e.preventDefault();
-        if (requireLogin()) return;
-        const patch = { kind: 'schedule' };
-        updateLoop(currentLoop.id, patch);
-        persistAndRender();
-        Sync.updateLoop(currentLoop.id, patch);
-        moveToNextLoop();
-        toast('Updated!');
-        return;
-      }
-      if (e.key === '5') {
-        e.preventDefault();
-        if (requireLogin()) return;
-        const patch = { kind: 'let_go', status: 'released' };
-        updateLoop(currentLoop.id, patch);
-        persistAndRender();
-        Sync.updateLoop(currentLoop.id, patch);
-        moveToNextLoop();
-        toast('Released!');
-        return;
-      }
-      
-      // Edit (e)
-      if (e.key === 'e' || e.key === 'E') {
-        e.preventDefault();
-        view.inlineEditId = currentLoop.id;
-        view.processingMode = false;
-        renderAll();
-        return;
-      }
-    }
-    
-    // Inline edit save with Enter
+
     if (e.key === 'Enter' && e.target.classList.contains('inline-edit-input') && !e.shiftKey) {
       e.preventDefault();
       const loopId = e.target.id.replace('inline-edit-', '');
@@ -4076,7 +4084,61 @@ a { color: inherit; text-decoration: none; }
     renderHeader();
   }
 
+  // ── THEME ──
+  function setTheme(theme) {
+    if (theme !== 'light' && theme !== 'dark') theme = 'dark';
+    view.theme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem(THEME_KEY, theme); } catch(e) {}
+    // Swap the theme-color meta so browser chrome (Android/iOS) follows along.
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'light' ? '#faf7f2' : '#111010');
+    renderThemeIcon();
+  }
+
+  function loadTheme() {
+    let saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch(e) {}
+    if (saved === 'light' || saved === 'dark') {
+      setTheme(saved);
+      return;
+    }
+    // Fall back to system preference on first run.
+    const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    setTheme(prefersLight ? 'light' : 'dark');
+  }
+
+  function renderThemeIcon() {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    const isDark = view.theme === 'dark';
+    // Dark mode → show moon (click to go light). Light mode → show sun.
+    btn.innerHTML = isDark
+      ? `<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      : `<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8h1.5M13 8h1.5M3.2 3.2l1.05 1.05M11.75 11.75l1.05 1.05M3.2 12.8l1.05-1.05M11.75 4.25l1.05-1.05" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+    btn.setAttribute('aria-label', isDark ? 'Switch to light theme' : 'Switch to dark theme');
+    btn.setAttribute('title', isDark ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+
+  // ── PWA INSTALL PROMPT ──
+  // Chromium fires this when the app is installable; we stash the event and
+  // reveal the install button so the user can trigger it intentionally.
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const btn = document.getElementById('install-btn');
+    if (btn) btn.hidden = false;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    const btn = document.getElementById('install-btn');
+    if (btn) btn.hidden = true;
+    toast('Installed!');
+  });
+
   // ── INIT ──
+  loadTheme();
   load();
   renderAll(); // First paint
 
@@ -4092,21 +4154,25 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── SERVICE WORKER ──
+  // Install handler in open-loops-sw.js calls skipWaiting(), so a new worker
+  // takes control immediately after installing. We watch for the 'activated'
+  // state (not 'installed') and reload once it's actually in charge.
   if ('serviceWorker' in navigator && !IS_FILE) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./open-loops-sw.js')
         .then(registration => {
-          // Check for updates every 60 seconds
+          // Poll for updates once a minute
           setInterval(() => registration.update(), 60000);
-          
-          // Listen for updates
+
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
+            if (!newWorker) return;
             newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New version available
-                toast('Update available! Refreshing...', { duration: 2000 });
-                setTimeout(() => window.location.reload(), 2000);
+              // Only reload when the new worker is actually controlling the
+              // page. Reloading earlier (on 'installed') serves the old cache.
+              if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                toast('Updated — reloading…', { duration: 1500 });
+                setTimeout(() => window.location.reload(), 1500);
               }
             });
           });

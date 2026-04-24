@@ -15,8 +15,12 @@ create table if not exists public.loops (
   prompt_answer text        not null default '',
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now(),
+  completed_at  timestamptz,
   deleted_at    timestamptz
 );
+
+-- Add completed_at to existing deployments (idempotent)
+alter table public.loops add column if not exists completed_at timestamptz;
 
 -- Fast per-user queries
 create index if not exists loops_user_id_idx       on public.loops (user_id);
@@ -61,7 +65,12 @@ create policy "users update own loops"
 
 -- ── BATCH UPSERT (used when seeding server from local data) ──────────────
 -- p_loops is a JSON array whose items use camelCase keys to match the JS
--- client: { id, rawText, kind, status, promptAnswer, createdAt }
+-- client: { id, rawText, kind, status, promptAnswer, createdAt }.
+-- Every inserted row is stamped with auth.uid() as user_id regardless of
+-- what the payload contains, so a caller cannot impersonate another user.
+-- RLS on public.loops blocks updates to rows owned by a different user, so
+-- on-conflict updates against someone else's id silently no-op (they're
+-- filtered by the UPDATE policy, not this function body).
 create or replace function public.batch_upsert_loops(p_loops jsonb)
 returns void
 language plpgsql
@@ -72,7 +81,6 @@ declare
 begin
   for item in select * from jsonb_array_elements(p_loops)
   loop
-    -- Skip any row whose user_id doesn't match the calling user (safety net)
     insert into public.loops
       (id, user_id, raw_text, kind, status, prompt_answer, created_at)
     values (
@@ -89,8 +97,7 @@ begin
           kind          = excluded.kind,
           status        = excluded.status,
           prompt_answer = excluded.prompt_answer,
-          updated_at    = now()
-    where public.loops.user_id = auth.uid();
+          updated_at    = now();
   end loop;
 end;
 $$;
