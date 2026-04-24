@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Open Loops">
-<meta name="theme-color" content="#111010">
+<meta name="theme-color" content="#101312">
 <meta name="description" content="A calm place for unfinished things.">
 <title>Open Loops</title>
 <link rel="manifest" href="./open-loops-manifest.json">
@@ -22,27 +22,29 @@
   crossorigin="anonymous"></script>
 <style>
 :root, [data-theme="dark"] {
-  --bg: #111315;
-  --surface: #191c1f;
-  --surface-2: #202428;
-  --surface-3: #2a3035;
-  --border: rgba(241,238,231,0.12);
-  --border-soft: rgba(241,238,231,0.07);
-  --text: #f3eee6;
-  --text-2: rgba(243,238,230,0.68);
-  --text-3: rgba(243,238,230,0.48);
-  --accent: #d8a15f;
-  --accent-ink: #15120e;
-  --accent-dim: rgba(216,161,95,0.16);
-  --accent-glow: rgba(216,161,95,0.10);
-  --do: #5ec98a;
-  --do-dim: rgba(94,201,138,0.12);
-  --decide: #e8c547;
-  --decide-dim: rgba(232,197,71,0.12);
-  --ask: #6ab4f5;
-  --ask-dim: rgba(106,180,245,0.12);
-  --schedule: #a87ef5;
-  --schedule-dim: rgba(168,126,245,0.12);
+  --bg: #101312;
+  --surface: #171b1a;
+  --surface-2: #202624;
+  --surface-3: #2a312e;
+  --border: rgba(239,242,235,0.12);
+  --border-soft: rgba(239,242,235,0.07);
+  --text: #f2f0ea;
+  --text-2: rgba(242,240,234,0.69);
+  --text-3: rgba(242,240,234,0.48);
+  --accent: #e5a158;
+  --accent-hot: #f4c07a;
+  --accent-deep: #ad612f;
+  --accent-ink: #20140a;
+  --accent-dim: rgba(229,161,88,0.15);
+  --accent-glow: rgba(229,161,88,0.10);
+  --do: #70c79c;
+  --do-dim: rgba(112,199,156,0.13);
+  --decide: #e1bf62;
+  --decide-dim: rgba(225,191,98,0.13);
+  --ask: #7fb7e8;
+  --ask-dim: rgba(127,183,232,0.13);
+  --schedule: #b29ae8;
+  --schedule-dim: rgba(178,154,232,0.13);
   --let_go: rgba(245,240,234,0.32);
   --let_go-dim: rgba(245,240,234,0.07);
   --r-sm: 8px;
@@ -57,27 +59,29 @@
 }
 
 [data-theme="light"] {
-  --bg: #f5f2ec;
-  --surface: #fffdf8;
-  --surface-2: #eee9df;
-  --surface-3: #e5ded2;
-  --border: rgba(48,44,38,0.13);
-  --border-soft: rgba(48,44,38,0.08);
-  --text: #25221e;
-  --text-2: rgba(37,34,30,0.66);
-  --text-3: rgba(37,34,30,0.45);
-  --accent: #9d6636;
-  --accent-ink: #fffaf4;
-  --accent-dim: rgba(157,102,54,0.14);
-  --accent-glow: rgba(157,102,54,0.09);
-  --do: #327f55;
-  --do-dim: rgba(50,127,85,0.12);
-  --decide: #9c7423;
-  --decide-dim: rgba(156,116,35,0.13);
-  --ask: #326f99;
-  --ask-dim: rgba(50,111,153,0.12);
-  --schedule: #7560a8;
-  --schedule-dim: rgba(117,96,168,0.12);
+  --bg: #f6f7f4;
+  --surface: #ffffff;
+  --surface-2: #eef1ec;
+  --surface-3: #e3e8df;
+  --border: rgba(31,38,34,0.13);
+  --border-soft: rgba(31,38,34,0.08);
+  --text: #202420;
+  --text-2: rgba(32,36,32,0.66);
+  --text-3: rgba(32,36,32,0.45);
+  --accent: #b96a35;
+  --accent-hot: #d98b4b;
+  --accent-deep: #8d4d26;
+  --accent-ink: #fffaf3;
+  --accent-dim: rgba(185,106,53,0.13);
+  --accent-glow: rgba(185,106,53,0.08);
+  --do: #2f7d5a;
+  --do-dim: rgba(47,125,90,0.12);
+  --decide: #957134;
+  --decide-dim: rgba(149,113,52,0.13);
+  --ask: #386f98;
+  --ask-dim: rgba(56,111,152,0.12);
+  --schedule: #715ca1;
+  --schedule-dim: rgba(113,92,161,0.12);
   --let_go: rgba(37,34,30,0.42);
   --let_go-dim: rgba(37,34,30,0.07);
 }
@@ -181,22 +185,25 @@ a { color: inherit; text-decoration: none; }
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent) 58%, var(--accent-deep));
+  color: var(--accent-ink);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .brand-mark svg {
   width: 15px;
   height: 15px;
 }
+.brand-mark svg path { stroke: currentColor; }
 
 .brand-name {
   font-size: 15px;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  color: var(--text);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--text) 88%, var(--accent));
   font-family: var(--serif);
 }
 
@@ -231,7 +238,8 @@ a { color: inherit; text-decoration: none; }
 }
 .pill-btn:hover { border-color: var(--text-3); color: var(--text); }
 .pill-btn.synced { color: var(--do); border-color: rgba(111,207,151,0.2); }
-.pill-btn.syncing { color: var(--decide); border-color: rgba(232,197,71,0.2); }
+.pill-btn.syncing { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 24%, transparent); }
+.pill-btn.offline { color: var(--ask); border-color: rgba(106,180,245,0.22); }
 .pill-btn.error { color: #f47; border-color: rgba(255,68,119,0.2); }
 
 .icon-btn {
@@ -545,7 +553,7 @@ a { color: inherit; text-decoration: none; }
 .active-cap-btn:hover { color: var(--text); background: var(--surface-3); }
 .active-cap-btn.active {
   color: var(--accent-ink);
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent));
 }
 
 .route-grid {
@@ -688,12 +696,16 @@ a { color: inherit; text-decoration: none; }
 .btn-ghost:hover { background: var(--surface-2); color: var(--text); border-color: var(--border); }
 
 .btn-primary {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent) 62%, var(--accent-deep));
   color: var(--accent-ink);
   font-weight: 600;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 22%, transparent);
 }
-.btn-primary:hover { background: color-mix(in srgb, var(--accent) 88%, var(--text)); }
-.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.btn-primary:disabled { opacity: 0.42; cursor: not-allowed; transform: none; box-shadow: none; }
 
 .btn-subtle {
   background: var(--surface-2);
@@ -718,6 +730,17 @@ a { color: inherit; text-decoration: none; }
   border-radius: 7px;
 }
 .btn-action:hover { color: var(--text); border-color: rgba(255,255,255,0.14); }
+.btn-action.btn-primary {
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent) 62%, var(--accent-deep));
+  color: var(--accent-ink);
+  border-color: transparent;
+  font-weight: 600;
+}
+.btn-action.btn-primary:hover {
+  color: var(--accent-ink);
+  border-color: transparent;
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 18%, transparent);
+}
 .btn-action.kind-do:hover    { color: var(--do);       border-color: var(--do); background: var(--do-dim); }
 .btn-action.kind-decide:hover{ color: var(--decide);   border-color: var(--decide); background: var(--decide-dim); }
 .btn-action.kind-ask:hover   { color: var(--ask);      border-color: var(--ask); background: var(--ask-dim); }
@@ -783,16 +806,19 @@ a { color: inherit; text-decoration: none; }
   gap: 8px;
   padding: 14px 24px;
   border-radius: 999px;
-  background: var(--accent);
-  color: #111010;
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent) 62%, var(--accent-deep));
+  color: var(--accent-ink);
   font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 8px 32px rgba(212,121,58,0.28);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-deep) 45%, transparent), 0 14px 34px color-mix(in srgb, var(--accent) 26%, transparent);
   z-index: 5;
   transition: all 0.2s;
   white-space: nowrap;
 }
-.fab:hover { background: #e18a4f; transform: translateX(-50%) translateY(-1px); box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 12px 40px rgba(212,121,58,0.34); }
+.fab:hover {
+  transform: translateX(-50%) translateY(-1px);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-deep) 50%, transparent), 0 18px 44px color-mix(in srgb, var(--accent) 32%, transparent);
+}
 .fab:active { transform: translateX(-50%) translateY(0); }
 
 .bottom-nav {
@@ -802,7 +828,8 @@ a { color: inherit; text-decoration: none; }
   right: 0;
   z-index: 9;
   display: flex;
-  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(14px);
   border-top: 1px solid var(--border-soft);
   padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
 }
@@ -822,7 +849,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .bottom-nav-btn.active {
-  color: var(--text);
+  color: var(--accent);
 }
 
 .bottom-nav-icon {
@@ -837,8 +864,8 @@ a { color: inherit; text-decoration: none; }
   min-width: 16px;
   height: 16px;
   border-radius: 999px;
-  background: var(--accent);
-  color: #111010;
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent));
+  color: var(--accent-ink);
   font-size: 9px;
   font-weight: 700;
   line-height: 16px;
@@ -958,7 +985,7 @@ a { color: inherit; text-decoration: none; }
 }
 .big-input:focus {
   outline: none;
-  border-color: rgba(232,197,71,0.35);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 .big-input::placeholder { color: var(--text-3); }
@@ -1144,7 +1171,7 @@ a { color: inherit; text-decoration: none; }
   font-size: 13px;
   transition: border-color 0.15s;
 }
-.email-input:focus { outline: none; border-color: rgba(232,197,71,0.35); }
+.email-input:focus { outline: none; border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
 .email-input::placeholder { color: var(--text-3); }
 
 /* ── SETTINGS ROWS ── */
@@ -1189,7 +1216,7 @@ a { color: inherit; text-decoration: none; }
 .settings-cap-btn:last-child { border-right: none; }
 .settings-cap-btn:hover { color: var(--text); background: var(--surface-2); }
 .settings-cap-btn.selected {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent));
   color: var(--accent-ink);
 }
 .settings-cap-btn.selected:hover { background: var(--accent); }
@@ -1272,7 +1299,7 @@ a { color: inherit; text-decoration: none; }
 .inline-edit-input {
   width: 100%;
   background: var(--surface-2);
-  border: 1px solid rgba(232,197,71,0.35);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   border-radius: 6px;
   padding: 6px 8px;
   font-size: 14px;
@@ -1374,7 +1401,7 @@ a { color: inherit; text-decoration: none; }
   top: 70px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(232,197,71,0.1);
+  background: var(--accent-dim);
   border: 1px solid var(--accent);
   padding: 10px 16px;
   border-radius: var(--r-md);
@@ -1405,18 +1432,17 @@ a { color: inherit; text-decoration: none; }
 
 .sync-error-retry {
   padding: 6px 12px;
-  background: var(--accent);
-  color: #0f0f0f;
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent));
+  color: var(--accent-ink);
   border: none;
   border-radius: 6px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .sync-error-retry:hover {
-  background: #f0d060;
   transform: translateY(-1px);
 }
 
@@ -1557,18 +1583,18 @@ a { color: inherit; text-decoration: none; }
 .sidebar-capture-btn {
   width: 100%;
   padding: 12px;
-  background: var(--accent);
-  color: #0f0f0f;
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent) 62%, var(--accent-deep));
+  color: var(--accent-ink);
   border-radius: var(--r-md);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 13px;
   transition: all 0.2s;
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .sidebar-capture-btn:hover {
-  background: #f0d060;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(232,197,71,0.3);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 /* ── CONTEXT PANEL (Desktop) ── */
@@ -1663,13 +1689,16 @@ a { color: inherit; text-decoration: none; }
 .auth-gate-logo-mark {
   width: 32px;
   height: 32px;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent) 58%, var(--accent-deep));
+  color: var(--accent-ink);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 28%, transparent);
 }
+.auth-gate-logo-mark svg path { stroke: currentColor; }
 
 .auth-gate-logo-name {
   font-family: var(--serif);
@@ -1715,24 +1744,25 @@ a { color: inherit; text-decoration: none; }
 }
 
 .auth-gate-input:focus {
-  border-color: rgba(232,197,71,0.4);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .auth-gate-btn {
   width: 100%;
   padding: 13px 16px;
-  background: var(--accent);
-  color: #0f0f0f;
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent) 62%, var(--accent-deep));
+  color: var(--accent-ink);
   border-radius: var(--r-md);
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: opacity 0.15s;
-  letter-spacing: -0.01em;
+  transition: all 0.15s;
+  letter-spacing: 0;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
-.auth-gate-btn:hover { opacity: 0.9; }
+.auth-gate-btn:hover { transform: translateY(-1px); }
 .auth-gate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .auth-gate-hint {
@@ -1841,7 +1871,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .onboarding-dot.done {
-  background: rgba(232,197,71,0.35);
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .onboarding-eyebrow {
@@ -1901,17 +1931,18 @@ a { color: inherit; text-decoration: none; }
 .onboarding-btn-primary {
   flex: 1;
   padding: 13px 16px;
-  background: var(--accent);
-  color: #0f0f0f;
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent) 62%, var(--accent-deep));
+  color: var(--accent-ink);
   border-radius: var(--r-md);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: opacity 0.15s;
+  transition: all 0.15s;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
-.onboarding-btn-primary:hover { opacity: 0.9; }
+.onboarding-btn-primary:hover { transform: translateY(-1px); }
 
 .onboarding-btn-ghost {
   padding: 13px 16px;
@@ -1974,8 +2005,8 @@ a { color: inherit; text-decoration: none; }
     <div class="brand">
       <div class="brand-mark">
         <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="#111010" stroke-width="1.8" stroke-linecap="round"/>
-          <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="#111010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
       <span class="brand-name">Open Loops</span>
@@ -2015,7 +2046,7 @@ a { color: inherit; text-decoration: none; }
 <!-- Sync error banner (Morning Brief pattern) -->
 <div class="sync-error-banner" id="sync-error-banner" style="display:none;">
   <div class="sync-error-msg">
-    <strong>Not synced.</strong> Changes saved locally only.
+    <strong>Sync issue.</strong> Your changes are saved on this device.
   </div>
   <button class="sync-error-retry" data-action="sync-retry">Retry</button>
   <button class="sync-error-dismiss" data-action="dismiss-sync-banner">✕</button>
@@ -2765,8 +2796,8 @@ a { color: inherit; text-decoration: none; }
             <div class="auth-gate-logo">
               <div class="auth-gate-logo-mark">
                 <svg viewBox="0 0 14 14" fill="none" width="18" height="18">
-                  <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="#111010" stroke-width="1.8" stroke-linecap="round"/>
-                  <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="#111010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
               <span class="auth-gate-logo-name">Open Loops</span>
@@ -2785,8 +2816,8 @@ a { color: inherit; text-decoration: none; }
             <div class="auth-gate-logo">
               <div class="auth-gate-logo-mark">
                 <svg viewBox="0 0 14 14" fill="none" width="18" height="18">
-                  <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="#111010" stroke-width="1.8" stroke-linecap="round"/>
-                  <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="#111010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
               <span class="auth-gate-logo-name">Open Loops</span>
@@ -2810,8 +2841,8 @@ a { color: inherit; text-decoration: none; }
           <div class="auth-gate-logo">
             <div class="auth-gate-logo-mark">
               <svg viewBox="0 0 14 14" fill="none" width="18" height="18">
-                <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="#111010" stroke-width="1.8" stroke-linecap="round"/>
-                <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="#111010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M7 2.2 A4.8 4.8 0 1 1 11.3 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M11.3 10 L9.6 8.8 M11.3 10 L12.8 8.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
             <span class="auth-gate-logo-name">Open Loops</span>
@@ -3997,19 +4028,19 @@ a { color: inherit; text-decoration: none; }
       const q = loadQueue();
       // Coalesce back-to-back updates to the same id so we don't pile up
       // hundreds of small UPDATEs from typing into an inline edit field.
-      if (entry.op === 'update' && q.length) {
+      if (entry.op === 'update' && q.length && !draining) {
         const last = q[q.length - 1];
         if (last.op === 'update' && last.id === entry.id) {
           last.payload = { ...last.payload, ...entry.payload };
           last.ts = entry.ts;
           saveQueue(q);
-          setSyncStatus('syncing', 'Pending…');
+          setSyncStatus(navigator.onLine ? 'syncing' : 'offline', navigator.onLine ? 'Saving…' : 'Saved offline');
           return;
         }
       }
       q.push(entry);
       saveQueue(q);
-      setSyncStatus('syncing', 'Pending…');
+      setSyncStatus(navigator.onLine ? 'syncing' : 'offline', navigator.onLine ? 'Saving…' : 'Saved offline');
     }
 
     // ── Map between local loop shape and DB row shape ──
@@ -4076,13 +4107,25 @@ a { color: inherit; text-decoration: none; }
     }
 
     async function processQueue() {
-      if (draining || !currentUser) return { ok: true, pending: !currentUser };
-      const q = loadQueue();
-      if (!q.length) { setSyncStatus('synced', 'Synced'); return { ok: true }; }
+      if (!currentUser) return { ok: true, pending: true };
+      if (draining) return { ok: true, pending: loadQueue().length > 0 };
+      if (!loadQueue().length) { setSyncStatus('synced', 'Synced'); return { ok: true }; }
       draining = true;
-      setSyncStatus('syncing', 'Syncing…');
+      let failed = false;
+      setSyncStatus(navigator.onLine ? 'syncing' : 'offline', navigator.onLine ? 'Saving…' : 'Saved offline');
       try {
-        while (q.length) {
+        while (true) {
+          if (!navigator.onLine) {
+            setSyncStatus('offline', 'Saved offline');
+            scheduleRetry();
+            return { ok: true, pending: true };
+          }
+          const q = loadQueue();
+          if (!q.length) {
+            setSyncStatus('synced', 'Synced');
+            hideSyncErrorBanner();
+            return { ok: true };
+          }
           const entry = q[0];
           try {
             if      (entry.op === 'create')   await netCreate(entry.payload);
@@ -4091,20 +4134,22 @@ a { color: inherit; text-decoration: none; }
             else if (entry.op === 'undelete') await netUndelete(entry.id);
           } catch(e) {
             console.error('Queue drain error:', e, entry);
-            saveQueue(q); // keep the failing entry at the head
-            setSyncStatus('error', 'Not saved');
+            failed = true;
+            saveQueue(loadQueue()); // keep the failing entry at the head
+            setSyncStatus('error', 'Sync issue');
             showSyncErrorBanner();
             scheduleRetry();
             return { ok: false, error: e };
           }
-          q.shift();
-          saveQueue(q);
+          const latest = loadQueue();
+          latest.shift();
+          saveQueue(latest);
         }
-        setSyncStatus('synced', 'Synced');
-        hideSyncErrorBanner();
-        return { ok: true };
       } finally {
         draining = false;
+        if (!failed && currentUser && navigator.onLine && loadQueue().length) {
+          processQueue();
+        }
       }
     }
 
@@ -4165,7 +4210,7 @@ a { color: inherit; text-decoration: none; }
         hideSyncErrorBanner();
       } catch(e) {
         console.error('Pull error:', e);
-        setSyncStatus('error', 'Sync error');
+        setSyncStatus('error', 'Sync issue');
         showSyncErrorBanner();
       }
     }
@@ -4260,7 +4305,7 @@ a { color: inherit; text-decoration: none; }
           }
         } catch(e) {
           console.error('Sync init error:', e);
-          setSyncStatus('error', 'Sync error');
+          setSyncStatus('error', 'Sync issue');
           showSyncErrorBanner();
         }
         // Auth check complete — app is always usable regardless of login state
@@ -4278,25 +4323,25 @@ a { color: inherit; text-decoration: none; }
         if (!loop || !loop.id) return;
         enqueue({ op: 'create', id: loop.id, payload: loop, ts: Date.now() });
         if (currentUser && navigator.onLine) processQueue();
-        else if (!navigator.onLine) { setSyncStatus('syncing', 'Offline'); scheduleRetry(); }
+        else if (!navigator.onLine) { setSyncStatus('offline', 'Saved offline'); scheduleRetry(); }
       },
       updateLoop(loopId, changes) {
         if (!loopId || !changes) return;
         enqueue({ op: 'update', id: loopId, payload: { ...changes }, ts: Date.now() });
         if (currentUser && navigator.onLine) processQueue();
-        else if (!navigator.onLine) { setSyncStatus('syncing', 'Offline'); scheduleRetry(); }
+        else if (!navigator.onLine) { setSyncStatus('offline', 'Saved offline'); scheduleRetry(); }
       },
       deleteLoop(loopId) {
         if (!loopId) return;
         enqueue({ op: 'delete', id: loopId, ts: Date.now() });
         if (currentUser && navigator.onLine) processQueue();
-        else if (!navigator.onLine) { setSyncStatus('syncing', 'Offline'); scheduleRetry(); }
+        else if (!navigator.onLine) { setSyncStatus('offline', 'Saved offline'); scheduleRetry(); }
       },
       undeleteLoop(loopId) {
         if (!loopId) return;
         enqueue({ op: 'undelete', id: loopId, ts: Date.now() });
         if (currentUser && navigator.onLine) processQueue();
-        else if (!navigator.onLine) { setSyncStatus('syncing', 'Offline'); scheduleRetry(); }
+        else if (!navigator.onLine) { setSyncStatus('offline', 'Saved offline'); scheduleRetry(); }
       },
 
       async processQueue() {
@@ -4314,7 +4359,7 @@ a { color: inherit; text-decoration: none; }
           setupRealtime();
           return { ok: true };
         } catch(e) {
-          setSyncStatus('error', 'Sync error');
+          setSyncStatus('error', 'Sync issue');
           return { ok: false, error: e };
         }
       },
@@ -4345,7 +4390,7 @@ a { color: inherit; text-decoration: none; }
     try { localStorage.setItem(THEME_KEY, theme); } catch(e) {}
     // Swap the theme-color meta so browser chrome (Android/iOS) follows along.
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'light' ? '#faf7f2' : '#111010');
+    if (meta) meta.setAttribute('content', theme === 'light' ? '#f6f7f4' : '#101312');
     renderThemeIcon();
   }
 

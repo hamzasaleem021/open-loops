@@ -1,4 +1,4 @@
-const CACHE = 'open-loops-v3-flowfix';
+const CACHE = 'open-loops-v5-brand-polish';
 
 const ASSETS = [
   './open-loops.html',
