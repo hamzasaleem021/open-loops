@@ -36,6 +36,7 @@ You sign in, capture a thought, clarify it into one of five kinds, and keep only
 - **Reorder active loops** — Drag on desktop, or use the up/down controls on mobile and keyboard. Order syncs across all your devices.
 - **Sign-in required** — Sign in with a magic link before using the app. This keeps every device on the same source of truth.
 - **Offline queue** — Signed-in edits made during brief connection drops are queued locally and sync automatically when you're back online.
+- **Account-safe local storage** — Local cache and offline writes are tied to the signed-in account, so two accounts on the same browser do not inherit each other's loops.
 - **Dark & light themes** — Toggle from the top bar. Preference persists across sessions.
 - **PWA** — Installable on desktop and mobile. Works like a native app.
 
@@ -117,6 +118,20 @@ If you've already deployed Open Loops and are pulling updates, **run the SQL mig
 
 The service worker detects updates automatically — existing users will see an "Updated — reloading…" toast on their next visit and land on the new version.
 
+### GitHub upload checklist
+
+For this sync-safety update, upload these changed files:
+
+```
+open-loops.html
+open-loops-sw.js
+README.md
+```
+
+No Supabase schema change is required for the account-safe local storage fix. If your deployed Supabase project has already run `open-loops-supabase.sql`, you do not need to run it again for this update. The service worker cache name was bumped so installed PWAs pick up the new client.
+
+If users have old unscoped local data from a previous version, the app keeps it aside instead of silently importing it into whichever account signs in next. They may see a small sync note: "Older local data was found on this device and kept aside, so it was not mixed into this account."
+
 ---
 
 ## How sync works
@@ -127,6 +142,8 @@ Key pieces:
 
 - **One row per loop.** Concurrent edits on different loops never collide. Concurrent edits on the same loop serialize at the database level.
 - **Offline queue.** Signed-in edits made during connection drops are queued in `localStorage` and drained automatically when the device comes back online or the tab regains focus. Repeated edits to the same loop are coalesced so one typing burst doesn't become one hundred writes.
+- **Per-account local cache.** Local cache, pending offline writes, onboarding state, reentry state, loop cap, and dead-lettered writes are scoped to the signed-in user. Signing out clears visible in-memory loops without deleting that user's saved local cache or pending writes.
+- **Legacy safety quarantine.** Older local data created before account scoping is kept aside under legacy debug keys and is not uploaded automatically into the next account that signs in.
 - **Position column for ordering.** Drag reorder and up/down move controls assign a fractional `position` value (midpoint between neighbors), so only the moved row needs a database update. Order syncs everywhere.
 - **Realtime reconnection.** The realtime channel monitors its own connection state. On any drop (network blip, device sleep, token refresh, idle disconnect) the client re-subscribes and pulls to catch up on missed events.
 - **Poison-pill handling.** If a single queued write fails repeatedly (bad data, permissions issue, etc.), after five attempts it's moved to a dead-letter queue so it can't block every edit behind it.
@@ -138,6 +155,7 @@ If something looks wrong, open the browser DevTools console and use:
 ```js
 openLoopsDebug.queue()     // pending (not-yet-synced) operations
 openLoopsDebug.dead()      // operations that failed more than 5 times
+openLoopsDebug.legacy()    // old unscoped local data kept aside for safety
 openLoopsDebug.clearDead() // clear the dead-letter queue
 openLoopsDebug.retry()     // force a queue drain + full pull
 ```

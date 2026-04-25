@@ -1,4 +1,4 @@
-const CACHE = 'open-loops-v8-sync-first-mobile-desktop';
+const CACHE = 'open-loops-v9-account-safe-sync';
 
 const NETWORK_FIRST = [
   './open-loops.html',

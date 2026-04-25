@@ -2072,11 +2072,13 @@ a { color: inherit; text-decoration: none; }
 <script>
 (() => {
   const CFG = window.OL_CONFIG || {};
-  const STORAGE_KEY   = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_v2'          : 'open_loops_data_v2';
-  const ONBOARDING_KEY = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_onboarded'  : 'open_loops_onboarded';
+  const STORAGE_KEY_BASE   = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_v2'          : 'open_loops_data_v2';
+  const ONBOARDING_KEY_BASE = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_onboarded'  : 'open_loops_onboarded';
   const THEME_KEY      = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_theme'      : 'open_loops_theme';
-  const LOOP_CAP_KEY   = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_cap'        : 'open_loops_cap';
-  const REENTRY_KEY    = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_reentry_dismissed' : 'open_loops_reentry_dismissed';
+  const LOOP_CAP_KEY_BASE   = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_cap'        : 'open_loops_cap';
+  const REENTRY_KEY_BASE    = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_reentry_dismissed' : 'open_loops_reentry_dismissed';
+  const LEGACY_STORAGE_KEY  = STORAGE_KEY_BASE;
+  const LEGACY_STORAGE_QUARANTINE_KEY = `${STORAGE_KEY_BASE}_legacy_unscoped`;
   const IS_FILE = location.protocol === 'file:';
 
   // UX constraints
@@ -2142,7 +2144,10 @@ a { color: inherit; text-decoration: none; }
   };
 
   function nowIso() { return new Date().toISOString(); }
-  function uid(p) { return `${p}-${Math.random().toString(36).slice(2,9)}`; }
+  function uid(p) {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return `${p}-${window.crypto.randomUUID()}`;
+    return `${p}-${Math.random().toString(36).slice(2,9)}-${Date.now().toString(36)}`;
+  }
   // Position is a double precision ordering value: bigger = higher in the
   // list. New rows get the current epoch-seconds so they land at the top.
   // Reorder computes midpoints between neighbors, so we rarely need to
@@ -2208,6 +2213,7 @@ a { color: inherit; text-decoration: none; }
   };
   let toastTimer = null;
   let deferredInstallPrompt = null; // set by 'beforeinstallprompt' event
+  let currentLocalUserId = null;
   // Set to true once Sync.init() resolves so we don't flash the lock screen
   // during the async auth check on cold start.
   let authReady = false;
@@ -2218,9 +2224,59 @@ a { color: inherit; text-decoration: none; }
   let lastMagicLinkAt = 0;
 
   // ── PERSIST ──
-  function load() {
+  function scopedKey(base, userId = currentLocalUserId) {
+    return userId ? `${base}:${userId}` : null;
+  }
+
+  function setLocalUser(user) {
+    currentLocalUserId = user && user.id ? user.id : null;
+  }
+
+  function resetLocalAppState() {
+    data = seedState();
+    view.activeTab = 'now';
+    view.overlay = null;
+    view.highlightedId = null;
+    view.reentryDismissedFor = null;
+    view.expanded = false;
+    view.inlineEditId = null;
+    view.draggingLoopId = null;
+    view.overlayOpenerEl = null;
+    view.onboardingStep = -1;
+    view.loopCap = DEFAULT_LOOP_CAP;
+  }
+
+  function quarantineLegacyLocalData() {
+    let moved = false;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (!raw) return;
+      const existing = localStorage.getItem(LEGACY_STORAGE_QUARANTINE_KEY);
+      if (!existing) localStorage.setItem(LEGACY_STORAGE_QUARANTINE_KEY, raw);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      moved = true;
+    } catch(e) {}
+    return moved;
+  }
+
+  function hasLegacyQuarantinedData() {
+    try {
+      return !!(
+        localStorage.getItem(LEGACY_STORAGE_QUARANTINE_KEY) ||
+        localStorage.getItem(LEGACY_OFFLINE_QUEUE_QUARANTINE_KEY) ||
+        localStorage.getItem(LEGACY_DEAD_QUEUE_QUARANTINE_KEY)
+      );
+    } catch(e) { return false; }
+  }
+
+  function load() {
+    if (!currentLocalUserId) {
+      resetLocalAppState();
+      return;
+    }
+    resetLocalAppState();
+    try {
+      const raw = localStorage.getItem(scopedKey(STORAGE_KEY_BASE));
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.loops)) {
@@ -2231,34 +2287,40 @@ a { color: inherit; text-decoration: none; }
     } catch(e) {}
     // Reentry dismissal (survives reload)
     try {
-      const r = localStorage.getItem(REENTRY_KEY);
+      const r = localStorage.getItem(scopedKey(REENTRY_KEY_BASE));
       if (r) view.reentryDismissedFor = r;
     } catch(e) {}
     // Loop cap
     try {
-      const c = parseInt(localStorage.getItem(LOOP_CAP_KEY) || '', 10);
+      const c = parseInt(localStorage.getItem(scopedKey(LOOP_CAP_KEY_BASE)) || '', 10);
       if (ALLOWED_LOOP_CAPS.includes(c)) view.loopCap = c;
     } catch(e) {}
   }
 
   function save() {
+    const key = scopedKey(STORAGE_KEY_BASE);
+    if (!key) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, lastLoopId: data.lastLoopId, activeTab: view.activeTab, loops: data.loops }));
+      localStorage.setItem(key, JSON.stringify({ version: 2, lastLoopId: data.lastLoopId, activeTab: view.activeTab, loops: data.loops }));
     } catch(e) {}
   }
 
   function saveReentryDismissed(id) {
     view.reentryDismissedFor = id || null;
+    const key = scopedKey(REENTRY_KEY_BASE);
+    if (!key) return;
     try {
-      if (id) localStorage.setItem(REENTRY_KEY, id);
-      else    localStorage.removeItem(REENTRY_KEY);
+      if (id) localStorage.setItem(key, id);
+      else    localStorage.removeItem(key);
     } catch(e) {}
   }
 
   function saveLoopCap(n) {
     if (!ALLOWED_LOOP_CAPS.includes(n)) return;
     view.loopCap = n;
-    try { localStorage.setItem(LOOP_CAP_KEY, String(n)); } catch(e) {}
+    const key = scopedKey(LOOP_CAP_KEY_BASE);
+    if (!key) return;
+    try { localStorage.setItem(key, String(n)); } catch(e) {}
   }
 
   // ── QUERIES ──
@@ -2851,6 +2913,7 @@ a { color: inherit; text-decoration: none; }
     const hasError = view.syncStatus === 'error';
     const isSyncing = view.syncStatus === 'syncing';
     const clientIssue = supabaseClientIssue();
+    const hasLegacy = hasLegacyQuarantinedData();
     return `
       <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="sync-title">
         <div class="overlay-header">
@@ -2870,6 +2933,7 @@ a { color: inherit; text-decoration: none; }
           ` : `
             <div class="sync-info" style="color:var(--do)">Connected. Your loops sync automatically across devices.</div>
           `}
+          ${hasLegacy ? `<div class="sync-info">Older local data was found on this device and kept aside, so it was not mixed into this account.</div>` : ''}
           <div class="overlay-actions" style="margin-top:0">
             <button class="btn btn-ghost" data-action="sign-out">Sign out</button>
             <button class="btn btn-ghost" data-action="close-overlay">Close</button>
@@ -3205,11 +3269,14 @@ a { color: inherit; text-decoration: none; }
   }
 
   function hasCompletedOnboarding() {
-    try { return !!localStorage.getItem(ONBOARDING_KEY); } catch(e) { return false; }
+    const key = scopedKey(ONBOARDING_KEY_BASE);
+    if (!key) return false;
+    try { return !!localStorage.getItem(key); } catch(e) { return false; }
   }
 
   function markOnboardingComplete() {
-    try { localStorage.setItem(ONBOARDING_KEY, '1'); } catch(e) {}
+    const key = scopedKey(ONBOARDING_KEY_BASE);
+    try { if (key) localStorage.setItem(key, '1'); } catch(e) {}
     view.onboardingStep = -1;
     renderOnboarding();
     // Open capture overlay to prompt first loop
@@ -3846,6 +3913,7 @@ a { color: inherit; text-decoration: none; }
         action: 'Undo',
         duration: 8000,
         onAction: async () => {
+          if (requireLogin()) return;
           if (getLoop(snapshot.id)) return;
           const insertAt = Math.min(Math.max(originalIndex, 0), data.loops.length);
           data.loops.splice(insertAt, 0, snapshot);
@@ -4018,7 +4086,10 @@ a { color: inherit; text-decoration: none; }
       return;
     }
     if (action === 'reset-onboarding' || action === 'replay-onboarding') {
-      try { localStorage.removeItem(ONBOARDING_KEY); } catch(e) {}
+      try {
+        const key = scopedKey(ONBOARDING_KEY_BASE);
+        if (key) localStorage.removeItem(key);
+      } catch(e) {}
       closeOverlay();
       startOnboarding();
       return;
@@ -4215,7 +4286,12 @@ a { color: inherit; text-decoration: none; }
   //   - Incoming realtime updates compare updated_at vs local; a remote row
   //     older than our local copy doesn't clobber (prevents late echoes from
   //     overwriting newer state).
-  const OFFLINE_QUEUE_KEY = 'open_loops_offline_queue';
+  const OFFLINE_QUEUE_KEY_BASE = 'open_loops_offline_queue';
+  const DEAD_QUEUE_KEY_BASE = 'open_loops_dead_queue';
+  const LEGACY_OFFLINE_QUEUE_KEY = OFFLINE_QUEUE_KEY_BASE;
+  const LEGACY_DEAD_QUEUE_KEY = DEAD_QUEUE_KEY_BASE;
+  const LEGACY_OFFLINE_QUEUE_QUARANTINE_KEY = `${OFFLINE_QUEUE_KEY_BASE}_legacy_unscoped`;
+  const LEGACY_DEAD_QUEUE_QUARANTINE_KEY = `${DEAD_QUEUE_KEY_BASE}_legacy_unscoped`;
 
   const Sync = (() => {
     if (!window.supabase || !hasSupabaseCfg()) {
@@ -4269,23 +4345,62 @@ a { color: inherit; text-decoration: none; }
       if (banner) banner.style.display = 'none';
     }
 
+    function queueKey() {
+      return scopedKey(OFFLINE_QUEUE_KEY_BASE);
+    }
+
+    function deadQueueKey() {
+      return scopedKey(DEAD_QUEUE_KEY_BASE);
+    }
+
+    function quarantineLegacyQueueData() {
+      let moved = false;
+      try {
+        const raw = localStorage.getItem(LEGACY_OFFLINE_QUEUE_KEY);
+        if (raw && !localStorage.getItem(LEGACY_OFFLINE_QUEUE_QUARANTINE_KEY)) {
+          localStorage.setItem(LEGACY_OFFLINE_QUEUE_QUARANTINE_KEY, raw);
+        }
+        if (raw) {
+          localStorage.removeItem(LEGACY_OFFLINE_QUEUE_KEY);
+          moved = true;
+        }
+
+        const dead = localStorage.getItem(LEGACY_DEAD_QUEUE_KEY);
+        if (dead && !localStorage.getItem(LEGACY_DEAD_QUEUE_QUARANTINE_KEY)) {
+          localStorage.setItem(LEGACY_DEAD_QUEUE_QUARANTINE_KEY, dead);
+        }
+        if (dead) {
+          localStorage.removeItem(LEGACY_DEAD_QUEUE_KEY);
+          moved = true;
+        }
+      } catch(e) {}
+      return moved;
+    }
+
     // ── Offline queue (localStorage) ──
     // Entry shape: { op: 'create'|'update'|'delete'|'undelete', id, payload?, ts }
     function loadQueue() {
+      const key = queueKey();
+      if (!key || !currentUser) return [];
       try {
-        const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+        const raw = localStorage.getItem(key);
         if (!raw) return [];
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(entry => !entry.ownerUserId || entry.ownerUserId === currentUser.id);
       } catch(e) { return []; }
     }
     function saveQueue(q) {
+      const key = queueKey();
+      if (!key) return;
       try {
-        if (!q.length) localStorage.removeItem(OFFLINE_QUEUE_KEY);
-        else           localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(q));
+        if (!q.length) localStorage.removeItem(key);
+        else           localStorage.setItem(key, JSON.stringify(q));
       } catch(e) {}
     }
     function enqueue(entry) {
+      if (!currentUser) return;
+      entry.ownerUserId = currentUser.id;
       const q = loadQueue();
       // Coalesce back-to-back updates to the same id so we don't pile up
       // hundreds of small UPDATEs from typing into an inline edit field.
@@ -4352,32 +4467,40 @@ a { color: inherit; text-decoration: none; }
       const row = patchToRow(patch);
       if (!Object.keys(row).length) return;
       markEcho(id);
-      const { error } = await db.from('loops').update(row).eq('id', id);
+      const { data: updated, error } = await db.from('loops').update(row).eq('id', id).select('id').maybeSingle();
       if (error) throw error;
+      if (!updated) throw new Error('No matching loop was updated for this signed-in user.');
     }
     async function netDelete(id) {
       markEcho(id);
-      const { error } = await db.from('loops')
+      const { data: updated, error } = await db.from('loops')
         .update({ deleted_at: nowIso() })
-        .eq('id', id);
+        .eq('id', id)
+        .select('id')
+        .maybeSingle();
       if (error) throw error;
+      if (!updated) throw new Error('No matching loop was deleted for this signed-in user.');
     }
     async function netUndelete(id) {
       markEcho(id);
-      const { error } = await db.from('loops')
+      const { data: updated, error } = await db.from('loops')
         .update({ deleted_at: null })
-        .eq('id', id);
+        .eq('id', id)
+        .select('id')
+        .maybeSingle();
       if (error) throw error;
+      if (!updated) throw new Error('No matching loop was restored for this signed-in user.');
     }
 
     // Max attempts per queue entry before moving it to a dead-letter queue.
     // Prevents a single poison-pill entry from blocking every edit behind it.
     const MAX_QUEUE_ATTEMPTS = 5;
-    const DEAD_QUEUE_KEY = 'open_loops_dead_queue';
 
     function moveToDeadQueue(entry, error) {
+      const key = deadQueueKey();
+      if (!key) return;
       try {
-        const dead = JSON.parse(localStorage.getItem(DEAD_QUEUE_KEY) || '[]');
+        const dead = JSON.parse(localStorage.getItem(key) || '[]');
         dead.push({
           ...entry,
           lastError: String(error && error.message ? error.message : error),
@@ -4385,7 +4508,7 @@ a { color: inherit; text-decoration: none; }
         });
         // Keep the last 50 dead entries — enough for debugging, not enough to
         // bloat localStorage if something is spamming failures.
-        localStorage.setItem(DEAD_QUEUE_KEY, JSON.stringify(dead.slice(-50)));
+        localStorage.setItem(key, JSON.stringify(dead.slice(-50)));
       } catch(_) {}
     }
 
@@ -4410,6 +4533,9 @@ a { color: inherit; text-decoration: none; }
             return { ok: true };
           }
           const entry = q[0];
+          if (entry.ownerUserId && entry.ownerUserId !== currentUser.id) {
+            throw new Error('Queued write belongs to a different signed-in user.');
+          }
           entry.attempts = (entry.attempts || 0) + 1;
           try {
             if      (entry.op === 'create')   await netCreate(entry.payload);
@@ -4652,9 +4778,14 @@ a { color: inherit; text-decoration: none; }
     db.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         currentUser = session.user;
+        setLocalUser(currentUser);
+        const foundLegacyData = quarantineLegacyLocalData();
+        const foundLegacyQueue = quarantineLegacyQueueData();
+        const foundLegacy = foundLegacyData || foundLegacyQueue;
+        load();
         cleanUrl();
         setSyncStatus('syncing', 'Syncing…');
-        // Drain anything captured while signed-out/offline first, then pull.
+        // Drain only this user's offline queue, then pull server truth.
         if (loadQueue().length) await processQueue();
         await pullAll();
         setupRealtime({ skipInitialPull: true });
@@ -4667,12 +4798,14 @@ a { color: inherit; text-decoration: none; }
           startOnboarding();
         }
         renderAll();
+        if (foundLegacy) toast('Older local data was kept aside for safety.');
       } else if (event === 'TOKEN_REFRESHED' && session) {
         // Fix 4: the JWT was refreshed. Realtime uses this token — if we
         // don't tell it about the new one, the channel will die the next
         // time the old token expires at the server. Also re-subscribe so
         // any silently-dropped channel gets rebuilt.
         currentUser = session.user;
+        setLocalUser(currentUser);
         try {
           if (db.realtime && typeof db.realtime.setAuth === 'function') {
             db.realtime.setAuth(session.access_token);
@@ -4681,10 +4814,12 @@ a { color: inherit; text-decoration: none; }
         setupRealtime();
       } else if (event === 'SIGNED_OUT') {
         currentUser = null;
+        setLocalUser(null);
         if (channel) { db.removeChannel(channel); channel = null; }
         // Clean up any pending retry timers so they don't fire stale.
         if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
         if (realtimeReconnectTimer) { clearTimeout(realtimeReconnectTimer); realtimeReconnectTimer = null; }
+        resetLocalAppState();
         setSyncStatus('idle', 'Sync');
         hideSyncErrorBanner();
         renderAll();
@@ -4697,11 +4832,17 @@ a { color: inherit; text-decoration: none; }
           const { data: { session } } = await db.auth.getSession();
           if (session) {
             currentUser = session.user;
+            setLocalUser(currentUser);
+            const foundLegacyData = quarantineLegacyLocalData();
+            const foundLegacyQueue = quarantineLegacyQueueData();
+            const foundLegacy = foundLegacyData || foundLegacyQueue;
+            load();
             cleanUrl();
             setSyncStatus('syncing', 'Syncing…');
             if (loadQueue().length) await processQueue();
             await pullAll();
             setupRealtime({ skipInitialPull: true });
+            if (foundLegacy) toast('Older local data was kept aside for safety.');
           }
         } catch(e) {
           console.error('Sync init error:', e);
@@ -4845,7 +4986,6 @@ a { color: inherit; text-decoration: none; }
 
   // ── INIT ──
   loadTheme();
-  load();
   renderAll(); // First paint
 
   // Kick off auth check. Sign-in is required because Supabase is the
@@ -4868,15 +5008,31 @@ a { color: inherit; text-decoration: none; }
   //   window.openLoopsDebug.retry()      → force a queue drain + pull
   window.openLoopsDebug = {
     queue() {
-      try { return JSON.parse(localStorage.getItem('open_loops_offline_queue') || '[]'); }
+      try {
+        const key = scopedKey(OFFLINE_QUEUE_KEY_BASE);
+        return key ? JSON.parse(localStorage.getItem(key) || '[]') : [];
+      }
       catch(_) { return []; }
     },
     dead() {
-      try { return JSON.parse(localStorage.getItem('open_loops_dead_queue') || '[]'); }
+      try {
+        const key = scopedKey(DEAD_QUEUE_KEY_BASE);
+        return key ? JSON.parse(localStorage.getItem(key) || '[]') : [];
+      }
       catch(_) { return []; }
     },
+    legacy() {
+      try {
+        return {
+          data: localStorage.getItem(LEGACY_STORAGE_QUARANTINE_KEY),
+          queue: JSON.parse(localStorage.getItem(LEGACY_OFFLINE_QUEUE_QUARANTINE_KEY) || '[]'),
+          dead: JSON.parse(localStorage.getItem(LEGACY_DEAD_QUEUE_QUARANTINE_KEY) || '[]')
+        };
+      } catch(_) { return {}; }
+    },
     clearDead() {
-      localStorage.removeItem('open_loops_dead_queue');
+      const key = scopedKey(DEAD_QUEUE_KEY_BASE);
+      if (key) localStorage.removeItem(key);
       return 'cleared';
     },
     async retry() {
