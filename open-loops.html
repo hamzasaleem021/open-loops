@@ -4816,7 +4816,7 @@ a { color: inherit; text-decoration: none; }
         });
     }
 
-    db.auth.onAuthStateChange(async (event, session) => {
+    async function handleAuthStateChange(event, session) {
       if (event === 'SIGNED_IN' && session) {
         currentUser = session.user;
         setLocalUser(currentUser);
@@ -4868,6 +4868,16 @@ a { color: inherit; text-decoration: none; }
         hideSyncErrorBanner();
         renderAll();
       }
+    }
+
+    db.auth.onAuthStateChange((event, session) => {
+      setTimeout(() => {
+        handleAuthStateChange(event, session).catch(e => {
+          console.error('Auth state change error:', e);
+          setSyncStatus('error', 'Sync issue');
+          showSyncErrorBanner();
+        });
+      }, 0);
     });
 
     return {
