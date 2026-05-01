@@ -2618,16 +2618,6 @@ a { color: inherit; text-decoration: none; }
 
     if (view.activeTab === 'now') {
       html += `<div class="tab-panel active" id="tab-now">`;
-      html += `
-        <section class="active-cap-panel" aria-label="Active loop capacity">
-          <div class="active-cap-copy">
-            <div class="active-cap-label">Active capacity</div>
-            <div class="active-cap-main">${active.length}/${cap} loops in focus</div>
-          </div>
-          <div class="active-cap-controls" role="group" aria-label="Active loop cap">
-            ${ALLOWED_LOOP_CAPS.map(n => `<button class="active-cap-btn ${cap === n ? 'active' : ''}" type="button" data-action="set-loop-cap" data-cap="${n}" aria-pressed="${cap === n}">${n}</button>`).join('')}
-          </div>
-        </section>`;
       if (visible.length) {
         html += `<div class="loop-stack" data-active-stack="1">${visible.map((l,i) => cardHtml(l,i, { draggable: true, total: visible.length })).join('')}</div>`;
         if (hidden > 0 && !view.expanded) {
