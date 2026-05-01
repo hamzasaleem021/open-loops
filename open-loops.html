@@ -4281,6 +4281,9 @@ a { color: inherit; text-decoration: none; }
 
     let currentUser = null;
     let channel     = null;
+    let channelHealthy = false;
+    let channelConnecting = false;
+    let channelSeq = 0;
     let retryTimer  = null;
     let draining    = false;
 
@@ -4363,13 +4366,38 @@ a { color: inherit; text-decoration: none; }
         else           localStorage.setItem(key, JSON.stringify(q));
       } catch(e) {}
     }
+    function loadDeadQueue() {
+      const key = deadQueueKey();
+      if (!key || !currentUser) return [];
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(entry => !entry.ownerUserId || entry.ownerUserId === currentUser.id);
+      } catch(e) { return []; }
+    }
+    function settleSyncStatus() {
+      if (loadDeadQueue().length) {
+        setSyncStatus('error', 'Sync issue');
+        showSyncErrorBanner();
+        return { ok: false, dead: true };
+      }
+      if (loadQueue().length) {
+        setSyncStatus(navigator.onLine ? 'syncing' : 'offline', navigator.onLine ? 'Saving…' : 'Saved offline');
+        return { ok: true, pending: true };
+      }
+      setSyncStatus('synced', 'Synced');
+      hideSyncErrorBanner();
+      return { ok: true };
+    }
     function enqueue(entry) {
       if (!currentUser) return;
       entry.ownerUserId = currentUser.id;
       const q = loadQueue();
       // Coalesce back-to-back updates to the same id so we don't pile up
       // hundreds of small UPDATEs from typing into an inline edit field.
-      if (entry.op === 'update' && q.length && !draining) {
+      // During a drain, q[0] may already be in flight. Only coalesce into a
+      // tail entry that is not the active network write.
+      if (entry.op === 'update' && q.length && (!draining || q.length > 1)) {
         const last = q[q.length - 1];
         if (last.op === 'update' && last.id === entry.id) {
           last.payload = { ...last.payload, ...entry.payload };
@@ -4425,7 +4453,7 @@ a { color: inherit; text-decoration: none; }
     // ── Single-row network ops ──
     async function netCreate(loop) {
       markEcho(loop.id);
-      const { error } = await db.from('loops').insert(loopToRow(loop));
+      const { error } = await db.from('loops').upsert(loopToRow(loop), { onConflict: 'id' });
       if (error) throw error;
     }
     async function netUpdate(id, patch) {
@@ -4480,25 +4508,25 @@ a { color: inherit; text-decoration: none; }
     async function processQueue() {
       if (!currentUser) return { ok: true, pending: true };
       if (draining) return { ok: true, pending: loadQueue().length > 0 };
-      if (!loadQueue().length) { setSyncStatus('synced', 'Synced'); return { ok: true }; }
+      if (!loadQueue().length) return settleSyncStatus();
       draining = true;
-      let lastAttempts = 1;
+      let chainAfterRun = true;
       setSyncStatus(navigator.onLine ? 'syncing' : 'offline', navigator.onLine ? 'Saving…' : 'Saved offline');
       try {
         while (true) {
           if (!navigator.onLine) {
             setSyncStatus('offline', 'Saved offline');
             scheduleRetry(1);
+            chainAfterRun = false;
             return { ok: true, pending: true };
           }
           const q = loadQueue();
           if (!q.length) {
-            setSyncStatus('synced', 'Synced');
-            hideSyncErrorBanner();
-            return { ok: true };
+            return settleSyncStatus();
           }
           const entry = q[0];
           if (entry.ownerUserId && entry.ownerUserId !== currentUser.id) {
+            chainAfterRun = false;
             throw new Error('Queued write belongs to a different signed-in user.');
           }
           entry.attempts = (entry.attempts || 0) + 1;
@@ -4513,7 +4541,7 @@ a { color: inherit; text-decoration: none; }
             saveQueue(latest);
           } catch(e) {
             console.error(`Queue drain error (attempt ${entry.attempts}):`, e, entry);
-            lastAttempts = entry.attempts;
+            chainAfterRun = false;
 
             // Poison-pill: after MAX_QUEUE_ATTEMPTS, move this entry to the
             // dead-letter queue so it stops blocking everything behind it.
@@ -4540,8 +4568,9 @@ a { color: inherit; text-decoration: none; }
           }
         }
       } finally {
+        const shouldChain = chainAfterRun && currentUser && navigator.onLine && loadQueue().length;
         draining = false;
-        if (currentUser && navigator.onLine && loadQueue().length) {
+        if (shouldChain) {
           // More work showed up while we were draining — chain another pass
           // without awaiting so we don't deepen the call stack.
           Promise.resolve().then(processQueue);
@@ -4561,6 +4590,40 @@ a { color: inherit; text-decoration: none; }
           await processQueue();
         }
       }, delay);
+    }
+
+    function applyPendingQueueOverlay(remoteLoops) {
+      const pending = loadQueue();
+      if (!pending.length) return remoteLoops;
+
+      const byId = new Map(remoteLoops.map(loop => [loop.id, loop]));
+      const localById = new Map(data.loops.map(loop => [loop.id, loop]));
+
+      for (const entry of pending) {
+        if (entry.ownerUserId && entry.ownerUserId !== currentUser.id) continue;
+
+        if (entry.op === 'create') {
+          const source = localById.get(entry.id) || entry.payload;
+          if (source) byId.set(entry.id, sanitize(source));
+        } else if (entry.op === 'update') {
+          const base = byId.get(entry.id) || localById.get(entry.id);
+          if (base) {
+            const local = localById.get(entry.id);
+            byId.set(entry.id, sanitize({
+              ...base,
+              ...entry.payload,
+              updatedAt: (local && local.updatedAt) || base.updatedAt || nowIso()
+            }));
+          }
+        } else if (entry.op === 'delete') {
+          byId.delete(entry.id);
+        } else if (entry.op === 'undelete') {
+          const local = localById.get(entry.id);
+          if (local) byId.set(entry.id, sanitize(local));
+        }
+      }
+
+      return Array.from(byId.values()).sort((a, b) => (b.position || 0) - (a.position || 0));
     }
 
     // ── Full pull (on login / init) ──
@@ -4587,6 +4650,7 @@ a { color: inherit; text-decoration: none; }
           if (countErr) throw countErr;
 
           const serverTrulyEmpty = (count || 0) === 0;
+          const protectedLocalLoops = applyPendingQueueOverlay([]);
 
           if (serverTrulyEmpty && data.loops && data.loops.length) {
             const payload = data.loops.map(l => ({
@@ -4600,6 +4664,18 @@ a { color: inherit; text-decoration: none; }
             }));
             const { error: upErr } = await db.rpc('batch_upsert_loops', { p_loops: payload });
             if (upErr) throw upErr;
+          } else if (protectedLocalLoops.length) {
+            // A server pull should not erase local edits that are still queued.
+            data = {
+              version:    2,
+              lastLoopId: data.lastLoopId && protectedLocalLoops.some(l => l.id === data.lastLoopId)
+                ? data.lastLoopId
+                : (protectedLocalLoops.find(l => l.status === 'active')?.id || null),
+              activeTab:  view.activeTab || 'now',
+              loops:      protectedLocalLoops
+            };
+            save();
+            renderMain();
           } else if (!serverTrulyEmpty) {
             // Server has data, but it's all soft-deleted. Trust the server:
             // clear local state so we don't silently resurrect rows the
@@ -4613,13 +4689,12 @@ a { color: inherit; text-decoration: none; }
             save();
             renderMain();
           }
-          setSyncStatus('synced', 'Synced');
-          hideSyncErrorBanner();
+          settleSyncStatus();
           return;
         }
 
         // Server has data — server is truth on pull. Replace local state.
-        const remoteLoops = rows.map(rowToLoop);
+        const remoteLoops = applyPendingQueueOverlay(rows.map(rowToLoop));
         const keepLast = data.lastLoopId && remoteLoops.some(l => l.id === data.lastLoopId);
         data = {
           version:    2,
@@ -4629,8 +4704,7 @@ a { color: inherit; text-decoration: none; }
         };
         save();
         renderMain();
-        setSyncStatus('synced', 'Synced');
-        hideSyncErrorBanner();
+        settleSyncStatus();
       } catch(e) {
         console.error('Pull error:', e);
         setSyncStatus('error', 'Sync issue');
@@ -4662,17 +4736,23 @@ a { color: inherit; text-decoration: none; }
 
     function setupRealtime(opts) {
       if (!currentUser) return;
-      if (opts && opts.skipInitialPull) skipNextSubscribePull = true;
+      skipNextSubscribePull = !!(opts && opts.skipInitialPull);
+      const seq = ++channelSeq;
+      channelHealthy = false;
+      channelConnecting = true;
       // Tear down any existing channel before creating a new one. Re-using a
       // dead channel is how we end up silently missing events.
       if (channel) {
         try { db.removeChannel(channel); } catch(_) {}
         channel = null;
       }
-      channel = db.channel(`loops:${currentUser.id}`)
+      const nextChannel = db.channel(`loops:${currentUser.id}`);
+      channel = nextChannel;
+      nextChannel
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'loops', filter: `user_id=eq.${currentUser.id}` },
           payload => {
+            if (seq !== channelSeq || channel !== nextChannel) return;
             const eventType = payload.eventType || payload.event;
             const row = payload.new || payload.old;
             if (!row || !row.id) return;
@@ -4722,7 +4802,10 @@ a { color: inherit; text-decoration: none; }
             renderMain();
           })
         .subscribe(async (status, err) => {
+          if (seq !== channelSeq || channel !== nextChannel) return;
           if (status === 'SUBSCRIBED') {
+            channelHealthy = true;
+            channelConnecting = false;
             // Fresh subscription — we may have missed events while we were
             // disconnected (or during initial setup). Pull to catch up —
             // unless the caller told us a pullAll just ran.
@@ -4733,8 +4816,11 @@ a { color: inherit; text-decoration: none; }
             try { await pullAll(); } catch(_) {}
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
             console.warn('[open-loops] Realtime channel dropped:', status, err);
-            try { if (channel) db.removeChannel(channel); } catch(_) {}
-            channel = null;
+            channelHealthy = false;
+            channelConnecting = false;
+            skipNextSubscribePull = false;
+            try { db.removeChannel(nextChannel); } catch(_) {}
+            if (channel === nextChannel) channel = null;
             scheduleRealtimeReconnect();
           }
         });
@@ -4780,6 +4866,9 @@ a { color: inherit; text-decoration: none; }
       } else if (event === 'SIGNED_OUT') {
         currentUser = null;
         setLocalUser(null);
+        channelHealthy = false;
+        channelConnecting = false;
+        channelSeq++;
         if (channel) { db.removeChannel(channel); channel = null; }
         // Clean up any pending retry timers so they don't fire stale.
         if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
@@ -4875,7 +4964,7 @@ a { color: inherit; text-decoration: none; }
       // pullAll on SUBSCRIBED to catch up on missed events).
       ensureRealtime() {
         if (!currentUser) return;
-        if (!channel) setupRealtime();
+        if (!channel || (!channelHealthy && !channelConnecting)) setupRealtime();
       },
 
       async sendMagicLink(email) {
