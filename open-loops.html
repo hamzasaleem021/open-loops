@@ -227,6 +227,8 @@ a { color: inherit; text-decoration: none; }
 .pill-btn.syncing { color: var(--accent); border-color: rgba(255,45,85,0.22); }
 .pill-btn.offline { color: var(--ask); border-color: rgba(10,132,255,0.22); }
 .pill-btn.error { color: var(--accent); border-color: rgba(255,45,85,0.2); }
+/* idle = signed-out / pre-auth state. Same neutral look as the default. */
+.pill-btn.idle { color: var(--text-3); border-color: var(--border); }
 
 /* ── ICON BUTTON ── */
 .icon-btn {
@@ -2416,11 +2418,11 @@ a { color: inherit; text-decoration: none; }
     if (above != null && below != null) {
       newPosition = (above + below) / 2;
     } else if (above != null) {
-      // Dragged to the bottom.
-      newPosition = below != null ? (above + below) / 2 : above - 1;
+      // Dragged to the bottom (no neighbour below).
+      newPosition = above - 1;
     } else if (below != null) {
-      // Dragged to the top.
-      newPosition = above != null ? (above + below) / 2 : below + 1;
+      // Dragged to the top (no neighbour above).
+      newPosition = below + 1;
     } else {
       newPosition = nowPosition();
     }
@@ -2526,11 +2528,16 @@ a { color: inherit; text-decoration: none; }
     const m = kindMeta[loop.kind] || kindMeta.inbox;
     const hl = view.highlightedId === loop.id ? ' highlighted' : '';
     const delay = `animation-delay:${idx*0.04}s`;
-    const draggable = opts.draggable ? ' draggable="true" data-draggable-loop="1"' : '';
-    const handle = dragHandleHtml(opts.draggable);
-    const canMoveUp = opts.draggable && idx > 0;
-    const canMoveDown = opts.draggable && idx < (opts.total || 0) - 1;
-    const reorderControls = opts.draggable ? `
+    // Suppress drag while this card is in inline-edit mode. Otherwise a
+    // mid-edit drag triggers re-render before save and the user's typed
+    // (but not yet saved) text is silently discarded.
+    const isEditing = view.inlineEditId === loop.id;
+    const dragEnabled = opts.draggable && !isEditing;
+    const draggable = dragEnabled ? ' draggable="true" data-draggable-loop="1"' : '';
+    const handle = dragHandleHtml(dragEnabled);
+    const canMoveUp = dragEnabled && idx > 0;
+    const canMoveDown = dragEnabled && idx < (opts.total || 0) - 1;
+    const reorderControls = dragEnabled ? `
       <span class="reorder-controls" aria-label="Reorder loop">
         <button class="reorder-btn" type="button" data-action="move-loop-up" data-loop-id="${esc(loop.id)}" title="Move up" aria-label="Move loop up" ${canMoveUp ? '' : 'disabled'}>
           <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 3.2 3.8 6.4M7 3.2l3.2 3.2M7 3.2v7.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2540,7 +2547,7 @@ a { color: inherit; text-decoration: none; }
         </button>
       </span>` : '';
 
-    if (view.inlineEditId === loop.id) {
+    if (isEditing) {
       const editLen = (loop.rawText || '').length;
       const editCounterClass = editLen >= MAX_LOOP_TEXT_LEN
         ? ' at-limit'
@@ -2904,51 +2911,6 @@ a { color: inherit; text-decoration: none; }
       </div>`;
   }
 
-  function renderSettingsLegacy() {
-    const cap = view.loopCap || DEFAULT_LOOP_CAP;
-    return `
-      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-        <div class="overlay-header">
-          <div class="overlay-meta"><div class="overlay-eyebrow">Settings</div></div>
-          <button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-        </div>
-        <h2 class="overlay-title" id="settings-title">Settings</h2>
-
-        <section class="settings-section">
-          <div class="settings-label">Theme</div>
-          <div class="settings-helper">Choose the view that feels calmest right now.</div>
-          <div class="seg-row" role="group" aria-label="Theme">
-            <button type="button" data-action="set-theme" data-theme="dark" class="${view.theme === 'dark' ? 'active' : ''}" aria-pressed="${view.theme === 'dark'}">Dark</button>
-            <button type="button" data-action="set-theme" data-theme="light" class="${view.theme === 'light' ? 'active' : ''}" aria-pressed="${view.theme === 'light'}">Light</button>
-          </div>
-        </section>
-
-        <div class="settings-row">
-          <div class="settings-row-label">
-            <div class="settings-row-title">Active loop cap</div>
-            <div class="settings-row-help">How many loops to show at once before "Show more". The constraint is the feature — keep it small.</div>
-          </div>
-          <div class="settings-cap-group" role="group" aria-label="Active loop cap">
-            ${ALLOWED_LOOP_CAPS.map(n => `
-              <button class="settings-cap-btn ${cap === n ? 'selected' : ''}" type="button" data-action="set-loop-cap" data-cap="${n}" aria-pressed="${cap === n}">${n}</button>
-            `).join('')}
-          </div>
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-row-label">
-            <div class="settings-row-title">Tutorial</div>
-            <div class="settings-row-help">${onboarded ? 'Show the four-step intro again.' : 'Walk through the four-step intro.'}</div>
-          </div>
-          <button class="btn btn-ghost btn-sm" data-action="replay-onboarding">Show tutorial</button>
-        </div>
-
-        <div class="overlay-actions">
-          <button class="btn btn-ghost" data-action="close-overlay">Done</button>
-        </div>
-      </div>`;
-  }
-
   // ── AUTH GATE ──
   // Settings stay behind the sign-in gate because the app is sync-first.
   function renderSettings() {
@@ -3086,57 +3048,6 @@ a { color: inherit; text-decoration: none; }
   // 4-step micro guided tutorial shown once after first sign-in and
   // replayable from Settings. Each step maps to one stage in the loop
   // lifecycle: Capture → Activate → Park → Close.
-  const ONBOARDING_STEPS_OLD = [
-    {
-      eyebrow: '1 of 4',
-      title: 'Capture.',
-      body: 'A thought entered your head and won\'t let go. Write it down. That act alone — naming it — quiets it.',
-      visual: `
-        <div class="onboarding-visual">
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Reply to the contractor quote</span></div>
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Choose a new laptop</span></div>
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Check in with Sarah</span></div>
-        </div>`,
-      next: 'Next',
-    },
-    {
-      eyebrow: '2 of 4',
-      title: 'Activate.',
-      body: 'Give it a kind — Do, Decide, Ask, Schedule, or Let go. Naming the kind of attention it needs is half the work.',
-      visual: `
-        <div class="onboarding-visual">
-          <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-            <span class="kind-chip do"><span class="kind-dot"></span>Do</span>
-            <span class="kind-chip decide"><span class="kind-dot"></span>Decide</span>
-            <span class="kind-chip ask"><span class="kind-dot"></span>Ask</span>
-            <span class="kind-chip schedule"><span class="kind-dot"></span>Schedule</span>
-            <span class="kind-chip let_go"><span class="kind-dot"></span>Let go</span>
-          </div>
-        </div>`,
-      next: 'Next',
-    },
-    {
-      eyebrow: '3 of 4',
-      title: 'Park what isn\'t yours.',
-      body: 'If the next move belongs to someone else — or to a later day — park it. It\'s waiting, not forgotten. Your head doesn\'t have to hold it.',
-      visual: `
-        <div class="onboarding-visual" style="text-align:center;padding:18px 20px;">
-          <div style="font-size:13px;color:var(--text-2);line-height:1.7;">Parked loops stay ready.<br>They come back when the move becomes yours again.</div>
-        </div>`,
-      next: 'Next',
-    },
-    {
-      eyebrow: '4 of 4',
-      title: 'Close.',
-      body: 'When a loop is done — whether you did it or let it go — close it. The point isn\'t the record. The point is relief.',
-      visual: `
-        <div class="onboarding-visual" style="text-align:center;padding:18px 20px;">
-          <div style="font-size:13px;color:var(--text-2);line-height:1.7;">Closed loops stay searchable but quiet.<br>Your head gets the space back.</div>
-        </div>`,
-      next: 'Start capturing',
-    },
-  ];
-
   const ONBOARDING_STEPS = [
     {
       eyebrow: '1 of 4',
@@ -3311,69 +3222,12 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── RENDER SIDEBAR ──
+  // The sidebar element is hidden via CSS (display:none) on every viewport.
+  // Kept as a no-op so renderAll() doesn't need a special case; if a sidebar
+  // is reintroduced, this is the place to wire it.
   function renderSidebar() {
     const sidebar = document.getElementById('sidebar');
-    if (!sidebar) return;
-    sidebar.innerHTML = '';
-    return;
-
-    const nowLoops = byStatus('active');
-    const typedNowLoops = nowLoops.filter(l => l.kind);
-    const laterLoops = byStatus('waiting');
-    const doneLoops = byStatus('released');
-    const inboxLoops = byStatus('inbox');
-
-    const stats = [
-      { label: 'Do', count: typedNowLoops.filter(l => l.kind === 'do').length, color: 'var(--do)' },
-      { label: 'Decide', count: typedNowLoops.filter(l => l.kind === 'decide').length, color: 'var(--decide)' },
-      { label: 'Ask', count: typedNowLoops.filter(l => l.kind === 'ask').length, color: 'var(--ask)' },
-      { label: 'Schedule', count: typedNowLoops.filter(l => l.kind === 'schedule').length, color: 'var(--schedule)' },
-    ];
-
-    sidebar.innerHTML = `
-      <div class="sidebar-section">
-        <div class="sidebar-title">Overview</div>
-        <div class="sidebar-stats">
-          ${stats.map(s => `
-            <div class="stat-row">
-              <div class="stat-label">
-                <div class="stat-badge" style="background:${s.color}"></div>
-                ${s.label}
-              </div>
-              <div class="stat-count">${s.count}</div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-      
-      <div class="sidebar-section">
-        <div class="sidebar-title">Views</div>
-        <div class="sidebar-tabs">
-          <div class="sidebar-tab ${view.activeTab === 'now' ? 'active' : ''}" data-action="set-tab" data-tab="now">
-            <span>${TAB_LABEL.active}</span>
-            <span class="tab-count">${nowLoops.length}</span>
-          </div>
-          <div class="sidebar-tab ${view.activeTab === 'later' ? 'active' : ''}" data-action="set-tab" data-tab="later">
-            <span>${TAB_LABEL.waiting}</span>
-            <span class="tab-count">${laterLoops.length}</span>
-          </div>
-          <div class="sidebar-tab ${view.activeTab === 'done' ? 'active' : ''}" data-action="set-tab" data-tab="done">
-            <span>${TAB_LABEL.released}</span>
-            <span class="tab-count">${doneLoops.length}</span>
-          </div>
-          <div class="sidebar-tab ${view.activeTab === 'inbox' ? 'active' : ''}" data-action="set-tab" data-tab="inbox">
-            <span>${TAB_LABEL.inbox}</span>
-            <span class="tab-count">${inboxLoops.length}</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="sidebar-section">
-        <div class="sidebar-actions">
-          <button class="sidebar-capture-btn" data-action="open-capture">+ New loop</button>
-        </div>
-      </div>
-    `;
+    if (sidebar) sidebar.innerHTML = '';
   }
 
   function renderBottomNav() {
@@ -3593,30 +3447,6 @@ a { color: inherit; text-decoration: none; }
       return;
     }
 
-    // Reentry
-    if (action === 'continue-reentry') {
-      const l = suggested();
-      if (l) { view.highlightedId = l.id; data.lastLoopId = l.id; }
-      saveReentryDismissed(l?.id || null);
-      renderMain();
-      return;
-    }
-    if (action === 'dismiss-reentry') {
-      saveReentryDismissed(suggested()?.id || null);
-      renderMain();
-      return;
-    }
-
-    // Inbox
-    if (action === 'clarify-inbox') {
-      const next = byStatus('inbox')[0];
-      if (next) {
-        rememberOverlayOpener(el);
-        view.overlay = { type: 'define-raw', loopId: next.id, rawText: next.rawText, kind: next.kind || null, promptAnswer: next.promptAnswer || '', status: next.kind === 'let_go' ? 'released' : 'active' };
-        renderOverlay();
-      }
-      return;
-    }
     if (action === 'define-raw') {
       const target = getLoop(loopId);
       if (target) {
@@ -3683,80 +3513,6 @@ a { color: inherit; text-decoration: none; }
       await persistAndRender();
       Sync.updateLoop(ov.loopId, patch);
       toast(status === 'active' ? 'Defined and made active.' : status === 'waiting' ? 'Defined and parked.' : 'Defined and closed.');
-      return;
-    }
-    if (action === 'capture-next') {
-      const ov = view.overlay;
-      if (!ov || ov.type !== 'capture') return;
-      const val = document.getElementById('capture-input')?.value.trim();
-      if (!val) return;
-      ov.rawText = val;
-      ov.step = 'kind';
-      renderOverlay();
-      return;
-    }
-    if (action === 'capture-back') {
-      if (view.overlay?.type === 'capture') { view.overlay.step = 'capture'; renderOverlay(); }
-      return;
-    }
-    if (action === 'pick-kind') {
-      if (view.overlay?.type === 'capture') { view.overlay.kind = el.dataset.kind; renderOverlay(); }
-      return;
-    }
-    if (action === 'kind-next') {
-      if (view.overlay?.type === 'capture' && view.overlay.kind) { view.overlay.step = 'detail'; renderOverlay(); }
-      return;
-    }
-    if (action === 'kind-back') {
-      if (view.overlay?.type === 'capture') { view.overlay.step = 'kind'; renderOverlay(); }
-      return;
-    }
-    if (action === 'finish-capture' || action === 'finish-capture-skip') {
-      if (requireLogin()) return;
-      const ov = view.overlay;
-      if (!ov || ov.type !== 'capture') return;
-      const ans = action === 'finish-capture-skip' ? '' : (document.getElementById('detail-input')?.value.trim() || '');
-      if (action === 'finish-capture' && !ans) return;
-      ov.promptAnswer = ans;
-      let _syncAction = null;
-      if (ov.sourceId) {
-        const patch = { rawText: ov.rawText, kind: ov.kind, promptAnswer: ans, status: ov.kind === 'let_go' ? 'released' : 'active' };
-        updateLoop(ov.sourceId, patch);
-        view.highlightedId = ov.sourceId;
-        _syncAction = () => Sync.updateLoop(ov.sourceId, patch);
-      } else {
-        const l = createLoop({ rawText: ov.rawText, kind: ov.kind, promptAnswer: ans, status: ov.kind === 'let_go' ? 'released' : 'active' });
-        view.highlightedId = l.id;
-        if (l.status === 'released') view.activeTab = 'released';
-        else view.activeTab = 'now';
-        _syncAction = () => Sync.createLoop(l);
-      }
-      saveReentryDismissed(null);
-      closeOverlay();
-      await persistAndRender();
-      _syncAction();
-      toast('Loop saved.');
-      return;
-    }
-    if (action === 'save-for-later') {
-      if (requireLogin()) return;
-      const ov = view.overlay;
-      if (!ov || ov.type !== 'capture') return;
-      const raw = document.getElementById('capture-input')?.value.trim();
-      if (!raw) return;
-      if (ov.sourceId) {
-        const patch = { rawText: raw, status: 'inbox' };
-        updateLoop(ov.sourceId, patch);
-        closeOverlay();
-        await persistAndRender();
-        Sync.updateLoop(ov.sourceId, patch);
-      } else {
-        const l = createLoop({ rawText: raw, kind: null, promptAnswer: '', status: 'inbox' });
-        closeOverlay();
-        await persistAndRender();
-        Sync.createLoop(l);
-      }
-      toast('Saved to inbox.');
       return;
     }
 
@@ -3830,7 +3586,9 @@ a { color: inherit; text-decoration: none; }
     }
     if (action === 'restore-active') {
       if (requireLogin()) return;
-      const current = getLoop(loopId);
+      // Snapshot the previous status BEFORE updateLoop mutates the same
+      // object reference (getLoop returns the live row, not a copy).
+      const prevStatus = getLoop(loopId)?.status;
       // Restoring from waiting/released should land the loop back on top
       // of the active list, not at its old position slot (which is likely
       // long-stale and below everything else active right now).
@@ -3840,7 +3598,7 @@ a { color: inherit; text-decoration: none; }
       view.activeTab = 'now';
       await persistAndRender();
       Sync.updateLoop(loopId, patch);
-      toast(current?.status === 'released' ? 'Reopened.' : 'Made active.');
+      toast(prevStatus === 'released' ? 'Reopened.' : 'Made active.');
       return;
     }
     if (action === 'delete-loop') {
@@ -4040,7 +3798,7 @@ a { color: inherit; text-decoration: none; }
       renderMain();
       return;
     }
-    if (action === 'reset-onboarding' || action === 'replay-onboarding') {
+    if (action === 'reset-onboarding') {
       try {
         const key = scopedKey(ONBOARDING_KEY_BASE);
         if (key) localStorage.removeItem(key);
@@ -4143,14 +3901,8 @@ a { color: inherit; text-decoration: none; }
     if (e.target.id === 'capture-input') {
       ov.rawText = e.target.value;
       updateCounter('capture-counter', e.target.value.length);
-      const btn = document.querySelector('[data-action="save-raw-loop"], [data-action="capture-next"]');
+      const btn = document.querySelector('[data-action="save-raw-loop"]');
       if (btn) btn.disabled = !(e.target.value.trim() && ov.kind);
-    }
-    if (e.target.id === 'detail-input') {
-      ov.promptAnswer = e.target.value;
-      updateCounter('detail-counter', e.target.value.length);
-      const btn = document.querySelector('[data-action="finish-capture"]');
-      if (btn) btn.disabled = !e.target.value.trim();
     }
   });
 
@@ -4290,7 +4042,13 @@ a { color: inherit; text-decoration: none; }
     }
 
     function cleanUrl() {
-      if (location.hash || location.search.includes('code='))
+      // Strip the magic-link auth fragments / query params after Supabase
+      // has consumed them. URLSearchParams.has('code') is exact — substring
+      // matching would also strip benign params like ?qrcode= or
+      // ?discount_code=.
+      let hasAuthParam = false;
+      try { hasAuthParam = new URLSearchParams(location.search).has('code'); } catch(_) {}
+      if (location.hash || hasAuthParam)
         history.replaceState({}, document.title, location.pathname);
     }
 
@@ -4618,7 +4376,12 @@ a { color: inherit; text-decoration: none; }
 
     // ── Full pull (on login / init) ──
     async function pullAll() {
-      if (!currentUser) return;
+      // Capture the user we're pulling for. If the user signs out (or signs in
+      // as a different account) while any of these awaits are in flight, we
+      // must abort — otherwise we'd overwrite the new user's data with the
+      // previous user's server rows.
+      const pullForUser = currentUser;
+      if (!pullForUser) return;
       setSyncStatus('syncing', 'Syncing…');
       try {
         const { data: rows, error } = await db
@@ -4626,6 +4389,7 @@ a { color: inherit; text-decoration: none; }
           .select('*')
           .is('deleted_at', null)
           .order('position', { ascending: false });
+        if (currentUser !== pullForUser) return;   // user switched mid-pull
         if (error) throw error;
 
         if (!rows || !rows.length) {
@@ -4637,6 +4401,7 @@ a { color: inherit; text-decoration: none; }
           const { count, error: countErr } = await db
             .from('loops')
             .select('id', { count: 'exact', head: true });
+          if (currentUser !== pullForUser) return; // user switched mid-pull
           if (countErr) throw countErr;
 
           const serverTrulyEmpty = (count || 0) === 0;
@@ -4653,6 +4418,7 @@ a { color: inherit; text-decoration: none; }
               createdAt:    l.createdAt
             }));
             const { error: upErr } = await db.rpc('batch_upsert_loops', { p_loops: payload });
+            if (currentUser !== pullForUser) return; // user switched mid-seed
             if (upErr) throw upErr;
           } else if (protectedLocalLoops.length) {
             // A server pull should not erase local edits that are still queued.
@@ -4696,6 +4462,7 @@ a { color: inherit; text-decoration: none; }
         renderMain();
         settleSyncStatus();
       } catch(e) {
+        if (currentUser !== pullForUser) return;   // ignore errors from a stale pull
         console.error('Pull error:', e);
         setSyncStatus('error', 'Sync issue');
         showSyncErrorBanner();
@@ -4993,7 +4760,7 @@ a { color: inherit; text-decoration: none; }
     try { localStorage.setItem(THEME_KEY, theme); } catch(e) {}
     // Swap the theme-color meta so browser chrome (Android/iOS) follows along.
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'light' ? '#f6f7f4' : '#101312');
+    if (meta) meta.setAttribute('content', theme === 'light' ? '#f7f7f9' : '#0c0c0d');
     renderThemeIcon();
   }
 
