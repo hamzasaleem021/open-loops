@@ -2875,7 +2875,6 @@ a { color: inherit; text-decoration: none; }
     const hasError = view.syncStatus === 'error';
     const isSyncing = view.syncStatus === 'syncing';
     const clientIssue = supabaseClientIssue();
-    const hasLegacy = hasLegacyQuarantinedData();
     return `
       <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="sync-title">
         <div class="overlay-header">
@@ -2895,7 +2894,6 @@ a { color: inherit; text-decoration: none; }
           ` : `
             <div class="sync-info" style="color:var(--do)">Connected. Your loops sync automatically across devices.</div>
           `}
-          ${hasLegacy ? `<div class="sync-info">Older local data was found on this device and kept aside, so it was not mixed into this account.</div>` : ''}
           <div class="overlay-actions" style="margin-top:0">
             <button class="btn btn-ghost" data-action="sign-out">Sign out</button>
             <button class="btn btn-ghost" data-action="close-overlay">Close</button>
