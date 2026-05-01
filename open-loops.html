@@ -200,12 +200,6 @@ a { color: inherit; text-decoration: none; }
   gap: 6px;
 }
 
-.new-loop-btn { display: none; }
-
-@media (min-width: 768px) {
-  .new-loop-btn { display: inline-flex; }
-}
-
 /* ── PILL BUTTON (sync status) ── */
 .pill-btn {
   display: inline-flex;
@@ -248,6 +242,11 @@ a { color: inherit; text-decoration: none; }
   border-color: rgba(255,255,255,0.1);
   color: var(--text-2);
   background: var(--surface-2);
+}
+.icon-btn.active {
+  color: var(--accent);
+  border-color: rgba(255,45,85,0.28);
+  background: var(--accent-dim);
 }
 .icon-btn svg { width: 14px; height: 14px; }
 #install-btn[hidden] { display: none !important; }
@@ -723,6 +722,25 @@ a { color: inherit; text-decoration: none; }
   text-transform: uppercase;
   color: var(--text-3);
   flex-shrink: 0;
+}
+
+.loop-meta {
+  margin-top: 9px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.loop-meta span {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 5px;
+  border: 1px solid var(--border-soft);
+  border-radius: 5px;
+  background: var(--surface-2);
 }
 
 .loop-card-bottom {
@@ -1454,10 +1472,6 @@ a { color: inherit; text-decoration: none; }
   .overlay-card { width: 100%; max-height: 86vh; border-radius: 16px 16px 0 0; }
 }
 
-@media (min-width: 768px) {
-  .fab { display: none; }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -1996,7 +2010,6 @@ a { color: inherit; text-decoration: none; }
       <span class="brand-name">Open Loops</span>
     </div>
     <div class="topbar-right">
-      <button class="btn btn-primary btn-sm new-loop-btn" type="button" data-action="open-capture">+ New loop</button>
       <button class="icon-btn" id="install-btn" type="button" data-action="install-app" title="Install app" aria-label="Install app" hidden>
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
@@ -2005,6 +2018,9 @@ a { color: inherit; text-decoration: none; }
       </button>
       <button class="icon-btn" id="settings-btn" type="button" data-action="open-settings" title="Settings" aria-label="Settings">
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4"/><path d="M12.5 8c0-.3 0-.7-.1-1l1.4-1.1-1-1.7-1.7.7c-.5-.4-1-.7-1.6-.9L9.2 2H6.8l-.3 2c-.6.2-1.1.5-1.6.9l-1.7-.7-1 1.7L3.6 7C3.5 7.3 3.5 7.7 3.5 8s0 .7.1 1l-1.4 1.1 1 1.7 1.7-.7c.5.4 1 .7 1.6.9l.3 2h2.4l.3-2c.6-.2 1.1-.5 1.6-.9l1.7.7 1-1.7L12.4 9c.1-.3.1-.7.1-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="icon-btn" id="archive-btn" type="button" data-action="set-tab" data-tab="done" title="Archive" aria-label="Archive">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 4h10l-.7 8.5H3.7L3 4Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M2.5 4h11V2.7h-11V4ZM6 7.2h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <button class="pill-btn" id="sync-pill" type="button" data-action="open-sync">
         <span class="dot"></span>
@@ -2030,7 +2046,7 @@ a { color: inherit; text-decoration: none; }
 <!-- Sync error banner (Morning Brief pattern) -->
 <div class="sync-error-banner" id="sync-error-banner" style="display:none;">
   <div class="sync-error-msg">
-    <strong>Sync issue.</strong> Your changes are saved on this device.
+    <strong>Still saving.</strong> Kept safely on this device.
   </div>
   <button class="sync-error-retry" data-action="sync-retry">Retry</button>
   <button class="sync-error-dismiss" data-action="dismiss-sync-banner">✕</button>
@@ -2059,7 +2075,7 @@ a { color: inherit; text-decoration: none; }
   // stay as 'inbox' / 'active' / 'waiting' / 'released' for backwards
   // compat with existing localStorage and the Supabase schema.
   const TAB_LABEL = {
-    inbox:    'Raw',
+    inbox:    'Inbox',
     active:   'Active',
     waiting:  'Parked',
     released: 'Closed',
@@ -2107,7 +2123,7 @@ a { color: inherit; text-decoration: none; }
     ask:      { label: 'Ask',      action: 'Reach out',  question: 'Who do you need something from?',    helper: 'One person, one ask. Nothing more.' },
     schedule: { label: 'Schedule', action: 'Add to cal', question: 'What needs time on a calendar?',     helper: 'Treat time as the missing ingredient.' },
     let_go:   { label: 'Let go',   action: 'Release',    question: 'What are you choosing to release?',  helper: 'The goal is relief, not proving the thought was silly.' },
-    inbox:    { label: 'Raw', action: 'Define',    question: '',                                   helper: '' }
+    inbox:    { label: 'Inbox', action: 'Define',    question: '',                                   helper: '' }
   };
 
   function nowIso() { return new Date().toISOString(); }
@@ -2150,7 +2166,8 @@ a { color: inherit; text-decoration: none; }
       promptAnswer: (loop.promptAnswer || '').trim().slice(0, MAX_LOOP_TEXT_LEN),
       position: pos,
       createdAt: loop.createdAt || nowIso(),
-      updatedAt: loop.updatedAt || nowIso()
+      updatedAt: loop.updatedAt || nowIso(),
+      completedAt: loop.completedAt || loop.completed_at || null
     };
   }
 
@@ -2509,6 +2526,22 @@ a { color: inherit; text-decoration: none; }
   }
 
   // ── KIND CHIP HTML ──
+  function formatLoopDate(value) {
+    if (!value) return '';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function loopMetaHtml(loop) {
+    const captured = formatLoopDate(loop.createdAt);
+    const closed = loop.status === 'released' ? formatLoopDate(loop.completedAt) : '';
+    const parts = [];
+    if (captured) parts.push(`<span>Captured ${esc(captured)}</span>`);
+    if (closed) parts.push(`<span>Closed ${esc(closed)}</span>`);
+    return parts.length ? `<div class="loop-meta">${parts.join('')}</div>` : '';
+  }
+
   function chipHtml(kind) {
     const m = kindMeta[kind] || kindMeta.inbox;
     const cls = kind || 'inbox';
@@ -2589,6 +2622,7 @@ a { color: inherit; text-decoration: none; }
           <span class="loop-next-label">Next</span>
           <span>${esc(loop.promptAnswer || 'No next step set.')}</span>
         </div>
+        ${loopMetaHtml(loop)}
         <div class="loop-card-bottom">
           <button class="btn-action kind-${loop.kind || 'inbox'}" data-action="primary-action" data-loop-id="${esc(loop.id)}">${m.action}</button>
         </div>
@@ -2615,9 +2649,6 @@ a { color: inherit; text-decoration: none; }
         <button class="tab ${view.activeTab === 'later' ? 'active' : ''}" data-action="set-tab" data-tab="later">
           ${TAB_LABEL.waiting} <span class="tab-count">${waiting.length}</span>
         </button>
-        <button class="tab ${view.activeTab === 'done' ? 'active' : ''}" data-action="set-tab" data-tab="done">
-          ${TAB_LABEL.released} <span class="tab-count">${released.length}</span>
-        </button>
         <button class="tab ${view.activeTab === 'inbox' ? 'active' : ''}" data-action="set-tab" data-tab="inbox">
           ${TAB_LABEL.inbox} <span class="tab-count">${inbox.length}</span>
         </button>
@@ -2631,7 +2662,7 @@ a { color: inherit; text-decoration: none; }
           html += `<button class="show-more" data-action="show-more">Show ${hidden} more loop${hidden > 1 ? 's' : ''}</button>`;
         }
       } else {
-        html += `<div class="empty-state"><strong>No active loops - your head is clear</strong>Capture a raw loop, then define it when you're ready.</div>`;
+        html += `<div class="empty-state"><strong>No active loops - your head is clear</strong>Capture a loop, then define it when you're ready.</div>`;
       }
       html += `</div>`;
     }
@@ -2646,6 +2677,7 @@ a { color: inherit; text-decoration: none; }
               <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
               <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '-')}</span></div>
+              ${loopMetaHtml(loop)}
               <div class="loop-card-bottom">
                 <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Make active</button>
               </div>
@@ -2668,6 +2700,7 @@ a { color: inherit; text-decoration: none; }
               <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title" style="text-decoration:line-through;color:var(--text-2)">${esc(loop.rawText)}</p>
               <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '-')}</span></div>
+              ${loopMetaHtml(loop)}
               <div class="loop-card-bottom">
                 <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Reopen</button>
               </div>
@@ -2689,6 +2722,7 @@ a { color: inherit; text-decoration: none; }
             <article class="loop-card kind-${loop.kind || 'inbox'}" style="animation-delay:${i*0.04}s">
               <div class="loop-card-top">${chipHtml(loop.kind || 'inbox')}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
+              ${loopMetaHtml(loop)}
               <div class="loop-card-bottom">
                 <button class="btn-action btn-primary" data-action="define-raw" data-loop-id="${esc(loop.id)}">Define and route</button>
               </div>
@@ -2696,7 +2730,7 @@ a { color: inherit; text-decoration: none; }
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state"><strong>No raw loops</strong>Captured loops land here before you define where they belong.</div>`;
+        html += `<div class="empty-state"><strong>No inbox loops</strong>Captured loops land here before you define where they belong.</div>`;
       }
       html += `</div>`;
     }
@@ -2727,11 +2761,11 @@ a { color: inherit; text-decoration: none; }
     return `
       <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="capture-title">
         <div class="overlay-header">
-          <div class="overlay-meta"><div class="overlay-eyebrow">New raw loop</div><div class="overlay-step">Capture to Raw</div></div>
+          <div class="overlay-meta"><div class="overlay-eyebrow">New loop</div><div class="overlay-step">Capture to Inbox</div></div>
           ${closeBtn}
         </div>
         <h2 class="overlay-title" id="capture-title">Get it out of your head.</h2>
-        <p class="overlay-subtitle">Name the open loop and choose the kind of attention it needs. It will land in Raw, not Active.</p>
+        <p class="overlay-subtitle">Name the open loop and choose the kind of attention it needs. It will land in Inbox, not Active.</p>
         <textarea class="big-input" id="capture-input" placeholder="One unfinished thing..." maxlength="${MAX_LOOP_TEXT_LEN}" aria-describedby="capture-counter">${esc(ov.rawText)}</textarea>
         <div class="input-hint-row">
           <p class="input-hint">Keep it short enough that Future You recognizes it instantly.</p>
@@ -2741,7 +2775,7 @@ a { color: inherit; text-decoration: none; }
         <div class="kind-grid">${kindOptions}</div>
         <div class="overlay-actions">
           <button class="btn btn-ghost" data-action="close-overlay">Cancel</button>
-          <button class="btn btn-primary" data-action="save-raw-loop" ${canAdd ? '' : 'disabled'}>Add to Raw</button>
+          <button class="btn btn-primary" data-action="save-raw-loop" ${canAdd ? '' : 'disabled'}>Add to Inbox</button>
         </div>
       </div>`;
   }
@@ -2776,7 +2810,7 @@ a { color: inherit; text-decoration: none; }
     return `
       <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="define-title">
         <div class="overlay-header">
-          <div class="overlay-meta"><div class="overlay-eyebrow">Define raw loop</div><div class="overlay-step">Route it</div></div>
+          <div class="overlay-meta"><div class="overlay-eyebrow">Define loop</div><div class="overlay-step">Route it</div></div>
           <button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
         <h2 class="overlay-title" id="define-title">Give this loop a shape.</h2>
@@ -3231,16 +3265,14 @@ a { color: inherit; text-decoration: none; }
   function renderBottomNav() {
     const nav = document.getElementById('bottom-nav');
     if (!nav) return;
-    const counts = {
-      now: byStatus('active').length,
-      later: byStatus('waiting').length,
-      done: byStatus('released').length,
-      inbox: byStatus('inbox').length
-    };
+      const counts = {
+        now: byStatus('active').length,
+        later: byStatus('waiting').length,
+        inbox: byStatus('inbox').length
+      };
     const items = [
       { key: 'now',   label: TAB_LABEL.active,   icon: '<path d="M9 3.5A4.5 4.5 0 1 1 5.8 11.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 3.5v3h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' },
       { key: 'later', label: TAB_LABEL.waiting,  icon: '<circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 6.8v2.6l1.7 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' },
-      { key: 'done',  label: TAB_LABEL.released, icon: '<path d="M4.8 9.3 7.4 12l5.8-6.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' },
       { key: 'inbox', label: TAB_LABEL.inbox,    icon: '<path d="M3.5 5.5h11l-1 7h-9l-1-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.5 8.8h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' }
     ];
     nav.innerHTML = items.map(item => `
@@ -3308,9 +3340,12 @@ a { color: inherit; text-decoration: none; }
   function renderHeader() {
     const pill = document.getElementById('sync-pill');
     const label = document.getElementById('sync-label');
-    if (!pill || !label) return;
-    pill.className = `pill-btn ${view.syncStatus}`;
-    label.textContent = view.syncText;
+    if (pill && label) {
+      pill.className = `pill-btn ${view.syncStatus}`;
+      label.textContent = view.syncText;
+    }
+    const archive = document.getElementById('archive-btn');
+    if (archive) archive.classList.toggle('active', view.activeTab === 'done' || view.activeTab === 'released');
   }
 
   function renderAll() {
@@ -3429,7 +3464,9 @@ a { color: inherit; text-decoration: none; }
     // Tabs
     if (action === 'set-tab') {
       view.activeTab = el.dataset.tab;
+      if (view.activeTab === 'done') view.expanded = false;
       save();
+      renderHeader();
       renderMain();
       renderSidebar();
       renderBottomNav();
@@ -3477,7 +3514,7 @@ a { color: inherit; text-decoration: none; }
       closeOverlay();
       await persistAndRender();
       Sync.createLoop(l);
-      toast('Added to Raw.');
+      toast('Added to Inbox.');
       return;
     }
     if (action === 'define-pick-kind') {
@@ -3485,6 +3522,7 @@ a { color: inherit; text-decoration: none; }
         view.overlay.kind = el.dataset.kind;
         if (view.overlay.kind === 'let_go') view.overlay.status = 'released';
         renderOverlay();
+        setTimeout(() => document.getElementById('define-detail-input')?.focus(), 80);
       }
       return;
     }
@@ -3502,7 +3540,7 @@ a { color: inherit; text-decoration: none; }
       const raw = document.getElementById('define-raw-input')?.value.trim() || ov.rawText;
       const ans = document.getElementById('define-detail-input')?.value.trim() || '';
       const status = ov.status || (ov.kind === 'let_go' ? 'released' : 'active');
-      const patch = { rawText: raw, kind: ov.kind, promptAnswer: ans, status };
+      const patch = { rawText: raw, kind: ov.kind, promptAnswer: ans, status, completedAt: status === 'released' ? nowIso() : null };
       updateLoop(ov.loopId, patch);
       view.highlightedId = status === 'active' ? ov.loopId : null;
       view.activeTab = status === 'waiting' ? 'later' : status === 'released' ? 'done' : 'now';
@@ -3536,7 +3574,7 @@ a { color: inherit; text-decoration: none; }
     // Primary action outcomes
     if (action === 'complete-done') {
       if (requireLogin()) return;
-      const patch = { status: 'released' };
+      const patch = { status: 'released', completedAt: nowIso() };
       updateLoop(loopId, patch);
       closeOverlay();
       view.activeTab = 'now';
@@ -3573,7 +3611,7 @@ a { color: inherit; text-decoration: none; }
     }
     if (action === 'move-released') {
       if (requireLogin()) return;
-      const patch = { status: 'released' };
+      const patch = { status: 'released', completedAt: nowIso() };
       updateLoop(loopId, patch);
       closeOverlay();
       view.activeTab = 'now';
@@ -3590,7 +3628,7 @@ a { color: inherit; text-decoration: none; }
       // Restoring from waiting/released should land the loop back on top
       // of the active list, not at its old position slot (which is likely
       // long-stale and below everything else active right now).
-      const patch = { status: 'active', position: topPosition() };
+      const patch = { status: 'active', position: topPosition(), completedAt: null };
       updateLoop(loopId, patch);
       closeOverlay();
       view.activeTab = 'now';
@@ -3650,6 +3688,7 @@ a { color: inherit; text-decoration: none; }
       const patch = { kind: newKind };
       // Match capture-flow behavior: choosing "Let go" releases the loop.
       if (newKind === 'let_go') patch.status = 'released';
+      if (newKind === 'let_go') patch.completedAt = nowIso();
       updateLoop(loopId, patch);
       closeOverlay();
       if (newKind === 'let_go') view.activeTab = 'now';
@@ -4026,6 +4065,7 @@ a { color: inherit; text-decoration: none; }
     let channelSeq = 0;
     let retryTimer  = null;
     let draining    = false;
+    let deadQueueDirty = false;
 
     // Echo suppression: when we write a row, the realtime subscription will
     // echo it back. We don't want that echo to clobber a newer in-flight
@@ -4122,8 +4162,8 @@ a { color: inherit; text-decoration: none; }
       } catch(e) { return []; }
     }
     function settleSyncStatus() {
-      if (loadDeadQueue().length) {
-        setSyncStatus('error', 'Sync issue');
+      if (deadQueueDirty && loadDeadQueue().length) {
+        setSyncStatus('error', 'Still saving');
         showSyncErrorBanner();
         return { ok: false, dead: true };
       }
@@ -4181,7 +4221,8 @@ a { color: inherit; text-decoration: none; }
         promptAnswer: row.prompt_answer || '',
         position:     row.position,
         createdAt:    row.created_at,
-        updatedAt:    row.updated_at
+        updatedAt:    row.updated_at,
+        completedAt:  row.completed_at
       });
     }
     function patchToRow(patch) {
@@ -4192,6 +4233,7 @@ a { color: inherit; text-decoration: none; }
       if ('promptAnswer' in patch) out.prompt_answer = patch.promptAnswer;
       if ('position'     in patch) out.position      = patch.position;
       if ('deleted_at'   in patch) out.deleted_at    = patch.deleted_at;
+      if ('completedAt'  in patch) out.completed_at  = patch.completedAt;
       if ('completed_at' in patch) out.completed_at  = patch.completed_at;
       return out;
     }
@@ -4296,6 +4338,7 @@ a { color: inherit; text-decoration: none; }
               const skipped = latest.shift();
               saveQueue(latest);
               moveToDeadQueue(skipped, e);
+              deadQueueDirty = true;
               console.warn('[open-loops] Moved poison-pill entry to dead queue:', skipped);
               // Keep draining — the next entry might succeed.
               continue;
@@ -4307,7 +4350,7 @@ a { color: inherit; text-decoration: none; }
               latest[0] = entry;
               saveQueue(latest);
             }
-            setSyncStatus('error', 'Sync issue');
+            setSyncStatus('error', 'Still saving');
             showSyncErrorBanner();
             scheduleRetry(entry.attempts);
             return { ok: false, error: e };
@@ -4462,7 +4505,7 @@ a { color: inherit; text-decoration: none; }
       } catch(e) {
         if (currentUser !== pullForUser) return;   // ignore errors from a stale pull
         console.error('Pull error:', e);
-        setSyncStatus('error', 'Sync issue');
+        setSyncStatus('error', 'Still saving');
         showSyncErrorBanner();
       }
     }
@@ -4520,7 +4563,7 @@ a { color: inherit; text-decoration: none; }
               data.loops = data.loops.filter(l => l.id !== row.id);
               if (data.lastLoopId === row.id) data.lastLoopId = null;
               save();
-              renderMain();
+              renderAll();
               return;
             }
 
@@ -4532,7 +4575,7 @@ a { color: inherit; text-decoration: none; }
               data.loops = data.loops.filter(l => l.id !== incoming.id);
               if (data.lastLoopId === incoming.id) data.lastLoopId = null;
               save();
-              renderMain();
+              renderAll();
               return;
             }
 
@@ -4554,7 +4597,7 @@ a { color: inherit; text-decoration: none; }
               data.loops[idx] = mapped;
             }
             save();
-            renderMain();
+            renderAll();
           })
         .subscribe(async (status, err) => {
           if (seq !== channelSeq || channel !== nextChannel) return;
@@ -4639,7 +4682,7 @@ a { color: inherit; text-decoration: none; }
       setTimeout(() => {
         handleAuthStateChange(event, session).catch(e => {
           console.error('Auth state change error:', e);
-          setSyncStatus('error', 'Sync issue');
+          setSyncStatus('error', 'Still saving');
           showSyncErrorBanner();
         });
       }, 0);
@@ -4665,7 +4708,7 @@ a { color: inherit; text-decoration: none; }
           }
         } catch(e) {
           console.error('Sync init error:', e);
-          setSyncStatus('error', 'Sync issue');
+          setSyncStatus('error', 'Still saving');
           showSyncErrorBanner();
         }
         // Auth check complete. The app remains locked until a user signs in.
@@ -4719,7 +4762,7 @@ a { color: inherit; text-decoration: none; }
           setupRealtime({ skipInitialPull: true });
           return { ok: true };
         } catch(e) {
-          setSyncStatus('error', 'Sync issue');
+          setSyncStatus('error', 'Still saving');
           return { ok: false, error: e };
         }
       },
