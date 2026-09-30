@@ -258,6 +258,22 @@ footer { background: var(--surface-soft); margin-top: 96px; padding-block: 56px;
 footer .container { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .footer-note { font-size: 14px; color: var(--muted); }
 
+/* ── WHY ── */
+.why-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: start; }
+.why-head { margin-bottom: 0; display: grid; gap: 16px; }
+.why-head p { font-size: 18px; margin-top: 0; }
+.why-head .why-cite { font-size: 13px; color: var(--muted); }
+.why-side { display: grid; gap: 20px; }
+.why-card { background: var(--surface-card); border-radius: 24px; padding: 28px 32px; display: grid; gap: 12px; }
+.why-card .eyebrow { color: var(--muted); }
+.why-card p { font-size: 16px; }
+.why-not { color: var(--muted); }
+.why-steps { margin: 0; padding-left: 22px; display: grid; gap: 10px; font-size: 16px; }
+.why-steps b { color: var(--ink); font-weight: 600; }
+.why-steps li::marker { color: var(--muted); font-weight: 600; }
+@media (max-width: 900px) { .why-grid { grid-template-columns: 1fr; gap: 32px; } }
+@media (max-width: 767px) { .why-card { padding: 24px; } }
+
 @media (max-width: 1024px) {
   .kinds-grid { grid-template-columns: repeat(2, 1fr); }
   .kind-card, .kind-card:nth-child(4), .kind-card:nth-child(5) { grid-column: span 1; }
@@ -307,6 +323,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
       <span class="brand-name">Open Loops</span>
     </a>
     <div class="nav-links">
+      <a href="#why" class="nav-link">Why</a>
       <a href="#how" class="nav-link">How it works</a>
       <a href="#kinds" class="nav-link">Loop kinds</a>
       <a href="./open-loops.html" class="btn btn-primary">Open app</a>
@@ -380,6 +397,36 @@ footer .container { display: flex; align-items: center; justify-content: space-b
     </div>
   </div>
 </div>
+
+<section id="why">
+  <div class="container why-grid">
+    <div class="section-head why-head">
+      <span class="eyebrow">Why Open Loops</span>
+      <h2>Unfinished things don't stay quiet.</h2>
+      <p>The reply you owe, the decision you keep circling, the call you keep forgetting. Each one tugs at your attention until it has somewhere to go, and your head is a poor place to keep them.</p>
+      <p>Research on unfinished goals found that writing a specific plan for one quiets those intrusive thoughts, even before the task is done. Open Loops gives every loop a home and one next step, so your mind can put it down.</p>
+      <p class="why-cite">Masicampo &amp; Baumeister (2011), "Consider it done! Plan making can eliminate the cognitive effects of unfulfilled goals."</p>
+    </div>
+    <div class="why-side">
+      <div class="why-card">
+        <span class="eyebrow">Who it's for</span>
+        <p>People carrying too many small open things at once: founders, operators, students, parents, anyone whose head feels crowded by "I still need to…".</p>
+        <p class="why-not">Not a project manager. Not a to-do list with 200 items.</p>
+      </div>
+      <div class="why-card">
+        <span class="eyebrow">How to use it best</span>
+        <ol class="why-steps">
+          <li><b>Capture fast.</b> The moment something tugs at you, put it in Inbox.</li>
+          <li><b>Define once a day.</b> One kind, one next step. The step is what quiets it.</li>
+          <li><b>Keep Active small.</b> When it's full, park something before adding more.</li>
+          <li><b>Work the Now card.</b> One loop at a time. New ones wait in Up next.</li>
+          <li><b>Park without guilt.</b> Parked means "not now", not "failed".</li>
+          <li><b>Close it.</b> Done or let go, and watch it land on your shelf.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section id="how">
   <div class="container">

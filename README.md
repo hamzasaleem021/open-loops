@@ -35,6 +35,10 @@ Open Loops is built around one personal workflow:
 - **Define and route** - Pick a kind, add an optional detail or next step, then send the loop to Active, Parked, or Closed.
 - **Active focus cap** - Show 3, 5, or 7 active loops before "Show more". Configure this in Settings. The Active view shows how many focus slots are in use.
 - **Now card** - The top Active loop is shown as a large card in its kind's color, with the rest listed under "Up next".
+- **Up next, not Now** - Loops entering Active (defined, reopened, or brought back from Parked) land in Up next. Only you promote a loop to Now, by reordering.
+- **Motion and sound** - Every move shows where the loop went. Closing seals the loop into a clay ring that lands in the Closed archive in the header. Sounds can be turned off in Settings.
+- **Closed shelf** - The Closed view shows one clay ring per loop closed this week; the archive button shows the weekly count.
+- **Why Open Loops** - Tap the logo (or Settings → Why Open Loops) for why the app exists, who it's for, and how to use it best.
 - **Archive/Closed** - Closed loops live behind the small archive button in the header instead of taking a main tab.
 - **Created and closed dates** - Loop cards show when they were captured. Closed loops also show when they were closed.
 - **Inline editing** - Click a loop title to edit it in place.
@@ -167,7 +171,7 @@ open-loops-icon-512-v2.png
 The service worker cache is currently:
 
 ```js
-open-loops-v11-clay
+open-loops-v12-motion
 ```
 
 The icon filenames are versioned (`-v3`, the Clay icon) so browsers and installed PWAs have a clean cache break. If an installed PWA still shows an old icon after deployment, uninstall and reinstall the PWA.
@@ -259,6 +263,8 @@ The app and landing page use a Clay-inspired system.
 - **One loud thing per screen:** only the top Active loop gets a saturated card. Everything else uses quiet cream cards with a colored kind pill, because Open Loops is meant to lower pressure.
 - **Clay illustrations:** the soft 3D shapes (the open "C" loop, the closed ring) are plain SVG with a lighting filter, drawn by `clayArtHtml()`. There are no image assets to manage.
 - **Radii:** 12px buttons and inputs, 16px cards, 24px focus cards and sheets, pills for chips and tabs.
+- **Motion:** `Motion` and `Sound` modules in `open-loops.html`. `renderMain()` snapshots card positions before each render and plays the change after, so every action animates without touching its handler. Flights and sounds run only for this device's own taps, never for realtime updates from another device. "Reduce motion" turns flights into fades.
+- **Sound:** synthesized with Web Audio (no audio files). One soft pluck, notes from D major pentatonic. An open loop is an unresolved interval; closing resolves it.
 - Tokens live at the top of the `<style>` block in `open-loops.html`. Component treatments sit in the `CLAY COMPONENT LAYER` at the end of it.
 
 ---

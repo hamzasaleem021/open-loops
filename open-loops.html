@@ -2608,16 +2608,123 @@ body {
   .cap-meter { flex-direction: row; align-items: center; gap: 10px; }
 }
 .loop-card.is-focus .focus-eyebrow { margin-bottom: 10px; }
+
+/* ── MOTION LAYER ── */
+.motion-layer { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+.motion-layer > * { pointer-events: none; }
+.motion-backdrop { position: fixed; inset: 0; background: rgba(40,32,15,0.28); }
+:root[data-theme="dark"] .motion-backdrop { background: rgba(0,10,10,0.6); }
+.motion-sheet { position: fixed; margin: 0; max-height: none; overflow: hidden; animation: none; transform-origin: center; }
+.motion-ghost { position: fixed; margin: 0; transform-origin: center; box-shadow: 0 18px 40px rgba(40,30,10,0.12); }
+.motion-token {
+  position: fixed;
+  left: 0; top: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,0.75), rgba(255,255,255,0) 40%),
+    radial-gradient(circle at 65% 72%, rgba(0,0,0,0.2), rgba(0,0,0,0) 60%),
+    var(--tok);
+  box-shadow: 0 6px 14px rgba(40,30,10,0.22);
+  will-change: transform;
+}
+.motion-ring { position: fixed; left: 0; top: 0; will-change: transform; filter: drop-shadow(0 8px 10px rgba(40,30,10,0.18)); }
+.motion-ring svg { display: block; overflow: visible; }
+
+/* Closed archive in the header: the "mast" loops land in */
+#archive-btn { position: relative; overflow: visible; }
+.archive-count { display: none; }
+#archive-btn.has-count {
+  width: auto;
+  padding: 0 11px 0 10px;
+  gap: 6px;
+}
+#archive-btn.has-count .archive-count {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+#archive-btn.active .archive-count { color: inherit; }
+
+/* Closed shelf: one clay ring per loop closed this week */
+.closed-shelf { max-width: 300px; }
+.ring-shelf { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.clay-ring { width: 24px; height: 24px; display: block; overflow: visible; filter: drop-shadow(0 2px 2px rgba(40,30,10,0.18)); }
+@media (max-width: 767px) {
+  .closed-shelf { flex-direction: column; align-items: flex-start; max-width: 100%; }
+  .ring-shelf { justify-content: flex-start; }
+}
+
+/* Kind picker: color fills in instead of snapping */
+.kind-option { transition: background-color .24s ease, color .24s ease, border-color .24s ease, transform .12s ease; }
+.kind-option:active { transform: scale(.985); }
+.btn-action:active, .btn:active, .fab:active { transform: scale(.97); }
+.fab:active { transform: translateX(-50%) scale(.97); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Why: the mast opens it */
+button.brand { background: none; border: none; padding: 4px 8px 4px 2px; margin-left: -2px; border-radius: var(--r-pill); color: inherit; cursor: pointer; }
+button.brand:hover .brand-why { background: var(--surface-strong); color: var(--text); }
+button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.brand-why { font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-3); border-radius: var(--r-pill); padding: 3px 9px; margin-left: 2px; transition: background .15s, color .15s; }
+.why-card .clay-art { width: 170px; margin: -6px 0 2px -12px; }
+.why-section { display: grid; gap: 8px; padding: 16px 0 4px; }
+.why-section p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--text-2); }
+.why-h { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-3); }
+.why-steps { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 15px; line-height: 1.5; color: var(--text-2); }
+.why-steps b { color: var(--text); font-weight: 600; }
+.why-steps li::marker { color: var(--text-3); font-weight: 600; }
+.why-source { margin: 18px 0 0; font-size: 12px; line-height: 1.5; color: var(--text-3); }
+@media (max-width: 420px) {
+  .brand-name { font-size: 16px; }
+  .topbar-right { gap: 2px; }
+  #sync-pill { padding: 0 10px; }
+}
+.brand-name { white-space: nowrap; }
+@media (max-width: 480px) {
+  /* Theme lives in Settings too; the header needs the room on phones. */
+  #theme-toggle { display: none; }
+}
+@media (max-width: 360px) {
+  .brand-why { display: none; }
+}
 </style>
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="ol-clay-sm" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.4" result="b"/>
+      <feDiffuseLighting in="b" surfaceScale="3" diffuseConstant="1.05" lighting-color="#fff" result="d"><feDistantLight azimuth="235" elevation="48"/></feDiffuseLighting>
+      <feComposite in="SourceGraphic" in2="d" operator="arithmetic" k1="1.05" result="lit"/>
+      <feSpecularLighting in="b" surfaceScale="3" specularConstant="0.55" specularExponent="16" lighting-color="#fff" result="s"><feDistantLight azimuth="235" elevation="55"/></feSpecularLighting>
+      <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+      <feComposite in="lit" in2="s2" operator="arithmetic" k2="1" k3="0.6" result="o"/>
+      <feComposite in="o" in2="SourceAlpha" operator="in"/>
+    </filter>
+    <filter id="ol-clay-xs" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="b"/>
+      <feDiffuseLighting in="b" surfaceScale="1.6" diffuseConstant="1.05" lighting-color="#fff" result="d"><feDistantLight azimuth="235" elevation="48"/></feDiffuseLighting>
+      <feComposite in="SourceGraphic" in2="d" operator="arithmetic" k1="1.05" result="lit"/>
+      <feSpecularLighting in="b" surfaceScale="1.6" specularConstant="0.5" specularExponent="14" lighting-color="#fff" result="s"><feDistantLight azimuth="235" elevation="55"/></feSpecularLighting>
+      <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+      <feComposite in="lit" in2="s2" operator="arithmetic" k2="1" k3="0.55" result="o"/>
+      <feComposite in="o" in2="SourceAlpha" operator="in"/>
+    </filter>
+  </defs>
+</svg>
+
 <div class="app" id="app">
   <header class="topbar">
-    <div class="brand">
+    <button class="brand" type="button" data-action="open-why" title="Why Open Loops" aria-label="Open Loops: why it exists and how to use it">
       <div class="brand-mark"><svg class="ol-mark" viewBox="0 0 30 30" fill="none" aria-hidden="true"><path d="M22 7.6A10 10 0 1 0 22.6 21.6" stroke="#ffb084" stroke-width="6" stroke-linecap="round"/><circle cx="24.4" cy="14.6" r="2.6" fill="#ff4d8b"/></svg></div>
       <span class="brand-name">Open Loops</span>
-    </div>
+    <span class="brand-why">Why?</span>
+    </button>
     <div class="topbar-right">
       <button class="icon-btn" id="install-btn" type="button" data-action="install-app" title="Install app" aria-label="Install app" hidden>
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2999,6 +3106,19 @@ body {
   // that spreads all active positions out evenly. Cheap, local, rare.
   const POSITION_MIN_GAP = 1e-9;
 
+  // Loops entering Active (defined, reopened, or brought back from Parked)
+  // land in "Up next", right under the Now card. Only the person promotes a
+  // loop to Now, by reordering; nothing new takes the focus slot on its own.
+  function upNextPosition(loopId) {
+    const others = data.loops
+      .filter(l => l.status === 'active' && l.id !== loopId)
+      .sort((a, b) => (b.position || 0) - (a.position || 0));
+    if (!others.length) return { position: topPosition(), rebalance: false };
+    if (others.length === 1) return { position: (others[0].position || 0) - 1, rebalance: false };
+    const a = others[0].position || 0, b = others[1].position || 0;
+    return { position: (a + b) / 2, rebalance: (a - b) < 1e-4 };
+  }
+
   function rebalanceActivePositions() {
     // Reassign positions on active loops in their current display order,
     // spaced by 1.0. Returns a list of { id, position } for sync.
@@ -3118,6 +3238,21 @@ body {
       el.classList.remove('visible');
       el.classList.remove('has-action');
     }, dur);
+  }
+
+  // Screen-reader-only announcement for changes the motion already shows.
+  function announce(msg) {
+    let el = document.getElementById('sr-announce');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'sr-announce';
+      el.className = 'sr-only';
+      el.setAttribute('role', 'status');
+      el.setAttribute('aria-live', 'polite');
+      document.body.appendChild(el);
+    }
+    el.textContent = '';
+    setTimeout(() => { el.textContent = msg; }, 30);
   }
 
   // ── ESCAPE HTML ──
@@ -3297,6 +3432,13 @@ body {
       const over = active.length > cap ? ` · +${active.length - cap} waiting` : '';
       meter = `<div class="cap-meter" title="Focus cap"><div class="cap-meter-dots">${dots}</div><div class="cap-meter-label">${used} of ${cap} focus slots${over}</div></div>`;
     }
+    if (tabKey === 'done') {
+      const week = closedThisWeek();
+      if (week.length) {
+        const shown = week.slice(-21);
+        meter = `<div class="cap-meter closed-shelf"><div class="ring-shelf" role="img" aria-label="${week.length} loops closed this week">${shown.map(l => clayRingHtml(l.kind)).join('')}</div><div class="cap-meter-label">${week.length} closed this week</div></div>`;
+      }
+    }
     html += `
       <header class="page-head">
         <div>
@@ -3338,7 +3480,7 @@ body {
         html += `<div class="loop-stack">`;
         waiting.forEach((loop, i) => {
           html += `
-            <article class="loop-card kind-${loop.kind || 'inbox'}" style="animation-delay:${i*0.04}s">
+            <article class="loop-card kind-${loop.kind || 'inbox'}" data-loop-id="${esc(loop.id)}" style="animation-delay:${i*0.04}s">
               <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
               <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '-')}</span></div>
@@ -3361,7 +3503,7 @@ body {
         html += `<div class="loop-stack">`;
         released.forEach((loop, i) => {
           html += `
-            <article class="loop-card kind-${loop.kind || 'inbox'}" style="animation-delay:${i*0.04}s;opacity:0.72">
+            <article class="loop-card kind-${loop.kind || 'inbox'}" data-loop-id="${esc(loop.id)}" style="animation-delay:${i*0.04}s;opacity:0.72">
               <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title" style="text-decoration:line-through;color:var(--text-2)">${esc(loop.rawText)}</p>
               <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '-')}</span></div>
@@ -3384,7 +3526,7 @@ body {
         html += `<div class="loop-stack">`;
         inbox.forEach((loop, i) => {
           html += `
-            <article class="loop-card kind-${loop.kind || 'inbox'}" style="animation-delay:${i*0.04}s">
+            <article class="loop-card kind-${loop.kind || 'inbox'}" data-loop-id="${esc(loop.id)}" style="animation-delay:${i*0.04}s">
               <div class="loop-card-top">${chipHtml(loop.kind || 'inbox')}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
               ${loopMetaHtml(loop)}
@@ -3610,6 +3752,50 @@ body {
 
   // ── AUTH GATE ──
   // Settings stay behind the sign-in gate because the app is sync-first.
+  // ── WHY OPEN LOOPS ──
+  // Opened from the header mark ("the mast") and from Settings.
+  function renderWhy() {
+    const closeBtn = `<button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
+    return `
+      <div class="overlay-card why-card" role="dialog" aria-modal="true" aria-labelledby="why-title">
+        <div class="overlay-header">
+          <div class="overlay-meta"><div class="overlay-eyebrow">Why Open Loops</div></div>
+          ${closeBtn}
+        </div>
+        ${clayArtHtml('open')}
+        <h2 class="overlay-title" id="why-title">Unfinished things don't stay quiet.</h2>
+
+        <section class="why-section">
+          <h3 class="why-h">Why it exists</h3>
+          <p>The reply you owe, the decision you keep circling, the call you keep forgetting. Each one tugs at your attention until it has somewhere to go, and your head is a poor place to keep them.</p>
+          <p>Research on unfinished goals found that writing a specific plan for one quiets those intrusive thoughts, even before the task is done. That is what Open Loops is for: every loop gets a home and one next step, so your mind can put it down.</p>
+        </section>
+
+        <section class="why-section">
+          <h3 class="why-h">Who it's for</h3>
+          <p>People carrying too many small open things at once: founders, operators, students, parents, anyone whose head feels crowded by "I still need to…". It is not a project manager, and it is not a to-do list with 200 items.</p>
+        </section>
+
+        <section class="why-section">
+          <h3 class="why-h">How to use it best</h3>
+          <ol class="why-steps">
+            <li><b>Capture fast.</b> The moment something tugs at you, put it in Inbox. Don't sort it yet.</li>
+            <li><b>Define once a day.</b> Give each loop a kind and one next step. The step is what quiets it.</li>
+            <li><b>Keep Active small.</b> The focus cap is a feature. When Active is full, park something before adding more.</li>
+            <li><b>Work the Now card.</b> One loop at a time. New loops wait in Up next until you move them up.</li>
+            <li><b>Park without guilt.</b> Parked means "not now", not "failed".</li>
+            <li><b>Close it.</b> Mark it done or let it go, and watch it land on your shelf.</li>
+          </ol>
+        </section>
+
+        <p class="why-source">Based on Masicampo &amp; Baumeister (2011), "Consider it done! Plan making can eliminate the cognitive effects of unfulfilled goals."</p>
+
+        <div class="overlay-actions">
+          <button class="btn btn-primary" data-action="close-overlay">Got it</button>
+        </div>
+      </div>`;
+  }
+
   function renderSettings() {
     const cap = view.loopCap || DEFAULT_LOOP_CAP;
     return `
@@ -3630,6 +3816,15 @@ body {
         </section>
 
         <section class="settings-section">
+          <div class="settings-label">Sounds</div>
+          <p class="settings-helper">Soft sounds when loops move. Closing a loop plays the full chord.</p>
+          <div class="seg-row" role="group" aria-label="Sounds">
+            <button type="button" data-action="set-sound" data-sound="on" class="${Sound.enabled ? 'active' : ''}" aria-pressed="${Sound.enabled}">On</button>
+            <button type="button" data-action="set-sound" data-sound="off" class="${!Sound.enabled ? 'active' : ''}" aria-pressed="${!Sound.enabled}">Off</button>
+          </div>
+        </section>
+
+        <section class="settings-section">
           <div class="settings-label">Active loop cap</div>
           <p class="settings-helper">How many loops to show in the Active view before "Show more".</p>
           <div class="seg-row" role="group" aria-label="Active loop cap">
@@ -3637,6 +3832,12 @@ body {
               <button type="button" data-action="set-loop-cap" data-cap="${n}" class="${cap === n ? 'active' : ''}" aria-pressed="${cap === n}">${n}</button>
             `).join('')}
           </div>
+        </section>
+
+        <section class="settings-section">
+          <div class="settings-label">Why Open Loops</div>
+          <p class="settings-helper">Why this exists, who it's for, and how to use it best.</p>
+          <button class="btn btn-ghost" data-action="open-why">Read the why</button>
         </section>
 
         <section class="settings-section">
@@ -3943,10 +4144,693 @@ body {
     if (panel) panel.innerHTML = '';
   }
 
+  // ── SOUND ──
+  // Tiny synthesized sounds (Web Audio), no audio files. One soft kalimba-like
+  // instrument, every note from D major pentatonic so all cues sit together.
+  // An open loop is an unresolved chord; closing it resolves to D major.
+  const SOUND_KEY = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_sound' : 'open_loops_sound';
+  const SOUND_HINT_KEY = SOUND_KEY + '_hinted';
+
+  const Sound = (() => {
+    let ctx = null;
+    let out = null;
+    let enabled = true;
+    let hinted = false;
+    try {
+      enabled = localStorage.getItem(SOUND_KEY) !== 'off';
+      hinted = localStorage.getItem(SOUND_HINT_KEY) === '1';
+    } catch (_) {}
+
+    const N = { A3: 220, D4: 293.66, E4: 329.63, Fs4: 369.99, A4: 440, B4: 493.88, D5: 587.33, E5: 659.25, Fs5: 739.99 };
+
+    // Create/resume the audio context. Called synchronously inside a click so
+    // iOS Safari allows playback.
+    function unlock() {
+      if (!enabled) return null;
+      try {
+        if (!ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return null;
+          ctx = new AC();
+          const comp = ctx.createDynamicsCompressor();
+          out = ctx.createGain();
+          out.gain.value = 0.3;
+          out.connect(comp);
+          comp.connect(ctx.destination);
+        }
+        if (ctx.state === 'suspended') ctx.resume();
+      } catch (_) { return null; }
+      return ctx;
+    }
+
+    function env(g, t, peak, attack, decay) {
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(peak, t + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+    }
+
+    // Kalimba-ish pluck: sine body + short inharmonic "tine" overtone.
+    function pluck(freq, at = 0, vel = 1, decay = 1.1) {
+      const c = unlock(); if (!c) return;
+      const t = c.currentTime + at;
+      const body = c.createOscillator(); body.type = 'sine'; body.frequency.value = freq;
+      const tine = c.createOscillator(); tine.type = 'sine'; tine.frequency.value = freq * 5.4;
+      const gb = c.createGain(); const gt = c.createGain();
+      env(gb, t, 0.5 * vel, 0.006, decay);
+      env(gt, t, 0.1 * vel, 0.003, 0.09);
+      body.connect(gb); tine.connect(gt); gb.connect(out); gt.connect(out);
+      body.start(t); tine.start(t);
+      body.stop(t + decay + 0.1); tine.stop(t + 0.15);
+    }
+
+    function noise(at, dur, opts = {}) {
+      const c = unlock(); if (!c) return;
+      const { type = 'lowpass', from = 400, to = 400, q = 0.8, vel = 0.2, attack = 0.004 } = opts;
+      const t = c.currentTime + at;
+      const len = Math.max(1, Math.ceil(c.sampleRate * dur));
+      const buf = c.createBuffer(1, len, c.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const src = c.createBufferSource(); src.buffer = buf;
+      const f = c.createBiquadFilter(); f.type = type; f.Q.value = q;
+      f.frequency.setValueAtTime(from, t);
+      f.frequency.exponentialRampToValueAtTime(to, t + dur);
+      const g = c.createGain();
+      env(g, t, vel, attack, Math.max(0.02, dur - attack));
+      src.connect(f); f.connect(g); g.connect(out);
+      src.start(t); src.stop(t + dur + 0.05);
+    }
+
+    // Soft clay "thunk": falling sine plus a puff of filtered noise.
+    function thud(at = 0, vel = 0.5) {
+      const c = unlock(); if (!c) return;
+      const t = c.currentTime + at;
+      const o = c.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(150, t);
+      o.frequency.exponentialRampToValueAtTime(55, t + 0.13);
+      const g = c.createGain();
+      env(g, t, vel, 0.005, 0.16);
+      o.connect(g); g.connect(out);
+      o.start(t); o.stop(t + 0.25);
+      noise(at, 0.06, { from: 900, to: 280, vel: vel * 0.22 });
+    }
+
+    const cues = {
+      // pebble dropping into the Inbox jar
+      capture:  () => { thud(0, 0.32); pluck(N.A3, 0.012, 0.75, 0.8); },
+      // two notes up: into focus
+      up:       () => { pluck(N.A4, 0, 0.65, 0.7); pluck(N.D5, 0.085, 0.65, 0.9); },
+      // two notes down: set aside
+      down:     () => { pluck(N.D5, 0, 0.5, 0.6); pluck(N.A4, 0.09, 0.45, 0.8); },
+      // back from Parked
+      wake:     () => { pluck(N.A4, 0, 0.55); pluck(N.D5, 0.08, 0.55); pluck(N.Fs5, 0.16, 0.4, 1.4); },
+      // the loop seals: a suspended interval, still unresolved
+      seal:     () => { pluck(N.E4, 0, 0.6, 1.0); pluck(N.A4, 0.075, 0.6, 1.2); },
+      // it lands in Closed: resolves to D major
+      land:     () => { thud(0, 0.42); pluck(N.D4, 0.01, 0.7, 1.6); pluck(N.Fs4, 0.035, 0.55, 1.6); pluck(N.D5, 0.06, 0.6, 1.9); },
+      // let go: an exhale, no resolution
+      release:  () => { noise(0, 0.75, { type: 'bandpass', from: 650, to: 2600, q: 1.1, vel: 0.07, attack: 0.28 }); pluck(N.E5, 0.14, 0.3, 1.4); },
+      quickLand: () => { thud(0, 0.3); pluck(N.D5, 0.01, 0.45, 1.0); pluck(N.Fs4, 0.03, 0.3, 1.0); },
+      softLand: () => { pluck(N.B4, 0, 0.32, 1.6); pluck(N.Fs5, 0.07, 0.22, 1.8); },
+      // reopen: the closing chord, backwards
+      reopen:   () => { pluck(N.D5, 0, 0.5, 0.6); pluck(N.A4, 0.07, 0.45, 0.6); pluck(N.E4, 0.14, 0.5, 1.0); },
+    };
+
+    function hint() {
+      if (hinted) return;
+      hinted = true;
+      try { localStorage.setItem(SOUND_HINT_KEY, '1'); } catch (_) {}
+      setTimeout(() => toast('Sound is on. You can turn it off in Settings.'), 1700);
+    }
+
+    return {
+      get enabled() { return enabled; },
+      set(on) {
+        enabled = !!on;
+        hinted = true;
+        try {
+          localStorage.setItem(SOUND_KEY, on ? 'on' : 'off');
+          localStorage.setItem(SOUND_HINT_KEY, '1');
+        } catch (_) {}
+      },
+      unlock,
+      play(name) {
+        if (!enabled) return;
+        const fn = cues[name];
+        if (!fn) return;
+        try { fn(); } catch (_) {}
+        hint();
+      }
+    };
+  })();
+
+  // ── MOTION ──
+  // Every move shows where the loop went. Data is saved first; motion only
+  // replays the change. Flights and sounds run only for this device's own
+  // taps, never for realtime updates arriving from another device.
+  const Motion = (() => {
+    const EASE = 'cubic-bezier(.2,.8,.2,1)';
+    const MUTATING = new Set([
+      'save-raw-loop', 'finish-define-raw', 'complete-done', 'move-waiting',
+      'move-released', 'restore-active', 'confirm-delete', 'set-kind-direct'
+    ]);
+    let layer = null;
+    let gesture = null;
+    let lastTab = null;
+    let lastStatuses = null;
+
+    const reduced = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const isLocal = () => !!gesture && performance.now() - gesture.t < 1800;
+
+    function ensureLayer() {
+      if (layer && document.body.contains(layer)) return layer;
+      layer = document.createElement('div');
+      layer.className = 'motion-layer';
+      layer.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(layer);
+      return layer;
+    }
+
+    function kindColor(kind) {
+      const v = getComputedStyle(document.documentElement).getPropertyValue(`--${kind || 'inbox'}`).trim();
+      return v || '#ffb084';
+    }
+
+    function place(el, x, y, w, h) {
+      Object.assign(el.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+    }
+
+    function fadeOut(el, ms = 200) {
+      const a = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
+      a.onfinish = () => el.remove();
+    }
+
+    function bump(el) {
+      if (!el) return;
+      el.animate([
+        { transform: 'scale(1)' },
+        { transform: 'scale(1.22, .84)', offset: 0.3 },
+        { transform: 'scale(.94, 1.07)', offset: 0.62 },
+        { transform: 'scale(1)' }
+      ], { duration: 460, easing: 'ease-out' });
+    }
+
+    // Quadratic arc from (x0,y0) to (x1,y1), lifted above both ends.
+    function arc(x0, y0, x1, y1, lift, steps, frame) {
+      const cx = (x0 + x1) / 2;
+      const cy = Math.min(y0, y1) - lift;
+      const out = [];
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const x = (1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * cx + t * t * x1;
+        const y = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * cy + t * t * y1;
+        out.push(Object.assign({ offset: t }, frame(t, x, y)));
+      }
+      return out;
+    }
+
+    function tabTarget(tab) {
+      if (tab === 'done') return document.getElementById('archive-btn');
+      const els = Array.from(document.querySelectorAll(`[data-action="set-tab"][data-tab="${tab}"]`));
+      return els.find(e => {
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden';
+      }) || null;
+    }
+    const tabFor = s => s === 'active' ? 'now' : s === 'waiting' ? 'later' : s === 'inbox' ? 'inbox' : 'done';
+
+    // A ball of clay in the loop's kind color.
+    function token(color, size) {
+      const t = document.createElement('div');
+      t.className = 'motion-token';
+      t.style.setProperty('--tok', color);
+      t.style.width = t.style.height = size + 'px';
+      ensureLayer().appendChild(t);
+      return t;
+    }
+
+    function ghostOf(b) {
+      const g = b.el.cloneNode(true);
+      g.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+      g.removeAttribute('draggable');
+      g.classList.add('motion-ghost');
+      g.style.animation = 'none';
+      g.style.opacity = '';
+      place(g, b.rect.left, b.rect.top, b.rect.width, b.rect.height);
+      ensureLayer().appendChild(g);
+      return g;
+    }
+
+    function hideContents(g, ms = 150) {
+      Array.from(g.children).forEach(c => c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: ms, fill: 'forwards' }));
+    }
+
+    // Sheet leaves smoothly instead of vanishing; for Capture it shrinks
+    // into the pellet that then drops into Inbox.
+    function exitSheet(ov, toPellet) {
+      const r = ov.getBoundingClientRect();
+      const L = ensureLayer();
+      const g = ov.cloneNode(true);
+      const srcFields = ov.querySelectorAll('textarea, input');
+      g.querySelectorAll('textarea, input').forEach((f, i) => { if (srcFields[i]) f.value = srcFields[i].value; });
+      g.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+      g.removeAttribute('id');
+      g.classList.add('motion-sheet');
+      place(g, r.left, r.top, r.width, r.height);
+      const bd = document.createElement('div');
+      bd.className = 'motion-backdrop';
+      L.append(bd, g);
+      bd.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 280, easing: 'ease-out', fill: 'forwards' }).onfinish = () => bd.remove();
+      if (reduced()) { fadeOut(g, 160); return; }
+      const a = toPellet
+        ? g.animate([
+            { transform: 'none', opacity: 1, borderRadius: '24px' },
+            { transform: 'scale(.06)', opacity: 0, borderRadius: '50%' }
+          ], { duration: 340, easing: 'cubic-bezier(.55,0,.75,.1)', fill: 'forwards' })
+        : g.animate([
+            { transform: 'none', opacity: 1 },
+            { transform: 'translateY(22px)', opacity: 0 }
+          ], { duration: 220, easing: 'ease-in', fill: 'forwards' });
+      a.onfinish = () => g.remove();
+    }
+
+    function onGesture(e) {
+      const el = e.target.closest && e.target.closest('[data-action]');
+      if (!el) return;
+      const action = el.dataset.action;
+      Sound.unlock();
+      const ov = document.querySelector('#overlay-root .overlay-card');
+      gesture = {
+        t: performance.now(),
+        action,
+        loopId: el.dataset.loopId || (view.overlay && view.overlay.loopId) || null,
+        overlayRect: ov ? ov.getBoundingClientRect() : null
+      };
+      if (ov && MUTATING.has(action)) exitSheet(ov, action === 'save-raw-loop');
+    }
+
+    // Which single loop changed because of this tap, and how.
+    function pickCue(prev, now) {
+      const ids = [];
+      if (gesture && gesture.loopId) ids.push(gesture.loopId);
+      now.forEach((v, id) => { if (!prev.has(id)) ids.push(id); });
+      prev.forEach((v, id) => { if (!now.has(id) || now.get(id).status !== v.status) ids.push(id); });
+      for (const id of ids) {
+        const p = prev.get(id), n = now.get(id);
+        if (p && !n) return { id, from: p.status, to: null, kind: p.kind };
+        if (n && !p) return { id, from: null, to: n.status, kind: n.kind };
+        if (n && p && n.status !== p.status) return { id, from: p.status, to: n.status, kind: n.kind };
+      }
+      return null;
+    }
+
+    function snapshot(main) {
+      const cards = new Map();
+      main.querySelectorAll('.loop-card[data-loop-id]').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if (!r.width) return;
+        const cs = getComputedStyle(el);
+        cards.set(el.dataset.loopId, {
+          el, rect: r, focus: el.classList.contains('is-focus'), bg: cs.backgroundColor, color: cs.color
+        });
+      });
+      const label = main.querySelector('.up-next-label');
+      return { tab: lastTab, statuses: lastStatuses, cards, labelRect: label ? label.getBoundingClientRect() : null };
+    }
+
+    // Focus card promotion: the kind color floods in.
+    function flood(el, b, delay) {
+      const cs = getComputedStyle(el);
+      el.animate([
+        { backgroundColor: b.bg, color: b.color },
+        { backgroundColor: cs.backgroundColor, color: cs.color }
+      ], { duration: 560, delay, easing: 'ease-out', fill: 'backwards' });
+      const eb = el.querySelector('.focus-eyebrow');
+      if (eb) eb.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 0.75, transform: 'none' }], { duration: 320, delay: delay + 260, fill: 'backwards' });
+    }
+
+    function poof(g) {
+      g.animate([
+        { opacity: 1, transform: 'none', filter: 'blur(0)' },
+        { opacity: 0, transform: 'scale(.94)', filter: 'blur(6px)' }
+      ], { duration: 300, easing: 'ease-in', fill: 'forwards' }).onfinish = () => g.remove();
+    }
+
+    // Card condenses into a clay ball that arcs to the tab it now lives in.
+    function flyToTab(g, rect, tab, kind, sound) {
+      const target = tabTarget(tab);
+      g.animate([{ transform: 'none', opacity: 1 }, { transform: 'scale(.9)', opacity: 0 }], { duration: 240, easing: 'ease-in', fill: 'forwards' }).onfinish = () => g.remove();
+      if (!target) { if (sound) Sound.play(sound); return; }
+      const tr = target.getBoundingClientRect();
+      const S = 34;
+      const x0 = rect.left + rect.width / 2 - S / 2, y0 = rect.top + rect.height / 2 - S / 2;
+      const x1 = tr.left + tr.width / 2 - S / 2, y1 = tr.top + tr.height / 2 - S / 2;
+      const t = token(kindColor(kind), S);
+      place(t, 0, 0, S, S);
+      const lift = Math.max(70, Math.min(150, Math.hypot(x1 - x0, y1 - y0) * 0.3));
+      const kf = arc(x0, y0, x1, y1, lift, 14, (p, x, y) => {
+        const s = p < 0.15 ? 0.3 + (p / 0.15) * 0.75 : 1.05 - 0.5 * ((p - 0.15) / 0.85);
+        return { transform: `translate(${x}px, ${y}px) scale(${s})`, opacity: p > 0.92 ? 0.4 : 1 };
+      });
+      if (sound) Sound.play(sound);
+      t.animate(kf, { duration: 640, easing: 'cubic-bezier(.45,0,.25,1)', fill: 'forwards' }).onfinish = () => {
+        t.remove();
+        bump(target);
+      };
+    }
+
+    // Capture: the sheet's pellet drops onto the new Inbox card.
+    function landCapture(el, fromRect, kind) {
+      el.style.animation = 'none';
+      if (!fromRect || reduced()) { Sound.play('capture'); return; }
+      const r = el.getBoundingClientRect();
+      const S = 26;
+      const x0 = fromRect.left + fromRect.width / 2 - S / 2, y0 = fromRect.top + fromRect.height / 2 - S / 2;
+      const x1 = r.left + 34 - S / 2, y1 = r.top + 34 - S / 2;
+      el.style.opacity = '0';
+      const t = token(kindColor(kind), S);
+      place(t, 0, 0, S, S);
+      const kf = arc(x0, y0, x1, y1, 60, 12, (p, x, y) => ({
+        transform: `translate(${x}px, ${y}px) scale(${p < 0.2 ? 0.2 + p * 4 : 1})`
+      }));
+      t.animate(kf, { duration: 520, delay: 180, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'both' }).onfinish = () => {
+        Sound.play('capture');
+        t.animate([
+          { transform: `translate(${x1}px, ${y1}px) scale(1.25, .7)`, opacity: 1 },
+          { transform: `translate(${x1}px, ${y1}px) scale(.2)`, opacity: 0 }
+        ], { duration: 200, easing: 'ease-out', fill: 'forwards' }).onfinish = () => t.remove();
+        el.style.opacity = '';
+        el.animate([
+          { opacity: 0, transform: 'translateY(-8px) scale(.97)' },
+          { opacity: 1, transform: 'none' }
+        ], { duration: 300, easing: EASE });
+      };
+    }
+
+    // Parked: the card tucks into the Parked tab like a note slid into a
+    // pocket. Different gesture from the clay ball, because parking is
+    // "set aside", not "raw thought".
+    function tuckAway(g, rect, tab, sound) {
+      const target = tabTarget(tab);
+      if (sound) Sound.play(sound);
+      if (!target) { fadeOut(g, 220); return; }
+      const tr = target.getBoundingClientRect();
+      const dx = (tr.left + tr.width / 2) - (rect.left + rect.width / 2);
+      const dy = (tr.top + tr.height / 2) - (rect.top + rect.height / 2);
+      const sx = Math.max(0.12, (tr.width * 0.9) / rect.width);
+      const sy = Math.max(0.04, 10 / rect.height);
+      hideContents(g, 180);
+      g.animate([
+        { transform: 'translate(0,0) scale(1)', opacity: 1, borderRadius: '16px' },
+        { transform: 'translate(0,-6px) scale(1.01)', opacity: 1, offset: 0.18 },
+        { transform: `translate(${dx * 0.55}px, ${dy * 0.55}px) scale(${0.5 + sx * 0.5}, 0.35)`, opacity: 1, borderRadius: '12px', offset: 0.6 },
+        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 0, borderRadius: '8px' }
+      ], { duration: 560, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'forwards' }).onfinish = () => {
+        g.remove();
+        // The tab takes it in: a short downward squash, like a pocket closing.
+        target.animate([
+          { transform: 'scale(1)' },
+          { transform: 'scale(1.08, .86) translateY(2px)', offset: 0.35 },
+          { transform: 'scale(1)' }
+        ], { duration: 360, easing: 'ease-out' });
+      };
+    }
+
+    // The signature moment: the card seals into a clay ring, which flies up
+    // into the Closed archive in the header and resolves the chord.
+    // quick = another loop was closed moments ago: same ring, half the time.
+    let lastCloseAt = 0;
+    function closeCeremony(g, rect, kind) {
+      const nowT = performance.now();
+      const quick = nowT - lastCloseAt < 3000;
+      lastCloseAt = nowT;
+      const letGo = kind === 'let_go';
+      const color = kindColor(kind);
+      const L = ensureLayer();
+      const S = 72, R = 24;
+      const C = 2 * Math.PI * R;
+      const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+      const archive = document.getElementById('archive-btn');
+      const count = archive && archive.querySelector('.archive-count');
+      const finalCount = count ? count.textContent : '';
+      if (count) {
+        const n = parseInt(finalCount, 10) || 0;
+        count.textContent = String(Math.max(0, n - 1));
+        archive.classList.toggle('has-count', n - 1 > 0);
+      }
+
+      // Timeline (ms): condense, seal, fly, land.
+      const T = quick
+        ? { condense: 260, ringIn: 60, sealAt: 140, seal: 160, flyAt: 330, fly: 420 }
+        : letGo
+          ? { condense: 440, ringIn: 140, sealAt: 300, seal: 700, flyAt: 380, fly: 1000 }
+          : { condense: 440, ringIn: 140, sealAt: 380, seal: 300, flyAt: 700, fly: 560 };
+
+      const ring = document.createElement('div');
+      ring.className = 'motion-ring';
+      ring.innerHTML = `<svg viewBox="0 0 ${S} ${S}" width="${S}" height="${S}"><g filter="url(#ol-clay-sm)"><circle cx="${S / 2}" cy="${S / 2}" r="${R}" fill="none" stroke-width="13" stroke-linecap="round" transform="rotate(14 ${S / 2} ${S / 2})"/></g></svg>`;
+      const stroke = ring.querySelector('circle');
+      stroke.style.stroke = color;
+      stroke.style.strokeDasharray = `${C * 0.76} ${C}`;
+      place(ring, 0, 0, S, S);
+      const at = `translate(${cx - S / 2}px, ${cy - S / 2}px)`;
+      ring.style.transform = at;
+      L.appendChild(ring);
+
+      // 1 · the card condenses into the ring
+      if (g) {
+        hideContents(g, quick ? 100 : 160);
+        g.animate([
+          { transform: 'none', opacity: 1, borderRadius: '24px' },
+          { transform: `scale(${S / rect.width}, ${S / rect.height})`, opacity: 0, borderRadius: '50%' }
+        ], { duration: T.condense, easing: 'cubic-bezier(.6,0,.2,1)', fill: 'forwards' }).onfinish = () => g.remove();
+      }
+      ring.animate([
+        { transform: `${at} scale(.3)`, opacity: 0 },
+        { transform: `${at} scale(1.06)`, opacity: 1, offset: 0.7 },
+        { transform: `${at} scale(1)`, opacity: 1 }
+      ], { duration: quick ? 220 : 380, delay: T.ringIn, easing: 'ease-out', fill: 'backwards' });
+
+      // 2 · seal the gap (Done) or let it quietly loosen (Let go)
+      if (!letGo) {
+        stroke.animate([{ strokeDasharray: `${C * 0.76} ${C}` }, { strokeDasharray: `${C} ${C}` }],
+          { duration: T.seal, delay: T.sealAt, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'forwards' });
+        if (!quick) {
+          ring.animate([
+            { transform: `${at} scale(1)` }, { transform: `${at} scale(1.12)`, offset: 0.45 }, { transform: `${at} scale(1)` }
+          ], { duration: 260, delay: T.sealAt + T.seal - 20, easing: 'ease-out' });
+          setTimeout(() => Sound.play('seal'), T.sealAt);
+        }
+      } else {
+        stroke.animate([{ strokeDasharray: `${C * 0.76} ${C}` }, { strokeDasharray: `${C * 0.5} ${C}` }],
+          { duration: T.seal, delay: T.sealAt, easing: 'ease-out', fill: 'forwards' });
+        if (!quick) setTimeout(() => Sound.play('release'), 240);
+      }
+
+      // 3 · home to the Closed archive, 4 · land
+      setTimeout(() => {
+        if (!archive) { fadeOut(ring, 200); return; }
+        const tr = archive.getBoundingClientRect();
+        const x0 = cx - S / 2, y0 = cy - S / 2;
+        const x1 = tr.left + tr.width / 2 - S / 2, y1 = tr.top + tr.height / 2 - S / 2;
+        let kf;
+        if (letGo && !quick) {
+          // Calm release: rise straight up first, then drift home, fading.
+          const rise = Math.min(90, Math.max(40, (y0 - y1) * 0.25));
+          const steps = 16;
+          kf = [];
+          for (let i = 0; i <= steps; i++) {
+            const p = i / steps;
+            const up = Math.min(1, p / 0.45);
+            const home = p <= 0.45 ? 0 : (p - 0.45) / 0.55;
+            const e = home * home * (3 - 2 * home);
+            const x = x0 + (x1 - x0) * e;
+            const y = (y0 - rise * (up * (2 - up))) + ((y1) - (y0 - rise)) * e;
+            kf.push({ offset: p, transform: `translate(${x}px, ${y}px) scale(${1 - 0.7 * p}) rotate(${30 * p}deg)`, opacity: 1 - 0.8 * p });
+          }
+        } else {
+          const lift = Math.min(160, Math.hypot(x1 - x0, y1 - y0) * (quick ? 0.18 : 0.28));
+          kf = arc(x0, y0, x1, y1, lift, 18, (p, x, y) => ({
+            transform: `translate(${x}px, ${y}px) scale(${1 - 0.72 * p}) rotate(${(quick ? 180 : 300) * p}deg)`,
+            opacity: letGo ? 1 - 0.7 * p : (p > 0.94 ? 0.5 : 1)
+          }));
+        }
+        ring.animate(kf, {
+          duration: T.fly,
+          easing: letGo && !quick ? 'cubic-bezier(.35,0,.45,1)' : 'cubic-bezier(.5,0,.25,1)',
+          fill: 'forwards'
+        }).onfinish = () => {
+          ring.remove();
+          Sound.play(letGo ? 'softLand' : quick ? 'quickLand' : 'land');
+          if (letGo) {
+            archive.animate([{ opacity: 1 }, { opacity: 0.55 }, { opacity: 1 }], { duration: 420, easing: 'ease-in-out' });
+          } else {
+            bump(archive);
+            archive.animate([
+              { boxShadow: `0 0 0 0 ${color}` },
+              { boxShadow: `0 0 0 10px transparent` }
+            ], { duration: 520, easing: 'ease-out' });
+          }
+          if (count) {
+            count.textContent = finalCount;
+            archive.classList.toggle('has-count', parseInt(finalCount, 10) > 0);
+            count.animate([
+              { transform: 'translateY(6px)', opacity: 0 }, { transform: 'none', opacity: 1 }
+            ], { duration: 320, easing: 'cubic-bezier(.2,.8,.2,1)' });
+          }
+        };
+      }, T.flyAt);
+    }
+
+    function soundFor(cue) {
+      const { from, to } = cue;
+      if (to === null || to === 'released') return null;       // delete is silent; closing scores itself
+      if (from === null) return gesture && gesture.action === 'save-raw-loop' ? null : 'up';
+      if (from === 'released') return 'reopen';
+      if (to === 'active') return from === 'waiting' ? 'wake' : 'up';
+      return 'down';
+    }
+
+    function play(main, snap) {
+      const now = new Map(data.loops.map(l => [l.id, { status: l.status, kind: l.kind }]));
+      const prevTab = snap.tab;
+      lastTab = view.activeTab;
+      lastStatuses = now;
+      if (!snap.statuses) return;
+
+      const local = isLocal();
+      const calm = reduced();
+      const tabChanged = prevTab !== view.activeTab;
+      const cue = local ? pickCue(snap.statuses, now) : null;
+      let sound = cue ? soundFor(cue) : null;
+      if (cue) gesture = null;   // one gesture, one cue
+      let ceremony = false;
+
+      // The panel's fade-in is for switching tabs only. Re-renders within the
+      // same view (reorder, close, park) must not flash the whole list.
+      if (!tabChanged) main.querySelectorAll('.tab-panel').forEach(el => { el.style.animation = 'none'; });
+
+      const after = new Map();
+      main.querySelectorAll('.loop-card[data-loop-id]').forEach(el => after.set(el.dataset.loopId, el));
+
+      // Cards present before and after: glide from old spot to new.
+      after.forEach((el, id) => {
+        const b = snap.cards.get(id);
+        if (!b) {
+          if (cue && cue.id === id && cue.from === null && sound === null) {
+            landCapture(el, snap.overlayRect, cue.kind);
+          }
+          return;
+        }
+        el.style.animation = 'none';
+        if (calm) return;
+        const a = el.getBoundingClientRect();
+        const dx = b.rect.left - a.left, dy = b.rect.top - a.top;
+        const moved = cue && cue.id === id && tabChanged;
+        if (moved) {
+          const sx = b.rect.width / a.width, sy = b.rect.height / a.height;
+          el.style.transformOrigin = 'top left';
+          el.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` }, { transform: 'none' }], { duration: 560, easing: EASE });
+          if (el.classList.contains('is-focus') && !b.focus) flood(el, b, 140);
+          return;
+        }
+        if (tabChanged) return;
+        // Same view: glide position, height and color together, so a card
+        // that gains or loses the Now slot morphs instead of snapping.
+        const cs = getComputedStyle(el);
+        const shifted = Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5;
+        const resized = Math.abs(b.rect.height - a.height) > 1;
+        const recolored = b.bg !== cs.backgroundColor || b.color !== cs.color;
+        if (!shifted && !resized && !recolored) return;
+        const closing = cue && cue.to === 'released';
+        const hold = closing ? (performance.now() - lastCloseAt < 3000 ? 300 : 650) : 0;
+        const lifted = local && gesture && gesture.loopId === id && /^move-loop-/.test(gesture.action || '');
+        const from = { transform: `translate(${dx}px, ${dy}px)` };
+        const to = { transform: 'none' };
+        if (resized) { from.height = b.rect.height + 'px'; to.height = a.height + 'px'; }
+        if (recolored) { from.backgroundColor = b.bg; to.backgroundColor = cs.backgroundColor; from.color = b.color; to.color = cs.color; }
+        if (lifted) { from.boxShadow = '0 16px 36px rgba(40,30,10,0.16)'; to.boxShadow = cs.boxShadow === 'none' ? '0 0 0 rgba(0,0,0,0)' : cs.boxShadow; el.style.zIndex = '2'; }
+        if (resized) el.style.overflow = 'hidden';
+        // While a closing ring is still on screen, hold the promotion so the
+        // two moments don't compete.
+        const anim = el.animate([from, to], { duration: closing ? 460 : 420, delay: hold, easing: EASE, fill: 'backwards' });
+        anim.onfinish = anim.oncancel = () => { el.style.overflow = ''; el.style.zIndex = ''; };
+        const eb = el.querySelector('.focus-eyebrow');
+        if (eb && !b.focus) eb.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 0.75, transform: 'none' }], { duration: 300, delay: hold + 180, fill: 'backwards' });
+      });
+
+      const label = main.querySelector('.up-next-label');
+      if (label && snap.labelRect && !tabChanged && !calm) {
+        const ly = snap.labelRect.top - label.getBoundingClientRect().top;
+        if (Math.abs(ly) > 0.5) label.animate([{ transform: `translateY(${ly}px)` }, { transform: 'none' }], { duration: 420, delay: cue && cue.to === 'released' ? (performance.now() - lastCloseAt < 3000 ? 300 : 650) : 0, easing: EASE, fill: 'backwards' });
+      }
+
+      // Cards that left this view: follow them to where they went.
+      snap.cards.forEach((b, id) => {
+        if (after.has(id)) return;
+        const isCue = cue && cue.id === id;
+        if (tabChanged && !isCue) return;
+        const g = ghostOf(b);
+        if (!local || calm) {
+          fadeOut(g, 180);
+          if (isCue && cue.to === 'released') Sound.play(cue.kind === 'let_go' ? 'softLand' : 'land');
+          return;
+        }
+        const n = now.get(id), p = snap.statuses.get(id);
+        if (!n) { poof(g); return; }
+        if (n.status === 'released' && p && p.status !== 'released') { ceremony = true; closeCeremony(g, b.rect, n.kind); return; }
+        if (p && n.status !== p.status) {
+          if (n.status === 'waiting') tuckAway(g, b.rect, 'later', isCue ? sound : null);
+          else flyToTab(g, b.rect, tabFor(n.status), n.kind, isCue ? sound : null);
+          if (isCue) sound = null;
+          return;
+        }
+        fadeOut(g, 200);
+      });
+
+      // Closed without a visible card (e.g. from a hidden row): still land it.
+      if (cue && cue.to === 'released' && !ceremony && !calm) {
+        const vw = window.innerWidth, vh = window.innerHeight;
+        closeCeremony(null, { left: vw / 2 - 1, top: vh / 2 - 1, width: 2, height: 2 }, cue.kind);
+      } else if (cue && cue.to === 'released' && calm && !ceremony) {
+        Sound.play(cue.kind === 'let_go' ? 'softLand' : 'land');
+      }
+      if (sound) Sound.play(sound);
+    }
+
+    return {
+      init() {
+        ensureLayer();
+        document.addEventListener('click', onGesture, true);
+      },
+      snapshot(main) {
+        const s = snapshot(main);
+        s.overlayRect = gesture ? gesture.overlayRect : null;
+        return s;
+      },
+      play
+    };
+  })();
+
+  // Clay ring for the Closed shelf (one per loop closed this week).
+  function clayRingHtml(kind) {
+    return `<svg class="clay-ring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7" fill="none" stroke-width="5" filter="url(#ol-clay-xs)" style="stroke:var(--${kind || 'inbox'})"/></svg>`;
+  }
+
+  function closedThisWeek() {
+    const weekAgo = Date.now() - 7 * 86400000;
+    return data.loops
+      .filter(l => l.status === 'released' && l.completedAt && new Date(l.completedAt).getTime() >= weekAgo)
+      .sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
+  }
+
   // ── RENDER MAIN ──
   function renderMain() {
     const main = document.getElementById('app-main');
-    if (main) main.innerHTML = renderHome();
+    if (!main) return;
+    const snap = Motion.snapshot(main);
+    main.innerHTML = renderHome();
+    Motion.play(main, snap);
     focusInlineEdit();
   }
 
@@ -3970,6 +4854,7 @@ body {
     else if (ov.type === 'change-kind')    inner = renderChangekind(getLoop(ov.loopId));
     else if (ov.type === 'sync')           inner = renderSync();
     else if (ov.type === 'settings')       inner = renderSettings();
+    else if (ov.type === 'why')            inner = renderWhy();
     else if (ov.type === 'primary-action') inner = renderPrimaryAction(getLoop(ov.loopId));
     else if (ov.type === 'confirm-delete') inner = renderConfirmDelete(getLoop(ov.loopId));
 
@@ -3996,7 +4881,20 @@ body {
       label.textContent = view.syncText;
     }
     const archive = document.getElementById('archive-btn');
-    if (archive) archive.classList.toggle('active', view.activeTab === 'done' || view.activeTab === 'released');
+    if (archive) {
+      archive.classList.toggle('active', view.activeTab === 'done' || view.activeTab === 'released');
+      let badge = archive.querySelector('.archive-count');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'archive-count';
+        archive.appendChild(badge);
+      }
+      const n = closedThisWeek().length;
+      badge.textContent = String(n);
+      archive.classList.toggle('has-count', n > 0);
+      archive.setAttribute('aria-label', n ? `Closed loops, ${n} this week` : 'Closed loops');
+      archive.title = n ? `${n} closed this week` : 'Closed';
+    }
   }
 
   function renderAll() {
@@ -4192,13 +5090,20 @@ body {
       const ans = document.getElementById('define-detail-input')?.value.trim() || '';
       const status = ov.status || (ov.kind === 'let_go' ? 'released' : 'active');
       const patch = { rawText: raw, kind: ov.kind, promptAnswer: ans, status, completedAt: status === 'released' ? nowIso() : null };
+      const prevStatus = getLoop(ov.loopId)?.status;
+      const upNext = status === 'active' && prevStatus !== 'active' ? upNextPosition(ov.loopId) : null;
+      if (upNext) patch.position = upNext.position;
       updateLoop(ov.loopId, patch);
+      const positionChanges = upNext && upNext.rebalance ? rebalanceActivePositions() : null;
       view.highlightedId = status === 'active' ? ov.loopId : null;
-      view.activeTab = status === 'waiting' ? 'later' : status === 'released' ? 'done' : 'now';
+      // Closing stays on the current view so the loop visibly lands in the
+      // Closed archive in the header instead of jumping tabs.
+      if (status !== 'released') view.activeTab = status === 'waiting' ? 'later' : 'now';
       saveReentryDismissed(null);
       closeOverlay();
       await persistAndRender();
       Sync.updateLoop(ov.loopId, patch);
+      if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
       toast(status === 'active' ? 'Defined and made active.' : status === 'waiting' ? 'Defined and parked.' : 'Defined and closed.');
       return;
     }
@@ -4231,7 +5136,7 @@ body {
       view.activeTab = 'now';
       await persistAndRender();
       Sync.updateLoop(loopId, patch);
-      toast('Released.');
+      toast('Closed.');
       return;
     }
     if (action === 'complete-progress') {
@@ -4276,15 +5181,18 @@ body {
       // Snapshot the previous status BEFORE updateLoop mutates the same
       // object reference (getLoop returns the live row, not a copy).
       const prevStatus = getLoop(loopId)?.status;
-      // Restoring from waiting/released should land the loop back on top
-      // of the active list, not at its old position slot (which is likely
-      // long-stale and below everything else active right now).
-      const patch = { status: 'active', position: topPosition(), completedAt: null };
+      // Restoring from waiting/released lands the loop in "Up next", right
+      // under the Now card: not at its stale old position, and not over the
+      // loop the person is currently focused on.
+      const upNext = upNextPosition(loopId);
+      const patch = { status: 'active', position: upNext.position, completedAt: null };
       updateLoop(loopId, patch);
+      const positionChanges = upNext.rebalance ? rebalanceActivePositions() : null;
       closeOverlay();
       view.activeTab = 'now';
       await persistAndRender();
       Sync.updateLoop(loopId, patch);
+      if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
       toast(prevStatus === 'released' ? 'Reopened.' : 'Made active.');
       return;
     }
@@ -4433,7 +5341,7 @@ body {
       if (!result.ok) return;
       await persistAndRender();
       syncPositionChanges(result);
-      toast(action === 'move-loop-up' ? 'Moved up.' : 'Moved down.');
+      announce(action === 'move-loop-up' ? 'Moved up.' : 'Moved down.');
       return;
     }
 
@@ -4466,10 +5374,22 @@ body {
     }
 
     // Settings overlay
+    if (action === 'open-why') {
+      rememberOverlayOpener(el);
+      view.overlay = { type: 'why' };
+      renderOverlay();
+      return;
+    }
     if (action === 'open-settings') {
       rememberOverlayOpener(el);
       view.overlay = { type: 'settings' };
       renderOverlay();
+      return;
+    }
+    if (action === 'set-sound') {
+      Sound.set(el.dataset.sound === 'on');
+      if (Sound.enabled) { Sound.unlock(); Sound.play('land'); }
+      if (view.overlay && view.overlay.type === 'settings') renderOverlay();
       return;
     }
     if (action === 'set-theme') {
@@ -5499,6 +6419,7 @@ body {
 
   // ── INIT ──
   loadTheme();
+  Motion.init();
   renderAll(); // First paint
 
   // Kick off auth check. Sign-in is required because Supabase is the
