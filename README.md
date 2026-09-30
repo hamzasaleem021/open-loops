@@ -4,7 +4,7 @@
 
 Open Loops is a small PWA for getting unfinished thoughts out of your head, shaping them, and keeping only a few active commitments in view. It is intentionally simple: capture a loop, define what kind of attention it needs, park it if it is not for now, and close it when it is done or released.
 
-![Open Loops](open-loops-icon-192-v2.png)
+![Open Loops](open-loops-icon-192-v3.png)
 
 ---
 
@@ -33,7 +33,8 @@ Open Loops is built around one personal workflow:
 
 - **Inbox capture** - Capture once from the bottom Capture button. New loops land in Inbox.
 - **Define and route** - Pick a kind, add an optional detail or next step, then send the loop to Active, Parked, or Closed.
-- **Active focus cap** - Show 3, 5, or 7 active loops before "Show more". Configure this in Settings.
+- **Active focus cap** - Show 3, 5, or 7 active loops before "Show more". Configure this in Settings. The Active view shows how many focus slots are in use.
+- **Now card** - The top Active loop is shown as a large card in its kind's color, with the rest listed under "Up next".
 - **Archive/Closed** - Closed loops live behind the small archive button in the header instead of taking a main tab.
 - **Created and closed dates** - Loop cards show when they were captured. Closed loops also show when they were closed.
 - **Inline editing** - Click a loop title to edit it in place.
@@ -42,7 +43,7 @@ Open Loops is built around one personal workflow:
 - **Magic-link sign-in** - Sign in with email; no password required.
 - **Offline queue** - Signed-in edits made during brief connection drops are queued locally and retried.
 - **Realtime sync** - Changes on one device update the other signed-in devices.
-- **Dark and light themes** - Toggle from the header. Preference persists.
+- **Light and night themes** - Clay cream by day, teal-black by night. Toggle from the header. Preference persists; first run follows the system setting.
 - **Installable PWA** - Works as an installed desktop/mobile app.
 
 ---
@@ -147,9 +148,10 @@ open-loops.html
 open-loops-config.js
 open-loops-manifest.json
 open-loops-sw.js
-open-loops-icon-192-v2.png
-open-loops-icon-512-v2.png
+open-loops-icon-192-v3.png
+open-loops-icon-512-v3.png
 open-loops-supabase.sql
+index.html
 README.md
 ```
 
@@ -158,15 +160,17 @@ Keep the older icon files too if existing installed PWAs may still request them:
 ```text
 open-loops-icon-192.png
 open-loops-icon-512.png
+open-loops-icon-192-v2.png
+open-loops-icon-512-v2.png
 ```
 
 The service worker cache is currently:
 
 ```js
-open-loops-v10-icons
+open-loops-v11-clay
 ```
 
-The icon filenames are versioned (`-v2`) so browsers and installed PWAs have a clean cache break. If an installed PWA still shows an old icon after deployment, uninstall and reinstall the PWA.
+The icon filenames are versioned (`-v3`, the Clay icon) so browsers and installed PWAs have a clean cache break. If an installed PWA still shows an old icon after deployment, uninstall and reinstall the PWA.
 
 ---
 
@@ -223,8 +227,10 @@ open-loops-config.js         Supabase credentials and app config
 open-loops-supabase.sql      Database schema, RLS policies, RPC, realtime setup
 open-loops-sw.js             Service worker and offline cache
 open-loops-manifest.json     PWA manifest
-open-loops-icon-192-v2.png   Current PWA icon
-open-loops-icon-512-v2.png   Current large PWA icon
+open-loops-icon-192-v3.png   Current PWA icon (Clay)
+open-loops-icon-512-v3.png   Current large PWA icon (Clay)
+open-loops-icon-192-v2.png   Previous icon kept for cache compatibility
+open-loops-icon-512-v2.png   Previous large icon kept for cache compatibility
 open-loops-icon-192.png      Legacy icon kept for cache compatibility
 open-loops-icon-512.png      Legacy large icon kept for cache compatibility
 index.html                   Landing page
@@ -240,6 +246,20 @@ README.md                    This file
 - **Closed is archive, not a main lane.** Active, Parked, and Inbox are the daily surfaces.
 - **Constraints are features.** The focus cap is there to reduce noise.
 - **No build step.** The app stays inspectable and deployable as static files.
+
+---
+
+## Visual Design: Clay
+
+The app and landing page use a Clay-inspired system.
+
+- **Canvas:** cream `#fffaf0` by day, teal-black `#0a1a1a` at night. Primary buttons are near-black by day and cream at night.
+- **Type:** Inter throughout. Display headings use weight 500 with tight negative tracking.
+- **Kinds map to the six card colors:** Do = teal, Decide = ochre, Ask = pink, Schedule = lavender, Let go = peach, Inbox = cream.
+- **One loud thing per screen:** only the top Active loop gets a saturated card. Everything else uses quiet cream cards with a colored kind pill, because Open Loops is meant to lower pressure.
+- **Clay illustrations:** the soft 3D shapes (the open "C" loop, the closed ring) are plain SVG with a lighting filter, drawn by `clayArtHtml()`. There are no image assets to manage.
+- **Radii:** 12px buttons and inputs, 16px cards, 24px focus cards and sheets, pills for chips and tabs.
+- Tokens live at the top of the `<style>` block in `open-loops.html`. Component treatments sit in the `CLAY COMPONENT LAYER` at the end of it.
 
 ---
 

@@ -1,4 +1,4 @@
-const CACHE = 'open-loops-v10-icons';
+const CACHE = 'open-loops-v11-clay';
 
 const NETWORK_FIRST = [
   './open-loops.html',
@@ -7,8 +7,8 @@ const NETWORK_FIRST = [
 
 const CACHE_FIRST = [
   './open-loops-manifest.json',
-  './open-loops-icon-192-v2.png',
-  './open-loops-icon-512-v2.png'
+  './open-loops-icon-192-v3.png',
+  './open-loops-icon-512-v3.png'
 ];
 
 const ASSETS = [...NETWORK_FIRST, ...CACHE_FIRST];
