@@ -38,7 +38,8 @@ Open Loops is built around one personal workflow:
 - **Up next, not Now** - Loops entering Active (defined, reopened, or brought back from Parked) land in Up next. Only you promote a loop to Now, by reordering.
 - **Motion and sound** - Every move shows where the loop went. Closing seals the loop into a clay ring that lands in the Closed archive in the header. Sounds can be turned off in Settings.
 - **Closed shelf** - The Closed view shows one clay ring per loop closed this week; the archive button shows the weekly count.
-- **Why Open Loops** - Tap the logo (or Settings → Why Open Loops) for why the app exists, who it's for, and how to use it best.
+- **Why Open Loops** - Tap the logo (or Settings → Why Open Loops) for a five-scene animated story: why unfinished things nag, the research behind next steps, how the app works, and who it's for. The landing page plays the same story. Music follows the Sounds setting; the voice-over is opt-in (Voice button in the sheet). On the landing page both start muted behind a Sound button.
+- **Quiet feedback** - Moves that animate don't also show a toast. Screen readers still hear each change. Toasts remain for Undo, errors and sync.
 - **Archive/Closed** - Closed loops live behind the small archive button in the header instead of taking a main tab.
 - **Created and closed dates** - Loop cards show when they were captured. Closed loops also show when they were closed.
 - **Inline editing** - Click a loop title to edit it in place.
@@ -171,7 +172,7 @@ open-loops-icon-512-v2.png
 The service worker cache is currently:
 
 ```js
-open-loops-v14-flow
+open-loops-v16-voice
 ```
 
 The icon filenames are versioned (`-v3`, the Clay icon) so browsers and installed PWAs have a clean cache break. If an installed PWA still shows an old icon after deployment, uninstall and reinstall the PWA.
@@ -238,6 +239,7 @@ open-loops-icon-512-v2.png   Previous large icon kept for cache compatibility
 open-loops-icon-192.png      Legacy icon kept for cache compatibility
 open-loops-icon-512.png      Legacy large icon kept for cache compatibility
 index.html                   Landing page
+why-voice-1.mp3 … -5.mp3     Voice-over for the Why story (Kokoro "Heart" voice, ~190KB total)
 README.md                    This file
 ```
 

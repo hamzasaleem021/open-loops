@@ -2823,6 +2823,92 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
 
 .overlay-card.swap-enter { animation: sheetSwap .18s ease-out; }
 @keyframes sheetSwap { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ── WHY STORY: half picture, half text ── */
+.why-sheet { max-width: 460px; }
+.why-story { display: grid; gap: 14px; }
+.why-bars { display: flex; gap: 4px; }
+.why-bars span { flex: 1; height: 3px; border-radius: 2px; background: var(--surface-strong); overflow: hidden; }
+.why-bars i { display: block; height: 100%; background: var(--text); transform: scaleX(0); transform-origin: left center; }
+.why-bars span.done i { transform: scaleX(1); }
+.why-story[data-scene="4"] .why-bars span.now i { transform: scaleX(1); }
+@media (prefers-reduced-motion: reduce) { .why-bars span.now i { transform: scaleX(1); } }
+.why-stage { display: block; width: 100%; padding: 0; border: none; border-radius: 20px; background: var(--surface-2); aspect-ratio: 320 / 206; overflow: hidden; cursor: pointer; }
+.why-stage svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.why-stage:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.why-text { min-height: 124px; display: grid; gap: 8px; align-content: start; }
+.why-h1 { margin: 0; font-family: var(--display); font-size: 26px; font-weight: 500; letter-spacing: -0.035em; line-height: 1.1; color: var(--text); }
+.why-p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--text-2); }
+.why-cite { margin: 0; font-size: 12px; color: var(--text-3); }
+.why-cite:empty { display: none; }
+.why-nav { display: flex; gap: 8px; }
+.why-nav .why-go { margin-left: auto; }
+.why-nav .why-back[hidden] { display: none; }
+
+.why-scene .w-mind { fill: var(--surface-3); }
+.why-scene .w-ring { transform-box: view-box; }
+.wk-ask { stroke: var(--ask); } .wk-decide { stroke: var(--decide); } .wk-do { stroke: var(--do); }
+.wk-schedule { stroke: var(--schedule); } .wk-let_go { stroke: var(--let_go); } .wk-ask-on { stroke: #fffaf0; }
+.why-scene .w-tag { opacity: 0; transform-box: fill-box; }
+.why-scene .w-tag-bg { fill: var(--text); }
+.why-scene .w-tag-text { fill: var(--bg); font: 600 10px var(--sans); }
+.why-scene .w-tray { fill: var(--surface-3); }
+.why-scene .w-label { fill: var(--text-3); font: 600 10px var(--sans); letter-spacing: .4px; }
+.why-scene .w-now { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.why-scene .w-now-card { fill: var(--ask-dim); }
+.why-scene .w-static { fill: var(--ask); }
+.why-scene .w-now-label { fill: var(--text-3); font: 600 9px var(--sans); letter-spacing: 1.2px; }
+.why-scene .w-now-step { fill: var(--text); font: 600 9.5px var(--sans); }
+.why-scene .w-now-cap { opacity: 0; }
+.why-scene .w-shelf { stroke: var(--border); stroke-width: 2; stroke-linecap: round; }
+.why-scene .w-close { transform-box: view-box; transform-origin: 160px 72px; }
+
+@keyframes w-jit {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-3px, 2px) rotate(-8deg); }
+  50% { transform: translate(2px, -3px) rotate(7deg); }
+  75% { transform: translate(3px, 2px) rotate(-4deg); }
+}
+.why-scene.play .w-jit { animation: w-jit .9s ease-in-out infinite; }
+.why-scene.play .j2 { animation-duration: .8s; animation-delay: -.2s; }
+.why-scene.play .j3 { animation-duration: 1s; animation-delay: -.45s; }
+.why-scene.play .j4 { animation-duration: .85s; animation-delay: -.1s; }
+.why-scene.play .j5 { animation-duration: .95s; animation-delay: -.3s; }
+.why-scene.play .w-settle { animation: w-jit .9s ease-in-out 0s 2; }
+@keyframes w-tag { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: none; } }
+.why-scene.play .w-tag { animation: w-tag .5s cubic-bezier(.2,.8,.2,1) 1.2s forwards; }
+
+@keyframes w-drop { from { transform: translateY(-120px); opacity: 0; } 55% { opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes w-rise { from { transform: none; } to { transform: translate(92px, -64px) scale(1.3); } }
+.why-scene .w-drop { opacity: 0; }
+.why-scene.play .d1 { animation: w-drop .55s cubic-bezier(.3,0,.3,1.25) .1s both; }
+.why-scene.play .d2 { animation: w-drop .55s cubic-bezier(.3,0,.3,1.25) .35s both; }
+.why-scene.play .d3 { animation: w-drop .55s cubic-bezier(.3,0,.3,1.25) .6s both, w-rise .75s cubic-bezier(.5,0,.25,1) 1.9s forwards; }
+@keyframes w-pop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+.why-scene.play .w-now { animation: w-pop .45s cubic-bezier(.2,.8,.2,1.2) 1.5s both; }
+.why-scene.play .w-now-cap { animation: w-pop .4s ease-out 2.4s both; }
+
+@keyframes w-seal { to { stroke-dasharray: 100.53 100.53; } }
+@keyframes w-fly {
+  0% { transform: none; }
+  40% { transform: translate(4px, -20px) scale(.9) rotate(120deg); }
+  100% { transform: translate(8px, 92px) scale(.56) rotate(300deg); }
+}
+@keyframes w-tint { to { stroke: var(--ask); } }
+@keyframes w-dim { to { opacity: .2; } }
+.why-scene.play .w-seal circle { animation: w-seal .45s cubic-bezier(.3,0,.2,1) .5s forwards, w-tint .5s ease 1.3s forwards; }
+.why-scene.play .w-close { animation: w-fly .75s cubic-bezier(.5,0,.25,1) 1.15s forwards; }
+.why-scene.play .w-static { animation: w-dim .4s ease 1.3s forwards; }
+
+@keyframes w-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+.why-scene.play .w-breathe { animation: w-breathe 3.2s ease-in-out infinite; }
+
+.why-voice-toggle { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 10px; margin-left: auto; margin-right: 6px; border-radius: var(--r-pill); border: 1px solid var(--border); background: transparent; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.why-voice-toggle .wv-on { display: none; }
+.why-voice-toggle.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.why-voice-toggle.on .wv-on { display: inline; }
+.why-voice-toggle.on .wv-off { display: none; }
+.why-voice-toggle:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 </style>
 </head>
 <body>
@@ -3551,9 +3637,9 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
 
     const HEAD = {
       now:   { title: TAB_LABEL.active,   sub: 'Only a few things, on purpose.' },
-      later: { title: TAB_LABEL.waiting,  sub: 'Not for now. Not forgotten.' },
-      inbox: { title: TAB_LABEL.inbox,    sub: 'Raw loops waiting for a shape.' },
-      done:  { title: TAB_LABEL.released, sub: 'Done or released. Reopen anytime.' }
+      later: { title: TAB_LABEL.waiting,  sub: 'Set aside for later.' },
+      inbox: { title: TAB_LABEL.inbox,    sub: 'New thoughts, not sorted yet.' },
+      done:  { title: TAB_LABEL.released, sub: 'Done or let go.' }
     };
     const tabKey = view.activeTab === 'waiting' ? 'later' : view.activeTab === 'released' ? 'done' : view.activeTab;
     const head = HEAD[tabKey] || HEAD.now;
@@ -3971,45 +4057,330 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
   // Settings stay behind the sign-in gate because the app is sync-first.
   // ── WHY OPEN LOOPS ──
   // Opened from the header mark ("the mast") and from Settings.
-  function renderWhy() {
-    const closeBtn = `<button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
+  // ── WHY STORY ──
+  // Five short animated scenes: half picture, half text. Auto-advances;
+  // tap the picture or use Next/Back. Scenes are plain SVG with CSS motion.
+  const WHY_SCENES = [
+    { h: 'Your head is full of open loops.', p: 'Every unfinished thing keeps pulling at you.' },
+    { h: 'One next step quiets a loop.', p: 'Studies show a plan calms the nagging, even before it’s done.', cite: 'Masicampo & Baumeister, 2011' },
+    { h: 'Catch it. Shape it. Focus.', p: 'Drop it in Inbox, give it one next step, do one at a time.' },
+    { h: 'Close it. Let it go.', p: 'Every closed loop lands on your shelf, and out of your head.' },
+    { h: 'Made for crowded heads.', p: 'If your mind keeps saying “I still need to…”, this is for you.' }
+  ];
+
+  // Story soundtrack: one mood per scene, same instrument and scale as the
+  // app's sounds. Plays when Sounds are on. The voice is opt-in per sheet.
+  const StoryAudio = (() => {
+    let ctx = null, master = null, group = null;
+    const N = { A2: 110, D3: 146.83, A3: 220, D4: 293.66, E4: 329.63, Fs4: 369.99, A4: 440, B4: 493.88, D5: 587.33, E5: 659.25, Fs5: 739.99, A5: 880, B5: 987.77 };
+    function ensure() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+        const comp = ctx.createDynamicsCompressor();
+        master = ctx.createGain(); master.gain.value = 0.26;
+        master.connect(comp); comp.connect(ctx.destination);
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+    function newGroup() {
+      const c = ensure(); if (!c) return null;
+      if (group) {
+        const old = group;
+        old.gain.cancelScheduledValues(c.currentTime);
+        old.gain.setValueAtTime(old.gain.value, c.currentTime);
+        old.gain.linearRampToValueAtTime(0, c.currentTime + 0.35);
+        setTimeout(() => { try { old.disconnect(); } catch (_) {} }, 500);
+      }
+      group = c.createGain(); group.gain.value = 1; group.connect(master);
+      return group;
+    }
+    function env(g, t, peak, a, d) {
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(peak, t + a);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+    }
+    function pluck(f, at, vel = 0.6, decay = 1.2, detune = 0) {
+      const c = ctx, t = c.currentTime + at, out = group;
+      const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = f; o.detune.value = detune;
+      const o2 = c.createOscillator(); o2.type = 'sine'; o2.frequency.value = f * 5.4;
+      const g = c.createGain(), g2 = c.createGain();
+      env(g, t, 0.5 * vel, 0.006, decay); env(g2, t, 0.09 * vel, 0.003, 0.09);
+      o.connect(g); o2.connect(g2); g.connect(out); g2.connect(out);
+      o.start(t); o2.start(t); o.stop(t + decay + 0.1); o2.stop(t + 0.15);
+    }
+    function pad(freqs, at, dur, vel = 0.12) {
+      const c = ctx, t = c.currentTime + at, out = group;
+      const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1100; f.connect(out);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vel, t + 1.2);
+      g.gain.setValueAtTime(vel, t + Math.max(1.3, dur - 1.6));
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      g.connect(f);
+      freqs.forEach(fr => [-6, 6].forEach(dt => {
+        const o = c.createOscillator(); o.type = 'triangle'; o.frequency.value = fr; o.detune.value = dt;
+        o.connect(g); o.start(t); o.stop(t + dur + 0.1);
+      }));
+    }
+    function thud(at, vel = 0.4) {
+      const c = ctx, t = c.currentTime + at;
+      const o = c.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.13);
+      const g = c.createGain(); env(g, t, vel, 0.005, 0.16);
+      o.connect(g); g.connect(group); o.start(t); o.stop(t + 0.25);
+    }
+
+    // ── voice clips ──
+    const VOICE_URL = i => `./why-voice-${i + 1}.mp3`;
+    const clipCache = {}, clipPending = {};
+    let clipQueue = Promise.resolve(), clipSrc = null, clipEl = null, voiceOut = null, voiceTicket = 0;
+    function decode(ab) {
+      return new Promise((res, rej) => {
+        try { const r = ctx.decodeAudioData(ab, res, rej); if (r && r.then) r.then(res, rej); } catch (e) { rej(e); }
+      });
+    }
+    function loadClip(i) {
+      if (clipCache[i]) return Promise.resolve(clipCache[i]);
+      if (clipPending[i]) return clipPending[i];
+      if (!ensure()) return Promise.resolve(null);
+      clipPending[i] = clipQueue = clipQueue
+        .then(() => clipCache[i] || fetch(VOICE_URL(i)).then(r => { if (!r.ok) throw new Error('clip'); return r.arrayBuffer(); }).then(decode))
+        .then(b => { clipCache[i] = b; return b; })
+        .catch(() => null)
+        .finally(() => { delete clipPending[i]; });
+      return clipPending[i];
+    }
+    function stopClip() {
+      if (clipSrc) { try { clipSrc.onended = null; clipSrc.stop(); } catch (_) {} clipSrc = null; }
+      if (clipEl) { try { clipEl.onended = null; clipEl.pause(); } catch (_) {} clipEl = null; }
+    }
+    function elementClip(i, onEnd) {
+      clipEl = new Audio(VOICE_URL(i));
+      let done = false; const fin = () => { if (!done) { done = true; clipEl = null; onEnd(); } };
+      clipEl.onended = fin; clipEl.onerror = fin; setTimeout(fin, 12000);
+      const pr = clipEl.play(); if (pr && pr.catch) pr.catch(fin);
+    }
+    function sayClip(i, onEnd) {
+      const my = ++voiceTicket;
+      stopClip();
+      if (!ensure()) { onEnd(); return; }
+      let settled = false;
+      // Never stall: if the clip isn't decoded in 4s, play it the plain way.
+      const fallback = setTimeout(() => { if (settled || my !== voiceTicket) return; settled = true; elementClip(i, onEnd); }, 4000);
+      loadClip(i).then(buf => {
+        if (settled || my !== voiceTicket) return;
+        settled = true; clearTimeout(fallback);
+        if (!buf) { elementClip(i, onEnd); return; }
+        if (ctx.state === 'suspended') ctx.resume();
+        if (!voiceOut) { voiceOut = ctx.createGain(); voiceOut.gain.value = 1; voiceOut.connect(ctx.destination); }
+        clipSrc = ctx.createBufferSource(); clipSrc.buffer = buf; clipSrc.connect(voiceOut);
+        clipSrc.onended = () => { clipSrc = null; if (my === voiceTicket) onEnd(); };
+        clipSrc.start();
+      });
+    }
+    const scenes = [
+      // 1 · tugging: scattered, overlapping, never settling
+      () => {
+        const pool = [N.E4, N.A4, N.B4, N.E5, N.Fs4, N.B5];
+        let t = 0.05;
+        while (t < 5.0) {
+          pluck(pool[Math.floor(Math.random() * pool.length)], t, 0.28 + Math.random() * 0.18, 0.6, (Math.random() - 0.5) * 24);
+          t += 0.14 + Math.random() * 0.22;
+        }
+        pad([N.A2, N.E4], 0, 5.2, 0.05);
+      },
+      // 2 · a next step: scatter thins, chime with the tag, one note holds
+      () => {
+        const pool = [N.E4, N.A4, N.B4, N.E5];
+        let t = 0.05, gap = 0.18;
+        while (t < 1.5) { pluck(pool[Math.floor(Math.random() * pool.length)], t, 0.26, 0.6, (Math.random() - 0.5) * 20); t += gap; gap += 0.05; }
+        pluck(N.D5, 1.62, 0.5, 2.2); pluck(N.A5, 1.68, 0.3, 2.4);
+        pad([N.D3, N.A3, N.Fs4], 1.6, 3.6, 0.07);
+        pluck(N.A4, 3.0, 0.3, 1.8); pluck(N.A4, 4.2, 0.22, 1.6);
+      },
+      // 3 · capture, define, focus: drops, a rising run, a steady pulse
+      () => {
+        pluck(N.D4, 0.62, 0.5, 0.9); pluck(N.Fs4, 0.88, 0.5, 0.9); pluck(N.A4, 1.13, 0.5, 0.9);
+        pad([N.D3, N.A3], 1.5, 3.7, 0.06);
+        pluck(N.A4, 1.95, 0.45, 0.7); pluck(N.D5, 2.12, 0.45, 0.7); pluck(N.Fs5, 2.3, 0.45, 1.4);
+        [3.1, 3.9, 4.7].forEach(t => pluck(N.D4, t, 0.25, 0.9));
+      },
+      // 4 · close: the app's own closing sound, suspended then resolved
+      () => {
+        pluck(N.E4, 0.5, 0.55, 1.0); pluck(N.A4, 0.57, 0.55, 1.2);
+        thud(1.9, 0.38); pluck(N.D4, 1.91, 0.65, 1.8); pluck(N.Fs4, 1.94, 0.5, 1.8); pluck(N.D5, 1.97, 0.55, 2.0);
+        pad([N.D3, N.Fs4, N.A4], 1.9, 3.3, 0.08);
+      },
+      // 5 · crowded heads: warm chord and a slow lullaby
+      () => {
+        pad([N.D3, N.A3, N.D4, N.Fs4], 0, 7.5, 0.1);
+        [[N.Fs5, 0.6], [N.E5, 1.5], [N.D5, 2.4], [N.A4, 3.6], [N.D5, 5.0]].forEach(([f, t]) => pluck(f, t, 0.38, 2.4));
+      }
+    ];
+    function duck(on) {
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      master.gain.cancelScheduledValues(t);
+      master.gain.setValueAtTime(master.gain.value, t);
+      master.gain.linearRampToValueAtTime(on ? 0.1 : 0.26, t + (on ? 0.25 : 0.8));
+    }
+    return {
+      duck,
+      ctx: () => ensure(),
+      start() { return !!ensure(); },
+      music(i) { if (!ensure()) return; if (!newGroup()) return; try { scenes[i](); } catch (_) {} },
+      stopMusic() { if (ctx) newGroup(); },
+      // Voice-over: five short recorded clips (Kokoro "Heart" voice).
+      say(i, onEnd) { sayClip(i, onEnd); },
+      stopVoice() { voiceTicket++; stopClip(); },
+      preloadVoice() { for (let i = 0; i < 5; i++) loadClip(i); },
+      stopAll() { voiceTicket++; stopClip(); if (ctx) newGroup(); duck(false); }
+    };
+  })();
+
+  // Open ring ("loop") at x,y. sealed = the gap is closed.
+  function wRing(x, y, kind, cls = '', sealed = false, r = 13) {
+    const c = 2 * Math.PI * r;
+    return `<g class="w-ring ${cls}" style="transform-origin:${x}px ${y}px"><circle cx="${x}" cy="${y}" r="${r}" fill="none" class="wk-${kind}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${sealed ? `${c} ${c}` : `${c * 0.74} ${c}`}" transform="rotate(14 ${x} ${y})" filter="url(#ol-clay-sm)"/></g>`;
+  }
+
+  function whySceneSvg(i) {
+    const mind = `<circle class="w-mind" cx="160" cy="100" r="84"/>`;
+    if (i === 0) return `
+      ${mind}
+      ${wRing(118, 70, 'ask', 'w-jit j1')}
+      ${wRing(200, 64, 'decide', 'w-jit j2')}
+      ${wRing(126, 132, 'do', 'w-jit j3')}
+      ${wRing(204, 128, 'schedule', 'w-jit j4')}
+      ${wRing(162, 100, 'let_go', 'w-jit j5')}`;
+    if (i === 1) return `
+      ${mind}
+      ${wRing(118, 70, 'ask', 'w-settle')}
+      ${wRing(200, 64, 'decide', 'w-jit j2')}
+      ${wRing(126, 132, 'do', 'w-jit j3')}
+      ${wRing(204, 128, 'schedule', 'w-jit j4')}
+      ${wRing(162, 100, 'let_go', 'w-jit j5')}
+      <g class="w-tag"><rect x="30" y="24" width="104" height="22" rx="11" class="w-tag-bg"/><text x="82" y="39" text-anchor="middle" class="w-tag-text">Next: email Bilal</text></g>`;
+    if (i === 2) return `
+      <g class="w-now"><rect class="w-now-card" x="176" y="44" width="118" height="92" rx="20"/><text class="w-now-label" x="192" y="66">NOW</text><text class="w-now-step" x="192" y="122">Next: email Bilal</text></g>
+      <rect class="w-tray" x="30" y="128" width="120" height="44" rx="14"/>
+      <text class="w-label" x="90" y="190" text-anchor="middle">Inbox</text>
+      ${wRing(60, 150, 'decide', 'w-drop d1', false, 11)}
+      ${wRing(90, 150, 'do', 'w-drop d2', false, 11)}
+      ${wRing(120, 150, 'ask', 'w-drop d3 w-rise', false, 11)}
+      <text class="w-label w-now-cap" x="235" y="160" text-anchor="middle">One at a time</text>`;
+    if (i === 3) return `
+      <rect class="w-now-card w-static" x="101" y="26" width="118" height="92" rx="20"/>
+      <g class="w-close">${wRing(160, 72, 'ask-on', 'w-seal', false, 16)}</g>
+      <line class="w-shelf" x1="60" y1="178" x2="260" y2="178"/>
+      ${wRing(84, 164, 'do', 'w-shelved', true, 9)}
+      ${wRing(112, 164, 'decide', 'w-shelved', true, 9)}
+      ${wRing(140, 164, 'schedule', 'w-shelved', true, 9)}`;
     return `
-      <div class="overlay-card why-card" role="dialog" aria-modal="true" aria-labelledby="why-title">
+      ${mind}
+      ${wRing(160, 96, 'ask', 'w-breathe', false, 15)}
+      <line class="w-shelf" x1="70" y1="196" x2="250" y2="196"/>
+      ${wRing(96, 182, 'do', '', true, 9)}${wRing(124, 182, 'decide', '', true, 9)}${wRing(152, 182, 'schedule', '', true, 9)}${wRing(180, 182, 'ask', '', true, 9)}${wRing(208, 182, 'let_go', '', true, 9)}`;
+  }
+
+  function whyStoryHtml() {
+    const bars = WHY_SCENES.map((_, i) => `<span data-i="${i}"><i></i></span>`).join('');
+    return `
+      <div class="why-story" data-scene="0">
+        <div class="why-bars" aria-hidden="true">${bars}</div>
+        <button type="button" class="why-stage" data-action="why-next" aria-label="Next">
+          <svg viewBox="0 0 320 206" role="img" aria-hidden="true"><g class="why-scene play">${whySceneSvg(0)}</g></svg>
+        </button>
+        <div class="why-text" aria-live="polite">
+          <h3 class="why-h1">${WHY_SCENES[0].h}</h3>
+          <p class="why-p">${WHY_SCENES[0].p}</p>
+          <p class="why-cite"></p>
+        </div>
+        <div class="why-nav">
+          <button type="button" class="btn btn-ghost why-back" data-action="why-back" hidden>Back</button>
+          <button type="button" class="btn btn-primary why-go" data-action="why-next">Next</button>
+        </div>
+      </div>`;
+  }
+
+  let whyTimer = null;
+  let whyToken = 0;
+  const WHY_MS = 5200;
+  // Read lazily: SOUND_KEY is defined further down the file.
+  const whyVoiceKey = () => SOUND_KEY + '_why_voice';
+  function whyVoiceOn() { try { return localStorage.getItem(whyVoiceKey()) === 'on'; } catch (_) { return false; } }
+  function setWhyVoice(on) { try { localStorage.setItem(whyVoiceKey(), on ? 'on' : 'off'); } catch (_) {} }
+
+  function whyShow(i, dir = 1) {
+    const story = document.querySelector('#overlay-root .why-story');
+    if (!story) { clearTimeout(whyTimer); StoryAudio.stopAll(); return; }
+    const n = WHY_SCENES.length;
+    i = Math.max(0, Math.min(n - 1, i));
+    story.dataset.scene = String(i);
+    const scene = story.querySelector('.why-scene');
+    scene.innerHTML = whySceneSvg(i);
+    scene.classList.remove('play'); void scene.getBoundingClientRect(); scene.classList.add('play');
+    const s = WHY_SCENES[i];
+    const text = story.querySelector('.why-text');
+    text.querySelector('.why-h1').textContent = s.h;
+    text.querySelector('.why-p').textContent = s.p;
+    text.querySelector('.why-cite').textContent = s.cite || '';
+    const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!calm && dir) text.animate([{ opacity: 0, transform: `translateX(${dir * 16}px)` }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    const voice = whyVoiceOn();
+    story.querySelectorAll('.why-bars span').forEach((b, k) => {
+      b.classList.toggle('done', k < i);
+      b.classList.toggle('now', k === i);
+      const fill = b.querySelector('i');
+      fill.getAnimations().forEach(a => a.cancel());
+      if (k === i && !calm && i < n - 1) fill.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: voice ? WHY_MS + 1800 : WHY_MS, easing: 'linear', fill: 'forwards' });
+    });
+    story.querySelector('.why-back').hidden = i === 0;
+    const go = story.querySelector('.why-go');
+    const last = i === n - 1;
+    go.textContent = last ? 'Got it' : 'Next';
+    go.dataset.action = last ? 'close-overlay' : 'why-next';
+
+    // Sound: music follows the Sounds setting; the voice is opt-in.
+    if (Sound.enabled) StoryAudio.music(i); else StoryAudio.stopMusic();
+    clearTimeout(whyTimer);
+    const token = ++whyToken;
+    let minDone = false, voiceDone = !voice;
+    const advance = () => {
+      if (token !== whyToken || !minDone || !voiceDone || calm || last) return;
+      whyTimer = setTimeout(() => { if (token === whyToken) whyShow(i + 1, 1); }, voice ? 700 : 0);
+    };
+    whyTimer = setTimeout(() => { minDone = true; advance(); }, voice ? WHY_MS - 700 : WHY_MS);
+    if (voice) {
+      StoryAudio.stopVoice();
+      StoryAudio.duck(true);
+      setTimeout(() => {
+        if (token !== whyToken) return;
+        StoryAudio.say(i, () => { if (token !== whyToken) return; StoryAudio.duck(false); voiceDone = true; advance(); });
+      }, 450);
+    } else { StoryAudio.stopVoice(); StoryAudio.duck(false); }
+  }
+  function whyStep(delta) {
+    const story = document.querySelector('#overlay-root .why-story');
+    if (!story) return;
+    whyShow(Number(story.dataset.scene || 0) + delta, delta);
+  }
+
+  function renderWhy() {
+    return `
+      <div class="overlay-card why-sheet" role="dialog" aria-modal="true" aria-labelledby="why-eyebrow">
         <div class="overlay-header">
-          <div class="overlay-meta"><div class="overlay-eyebrow">Why Open Loops</div></div>
-          ${closeBtn}
+          <div class="overlay-meta"><div class="overlay-eyebrow" id="why-eyebrow">Why Open Loops</div></div>
+          <button type="button" class="why-voice-toggle${whyVoiceOn() ? ' on' : ''}" data-action="why-voice" aria-pressed="${whyVoiceOn()}" title="Voice-over">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 6h2.2L8.5 3.2v9.6L5.2 10H3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path class="wv-on" d="M10.6 5.6a3.3 3.3 0 0 1 0 4.8M12.2 4a5.6 5.6 0 0 1 0 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path class="wv-off" d="M10.5 6.2l3.2 3.6M13.7 6.2l-3.2 3.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            <span>Voice</span>
+          </button>
+          <button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
-        ${clayArtHtml('open')}
-        <h2 class="overlay-title" id="why-title">Unfinished things don't stay quiet.</h2>
-
-        <section class="why-section">
-          <h3 class="why-h">Why it exists</h3>
-          <p>The reply you owe, the decision you keep circling, the call you keep forgetting. Each one tugs at your attention until it has somewhere to go, and your head is a poor place to keep them.</p>
-          <p>Research on unfinished goals found that writing a specific plan for one quiets those intrusive thoughts, even before the task is done. That is what Open Loops is for: every loop gets a home and one next step, so your mind can put it down.</p>
-        </section>
-
-        <section class="why-section">
-          <h3 class="why-h">Who it's for</h3>
-          <p>People carrying too many small open things at once: founders, operators, students, parents, anyone whose head feels crowded by "I still need to…". It is not a project manager, and it is not a to-do list with 200 items.</p>
-        </section>
-
-        <section class="why-section">
-          <h3 class="why-h">How to use it best</h3>
-          <ol class="why-steps">
-            <li><b>Capture fast.</b> The moment something tugs at you, put it in Inbox. Don't sort it yet.</li>
-            <li><b>Define once a day.</b> Give each loop a kind and one next step. The step is what quiets it.</li>
-            <li><b>Keep Active small.</b> The focus cap is a feature. When Active is full, park something before adding more.</li>
-            <li><b>Work the Now card.</b> One loop at a time. New loops wait in Up next until you move them up.</li>
-            <li><b>Park without guilt.</b> Parked means "not now", not "failed".</li>
-            <li><b>Close it.</b> Mark it done or let it go, and watch it land on your shelf.</li>
-          </ol>
-        </section>
-
-        <p class="why-source">Based on Masicampo &amp; Baumeister (2011), "Consider it done! Plan making can eliminate the cognitive effects of unfulfilled goals."</p>
-
-        <div class="overlay-actions">
-          <button class="btn btn-primary" data-action="close-overlay">Got it</button>
-        </div>
+        ${whyStoryHtml()}
       </div>`;
   }
 
@@ -4377,7 +4748,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
         inbox: byStatus('inbox').length
       };
     const items = [
-      { key: 'now',   label: TAB_LABEL.active,   icon: '<path d="M9 3.5A4.5 4.5 0 1 1 5.8 11.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 3.5v3h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' },
+      { key: 'now',   label: TAB_LABEL.active,   icon: '<path d="M13.6 5.2A6 6 0 1 0 14 12.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="9" r="2" fill="currentColor"/>' },
       { key: 'later', label: TAB_LABEL.waiting,  icon: '<circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 6.8v2.6l1.7 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' },
       { key: 'inbox', label: TAB_LABEL.inbox,    icon: '<path d="M3.5 5.5h11l-1 7h-9l-1-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.5 8.8h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' }
     ];
@@ -5248,6 +5619,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
   function closeOverlay() {
     const opener = view.overlayOpenerEl;
     if (view.overlay) Motion.dismissSheet();
+    if (view.overlay && view.overlay.type === 'why') { clearTimeout(whyTimer); whyToken++; StoryAudio.stopAll(); }
     view.overlay = null;
     renderOverlay();
     view.overlayOpenerEl = null;
@@ -5408,7 +5780,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       closeOverlay();
       await persistAndRender();
       Sync.createLoop(l);
-      toast(n > 1 ? `${n} loops added to Inbox.` : 'Added to Inbox.');
+      announce(n > 1 ? `${n} loops added to Inbox.` : 'Added to Inbox.');
       return;
     }
     if (action === 'define-pick-kind') {
@@ -5464,7 +5836,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       await persistAndRender();
       Sync.updateLoop(ov.loopId, patch);
       if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
-      toast(status === 'active' ? 'Defined and made active.' : status === 'waiting' ? 'Defined and parked.' : 'Defined and closed.');
+      announce(status === 'active' ? 'Defined. Now in Up next.' : status === 'waiting' ? 'Defined and parked.' : 'Defined and closed.');
       return;
     }
 
@@ -5496,12 +5868,12 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       view.activeTab = 'now';
       await persistAndRender();
       Sync.updateLoop(loopId, patch);
-      toast('Closed.');
+      announce('Closed.');
       return;
     }
     if (action === 'complete-progress') {
       closeOverlay();
-      toast('Still in progress.');
+      announce('Still in progress.');
       return;
     }
     if (action === 'complete-update') {
@@ -5522,7 +5894,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       closeOverlay();
       await persistAndRender();
       Sync.updateLoop(loopId, patch);
-      toast('Moved to Waiting.');
+      announce('Parked.');
       return;
     }
     if (action === 'move-released') {
@@ -5533,7 +5905,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       view.activeTab = 'now';
       await persistAndRender();
       Sync.updateLoop(loopId, patch);
-      toast('Released.');
+      announce('Released.');
       return;
     }
     if (action === 'restore-active') {
@@ -5553,7 +5925,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       await persistAndRender();
       Sync.updateLoop(loopId, patch);
       if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
-      toast(prevStatus === 'released' ? 'Reopened.' : 'Made active.');
+      announce(prevStatus === 'released' ? 'Reopened. Now in Up next.' : 'Made active. Now in Up next.');
       return;
     }
     if (action === 'delete-loop') {
@@ -5613,7 +5985,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       if (newKind === 'let_go') view.activeTab = 'now';
       await persistAndRender();
       Sync.updateLoop(loopId, patch);
-      toast(newKind === 'let_go' ? 'Released.' : 'Kind updated.');
+      announce(newKind === 'let_go' ? 'Released.' : 'Kind updated.');
       return;
     }
 
@@ -5638,7 +6010,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
         updateLoop(loopId, patch);
         await persistAndRender();
         Sync.updateLoop(loopId, patch);
-        toast('Updated.');
+        announce('Updated.');
       }
       view.inlineEditId = null;
       renderMain();
@@ -5739,6 +6111,26 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       rememberOverlayOpener(el);
       view.overlay = { type: 'why' };
       renderOverlay();
+      StoryAudio.start();
+      if (whyVoiceOn()) StoryAudio.preloadVoice();
+      whyShow(0);
+      return;
+    }
+    if (action === 'why-next') {
+      const story = document.querySelector('#overlay-root .why-story');
+      if (story && Number(story.dataset.scene) >= WHY_SCENES.length - 1) return;
+      whyStep(1);
+      return;
+    }
+    if (action === 'why-back') { whyStep(-1); return; }
+    if (action === 'why-voice') {
+      const on = !whyVoiceOn();
+      setWhyVoice(on);
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-pressed', String(on));
+      if (on) StoryAudio.preloadVoice();
+      const story = document.querySelector('#overlay-root .why-story');
+      if (story) whyShow(Number(story.dataset.scene || 0), 0);
       return;
     }
     if (action === 'open-settings') {
@@ -5931,7 +6323,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
         updateLoop(loopId, patch);
         persistAndRender();
         Sync.updateLoop(loopId, patch);
-        toast('Updated.');
+        announce('Updated.');
       }
       view.inlineEditId = null;
       renderMain();

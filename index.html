@@ -258,22 +258,111 @@ footer { background: var(--surface-soft); margin-top: 96px; padding-block: 56px;
 footer .container { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .footer-note { font-size: 14px; color: var(--muted); }
 
-/* ── WHY ── */
-.why-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: start; }
-.why-head { margin-bottom: 0; display: grid; gap: 16px; }
-.why-head p { font-size: 18px; margin-top: 0; }
-.why-head .why-cite { font-size: 13px; color: var(--muted); }
-.why-side { display: grid; gap: 20px; }
-.why-card { background: var(--surface-card); border-radius: 24px; padding: 28px 32px; display: grid; gap: 12px; }
-.why-card .eyebrow { color: var(--muted); }
-.why-card p { font-size: 16px; }
-.why-not { color: var(--muted); }
-.why-steps { margin: 0; padding-left: 22px; display: grid; gap: 10px; font-size: 16px; }
-.why-steps b { color: var(--ink); font-weight: 600; }
-.why-steps li::marker { color: var(--muted); font-weight: 600; }
-@media (max-width: 900px) { .why-grid { grid-template-columns: 1fr; gap: 32px; } }
-@media (max-width: 767px) { .why-card { padding: 24px; } }
 
+/* ── WHY STORY (same scenes as the app's Why sheet) ── */
+.story-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.story-sound { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px 0 11px; border-radius: 999px; border: 1px solid var(--hairline); background: transparent; color: var(--body); font: 600 13px var(--sans); cursor: pointer; }
+.story-sound .wv-on { display: none; }
+.story-sound.on { background: var(--ink); color: var(--canvas); border-color: var(--ink); }
+.story-sound.on .wv-on { display: inline; } .story-sound.on .wv-off { display: none; }
+.story-sound:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.why-story {
+  --bg: #fffaf0; --text: #0a0a0a; --text-2: #3a3a3a; --text-3: #8a857a;
+  --surface-2: #f5f0e0; --surface-3: #ebe6d6; --surface-strong: #e3ddcb; --border: #d9d2bf;
+  --ask: #ff4d8b; --ask-dim: #ffd6e5; --decide: #e8b94a; --do: #1a3a3a; --schedule: #b8a4ed; --let_go: #ffb084;
+  --display: var(--sans);
+}
+.landing-story { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; align-items: center; }
+.landing-story-side { display: grid; gap: 18px; }
+.landing-story-side .eyebrow { color: var(--muted); }
+.landing-story .why-h1 { font-size: clamp(32px, 4.5vw, 48px); letter-spacing: -0.045em; line-height: 1.05; }
+.landing-story .why-p { font-size: 18px; max-width: 30em; }
+.landing-story .why-text { min-height: 168px; }
+.landing-story .why-stage { border-radius: 24px; }
+.why-go.is-link { text-decoration: none; }
+@media (max-width: 900px) {
+  .landing-story { grid-template-columns: 1fr; gap: 24px; }
+  .landing-story .why-text { min-height: 150px; }
+}
+/* ── WHY STORY: half picture, half text ── */
+.why-sheet { max-width: 460px; }
+.why-story { display: grid; gap: 14px; }
+.why-bars { display: flex; gap: 4px; }
+.why-bars span { flex: 1; height: 3px; border-radius: 2px; background: var(--surface-strong); overflow: hidden; }
+.why-bars i { display: block; height: 100%; background: var(--text); transform: scaleX(0); transform-origin: left center; }
+.why-bars span.done i { transform: scaleX(1); }
+.why-story[data-scene="4"] .why-bars span.now i { transform: scaleX(1); }
+@media (prefers-reduced-motion: reduce) { .why-bars span.now i { transform: scaleX(1); } }
+.why-stage { display: block; width: 100%; padding: 0; border: none; border-radius: 20px; background: var(--surface-2); aspect-ratio: 320 / 206; overflow: hidden; cursor: pointer; }
+.why-stage svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.why-stage:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.why-text { min-height: 124px; display: grid; gap: 8px; align-content: start; }
+.why-h1 { margin: 0; font-family: var(--display); font-size: 26px; font-weight: 500; letter-spacing: -0.035em; line-height: 1.1; color: var(--text); }
+.why-p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--text-2); }
+.why-cite { margin: 0; font-size: 12px; color: var(--text-3); }
+.why-cite:empty { display: none; }
+.why-nav { display: flex; gap: 8px; }
+.why-nav .why-go { margin-left: auto; }
+.why-nav .why-back[hidden] { display: none; }
+
+.why-scene .w-mind { fill: var(--surface-3); }
+.why-scene .w-ring { transform-box: view-box; }
+.wk-ask { stroke: var(--ask); } .wk-decide { stroke: var(--decide); } .wk-do { stroke: var(--do); }
+.wk-schedule { stroke: var(--schedule); } .wk-let_go { stroke: var(--let_go); } .wk-ask-on { stroke: #fffaf0; }
+.why-scene .w-tag { opacity: 0; transform-box: fill-box; }
+.why-scene .w-tag-bg { fill: var(--text); }
+.why-scene .w-tag-text { fill: var(--bg); font: 600 10px var(--sans); }
+.why-scene .w-tray { fill: var(--surface-3); }
+.why-scene .w-label { fill: var(--text-3); font: 600 10px var(--sans); letter-spacing: .4px; }
+.why-scene .w-now { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.why-scene .w-now-card { fill: var(--ask-dim); }
+.why-scene .w-static { fill: var(--ask); }
+.why-scene .w-now-label { fill: var(--text-3); font: 600 9px var(--sans); letter-spacing: 1.2px; }
+.why-scene .w-now-step { fill: var(--text); font: 600 9.5px var(--sans); }
+.why-scene .w-now-cap { opacity: 0; }
+.why-scene .w-shelf { stroke: var(--border); stroke-width: 2; stroke-linecap: round; }
+.why-scene .w-close { transform-box: view-box; transform-origin: 160px 72px; }
+
+@keyframes w-jit {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-3px, 2px) rotate(-8deg); }
+  50% { transform: translate(2px, -3px) rotate(7deg); }
+  75% { transform: translate(3px, 2px) rotate(-4deg); }
+}
+.why-scene.play .w-jit { animation: w-jit .9s ease-in-out infinite; }
+.why-scene.play .j2 { animation-duration: .8s; animation-delay: -.2s; }
+.why-scene.play .j3 { animation-duration: 1s; animation-delay: -.45s; }
+.why-scene.play .j4 { animation-duration: .85s; animation-delay: -.1s; }
+.why-scene.play .j5 { animation-duration: .95s; animation-delay: -.3s; }
+.why-scene.play .w-settle { animation: w-jit .9s ease-in-out 0s 2; }
+@keyframes w-tag { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: none; } }
+.why-scene.play .w-tag { animation: w-tag .5s cubic-bezier(.2,.8,.2,1) 1.2s forwards; }
+
+@keyframes w-drop { from { transform: translateY(-120px); opacity: 0; } 55% { opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes w-rise { from { transform: none; } to { transform: translate(92px, -64px) scale(1.3); } }
+.why-scene .w-drop { opacity: 0; }
+.why-scene.play .d1 { animation: w-drop .55s cubic-bezier(.3,0,.3,1.25) .1s both; }
+.why-scene.play .d2 { animation: w-drop .55s cubic-bezier(.3,0,.3,1.25) .35s both; }
+.why-scene.play .d3 { animation: w-drop .55s cubic-bezier(.3,0,.3,1.25) .6s both, w-rise .75s cubic-bezier(.5,0,.25,1) 1.9s forwards; }
+@keyframes w-pop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+.why-scene.play .w-now { animation: w-pop .45s cubic-bezier(.2,.8,.2,1.2) 1.5s both; }
+.why-scene.play .w-now-cap { animation: w-pop .4s ease-out 2.4s both; }
+
+@keyframes w-seal { to { stroke-dasharray: 100.53 100.53; } }
+@keyframes w-fly {
+  0% { transform: none; }
+  40% { transform: translate(4px, -20px) scale(.9) rotate(120deg); }
+  100% { transform: translate(8px, 92px) scale(.56) rotate(300deg); }
+}
+@keyframes w-tint { to { stroke: var(--ask); } }
+@keyframes w-dim { to { opacity: .2; } }
+.why-scene.play .w-seal circle { animation: w-seal .45s cubic-bezier(.3,0,.2,1) .5s forwards, w-tint .5s ease 1.3s forwards; }
+.why-scene.play .w-close { animation: w-fly .75s cubic-bezier(.5,0,.25,1) 1.15s forwards; }
+.why-scene.play .w-static { animation: w-dim .4s ease 1.3s forwards; }
+
+@keyframes w-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+.why-scene.play .w-breathe { animation: w-breathe 3.2s ease-in-out infinite; }
 @media (max-width: 1024px) {
   .kinds-grid { grid-template-columns: repeat(2, 1fr); }
   .kind-card, .kind-card:nth-child(4), .kind-card:nth-child(5) { grid-column: span 1; }
@@ -308,6 +397,15 @@ footer .container { display: flex; align-items: center; justify-content: space-b
       <feDiffuseLighting in="b" surfaceScale="6" diffuseConstant="1.05" lighting-color="#fff" result="d"><feDistantLight azimuth="235" elevation="48"/></feDiffuseLighting>
       <feComposite in="SourceGraphic" in2="d" operator="arithmetic" k1="1.05" result="lit"/>
       <feSpecularLighting in="b" surfaceScale="6" specularConstant="0.55" specularExponent="16" lighting-color="#fff" result="s"><feDistantLight azimuth="235" elevation="55"/></feSpecularLighting>
+      <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+      <feComposite in="lit" in2="s2" operator="arithmetic" k2="1" k3="0.6" result="o"/>
+      <feComposite in="o" in2="SourceAlpha" operator="in"/>
+    </filter>
+    <filter id="ol-clay-sm" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.4" result="b"/>
+      <feDiffuseLighting in="b" surfaceScale="3" diffuseConstant="1.05" lighting-color="#fff" result="d"><feDistantLight azimuth="235" elevation="48"/></feDiffuseLighting>
+      <feComposite in="SourceGraphic" in2="d" operator="arithmetic" k1="1.05" result="lit"/>
+      <feSpecularLighting in="b" surfaceScale="3" specularConstant="0.55" specularExponent="16" lighting-color="#fff" result="s"><feDistantLight azimuth="235" elevation="55"/></feSpecularLighting>
       <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
       <feComposite in="lit" in2="s2" operator="arithmetic" k2="1" k3="0.6" result="o"/>
       <feComposite in="o" in2="SourceAlpha" operator="in"/>
@@ -399,30 +497,29 @@ footer .container { display: flex; align-items: center; justify-content: space-b
 </div>
 
 <section id="why">
-  <div class="container why-grid">
-    <div class="section-head why-head">
-      <span class="eyebrow">Why Open Loops</span>
-      <h2>Unfinished things don't stay quiet.</h2>
-      <p>The reply you owe, the decision you keep circling, the call you keep forgetting. Each one tugs at your attention until it has somewhere to go, and your head is a poor place to keep them.</p>
-      <p>Research on unfinished goals found that writing a specific plan for one quiets those intrusive thoughts, even before the task is done. Open Loops gives every loop a home and one next step, so your mind can put it down.</p>
-      <p class="why-cite">Masicampo &amp; Baumeister (2011), "Consider it done! Plan making can eliminate the cognitive effects of unfulfilled goals."</p>
-    </div>
-    <div class="why-side">
-      <div class="why-card">
-        <span class="eyebrow">Who it's for</span>
-        <p>People carrying too many small open things at once: founders, operators, students, parents, anyone whose head feels crowded by "I still need to…".</p>
-        <p class="why-not">Not a project manager. Not a to-do list with 200 items.</p>
-      </div>
-      <div class="why-card">
-        <span class="eyebrow">How to use it best</span>
-        <ol class="why-steps">
-          <li><b>Capture fast.</b> The moment something tugs at you, put it in Inbox.</li>
-          <li><b>Define once a day.</b> One kind, one next step. The step is what quiets it.</li>
-          <li><b>Keep Active small.</b> When it's full, park something before adding more.</li>
-          <li><b>Work the Now card.</b> One loop at a time. New ones wait in Up next.</li>
-          <li><b>Park without guilt.</b> Parked means "not now", not "failed".</li>
-          <li><b>Close it.</b> Done or let go, and watch it land on your shelf.</li>
-        </ol>
+  <div class="container">
+    <div class="why-story landing-story" data-scene="0">
+      <button type="button" class="why-stage" aria-label="Next scene">
+        <svg viewBox="0 0 320 206" aria-hidden="true"><g class="why-scene play"></g></svg>
+      </button>
+      <div class="landing-story-side">
+        <div class="story-top">
+          <span class="eyebrow">Why Open Loops</span>
+          <button type="button" class="story-sound" aria-pressed="false" title="Sound">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 6h2.2L8.5 3.2v9.6L5.2 10H3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path class="wv-on" d="M10.6 5.6a3.3 3.3 0 0 1 0 4.8M12.2 4a5.6 5.6 0 0 1 0 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path class="wv-off" d="M10.5 6.2l3.2 3.6M13.7 6.2l-3.2 3.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            <span class="story-sound-label">Sound off</span>
+          </button>
+        </div>
+        <div class="why-bars" aria-hidden="true"></div>
+        <div class="why-text" aria-live="polite">
+          <h2 class="why-h1"></h2>
+          <p class="why-p"></p>
+          <p class="why-cite"></p>
+        </div>
+        <div class="why-nav">
+          <button type="button" class="btn btn-secondary why-back" hidden>Back</button>
+          <button type="button" class="btn btn-primary why-go">Next</button>
+        </div>
       </div>
     </div>
   </div>
@@ -531,5 +628,303 @@ footer .container { display: flex; align-items: center; justify-content: space-b
     <span class="footer-note">Auth-first, cross-device, and intentionally calm.</span>
   </div>
 </footer>
+
+<script>
+(function () {
+  const WHY_SCENES = [
+    { h: 'Your head is full of open loops.', p: 'Every unfinished thing keeps pulling at you.' },
+    { h: 'One next step quiets a loop.', p: 'Studies show a plan calms the nagging, even before it’s done.', cite: 'Masicampo & Baumeister, 2011' },
+    { h: 'Catch it. Shape it. Focus.', p: 'Drop it in Inbox, give it one next step, do one at a time.' },
+    { h: 'Close it. Let it go.', p: 'Every closed loop lands on your shelf, and out of your head.' },
+    { h: 'Made for crowded heads.', p: 'If your mind keeps saying “I still need to…”, this is for you.' }
+  ];
+
+  const StoryAudio = (() => {
+    let ctx = null, master = null, group = null;
+    const N = { A2: 110, D3: 146.83, A3: 220, D4: 293.66, E4: 329.63, Fs4: 369.99, A4: 440, B4: 493.88, D5: 587.33, E5: 659.25, Fs5: 739.99, A5: 880, B5: 987.77 };
+    function ensure() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+        const comp = ctx.createDynamicsCompressor();
+        master = ctx.createGain(); master.gain.value = 0.26;
+        master.connect(comp); comp.connect(ctx.destination);
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+    function newGroup() {
+      const c = ensure(); if (!c) return null;
+      if (group) {
+        const old = group;
+        old.gain.cancelScheduledValues(c.currentTime);
+        old.gain.setValueAtTime(old.gain.value, c.currentTime);
+        old.gain.linearRampToValueAtTime(0, c.currentTime + 0.35);
+        setTimeout(() => { try { old.disconnect(); } catch (_) {} }, 500);
+      }
+      group = c.createGain(); group.gain.value = 1; group.connect(master);
+      return group;
+    }
+    function env(g, t, peak, a, d) {
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(peak, t + a);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+    }
+    function pluck(f, at, vel = 0.6, decay = 1.2, detune = 0) {
+      const c = ctx, t = c.currentTime + at, out = group;
+      const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = f; o.detune.value = detune;
+      const o2 = c.createOscillator(); o2.type = 'sine'; o2.frequency.value = f * 5.4;
+      const g = c.createGain(), g2 = c.createGain();
+      env(g, t, 0.5 * vel, 0.006, decay); env(g2, t, 0.09 * vel, 0.003, 0.09);
+      o.connect(g); o2.connect(g2); g.connect(out); g2.connect(out);
+      o.start(t); o2.start(t); o.stop(t + decay + 0.1); o2.stop(t + 0.15);
+    }
+    function pad(freqs, at, dur, vel = 0.12) {
+      const c = ctx, t = c.currentTime + at, out = group;
+      const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1100; f.connect(out);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vel, t + 1.2);
+      g.gain.setValueAtTime(vel, t + Math.max(1.3, dur - 1.6));
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      g.connect(f);
+      freqs.forEach(fr => [-6, 6].forEach(dt => {
+        const o = c.createOscillator(); o.type = 'triangle'; o.frequency.value = fr; o.detune.value = dt;
+        o.connect(g); o.start(t); o.stop(t + dur + 0.1);
+      }));
+    }
+    function thud(at, vel = 0.4) {
+      const c = ctx, t = c.currentTime + at;
+      const o = c.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.13);
+      const g = c.createGain(); env(g, t, vel, 0.005, 0.16);
+      o.connect(g); g.connect(group); o.start(t); o.stop(t + 0.25);
+    }
+
+    // ── voice clips ──
+    const VOICE_URL = i => `./why-voice-${i + 1}.mp3`;
+    const clipCache = {}, clipPending = {};
+    let clipQueue = Promise.resolve(), clipSrc = null, clipEl = null, voiceOut = null, voiceTicket = 0;
+    function decode(ab) {
+      return new Promise((res, rej) => {
+        try { const r = ctx.decodeAudioData(ab, res, rej); if (r && r.then) r.then(res, rej); } catch (e) { rej(e); }
+      });
+    }
+    function loadClip(i) {
+      if (clipCache[i]) return Promise.resolve(clipCache[i]);
+      if (clipPending[i]) return clipPending[i];
+      if (!ensure()) return Promise.resolve(null);
+      clipPending[i] = clipQueue = clipQueue
+        .then(() => clipCache[i] || fetch(VOICE_URL(i)).then(r => { if (!r.ok) throw new Error('clip'); return r.arrayBuffer(); }).then(decode))
+        .then(b => { clipCache[i] = b; return b; })
+        .catch(() => null)
+        .finally(() => { delete clipPending[i]; });
+      return clipPending[i];
+    }
+    function stopClip() {
+      if (clipSrc) { try { clipSrc.onended = null; clipSrc.stop(); } catch (_) {} clipSrc = null; }
+      if (clipEl) { try { clipEl.onended = null; clipEl.pause(); } catch (_) {} clipEl = null; }
+    }
+    function elementClip(i, onEnd) {
+      clipEl = new Audio(VOICE_URL(i));
+      let done = false; const fin = () => { if (!done) { done = true; clipEl = null; onEnd(); } };
+      clipEl.onended = fin; clipEl.onerror = fin; setTimeout(fin, 12000);
+      const pr = clipEl.play(); if (pr && pr.catch) pr.catch(fin);
+    }
+    function sayClip(i, onEnd) {
+      const my = ++voiceTicket;
+      stopClip();
+      if (!ensure()) { onEnd(); return; }
+      let settled = false;
+      // Never stall: if the clip isn't decoded in 4s, play it the plain way.
+      const fallback = setTimeout(() => { if (settled || my !== voiceTicket) return; settled = true; elementClip(i, onEnd); }, 4000);
+      loadClip(i).then(buf => {
+        if (settled || my !== voiceTicket) return;
+        settled = true; clearTimeout(fallback);
+        if (!buf) { elementClip(i, onEnd); return; }
+        if (ctx.state === 'suspended') ctx.resume();
+        if (!voiceOut) { voiceOut = ctx.createGain(); voiceOut.gain.value = 1; voiceOut.connect(ctx.destination); }
+        clipSrc = ctx.createBufferSource(); clipSrc.buffer = buf; clipSrc.connect(voiceOut);
+        clipSrc.onended = () => { clipSrc = null; if (my === voiceTicket) onEnd(); };
+        clipSrc.start();
+      });
+    }
+    const scenes = [
+      // 1 · tugging: scattered, overlapping, never settling
+      () => {
+        const pool = [N.E4, N.A4, N.B4, N.E5, N.Fs4, N.B5];
+        let t = 0.05;
+        while (t < 5.0) {
+          pluck(pool[Math.floor(Math.random() * pool.length)], t, 0.28 + Math.random() * 0.18, 0.6, (Math.random() - 0.5) * 24);
+          t += 0.14 + Math.random() * 0.22;
+        }
+        pad([N.A2, N.E4], 0, 5.2, 0.05);
+      },
+      // 2 · a next step: scatter thins, chime with the tag, one note holds
+      () => {
+        const pool = [N.E4, N.A4, N.B4, N.E5];
+        let t = 0.05, gap = 0.18;
+        while (t < 1.5) { pluck(pool[Math.floor(Math.random() * pool.length)], t, 0.26, 0.6, (Math.random() - 0.5) * 20); t += gap; gap += 0.05; }
+        pluck(N.D5, 1.62, 0.5, 2.2); pluck(N.A5, 1.68, 0.3, 2.4);
+        pad([N.D3, N.A3, N.Fs4], 1.6, 3.6, 0.07);
+        pluck(N.A4, 3.0, 0.3, 1.8); pluck(N.A4, 4.2, 0.22, 1.6);
+      },
+      // 3 · capture, define, focus: drops, a rising run, a steady pulse
+      () => {
+        pluck(N.D4, 0.62, 0.5, 0.9); pluck(N.Fs4, 0.88, 0.5, 0.9); pluck(N.A4, 1.13, 0.5, 0.9);
+        pad([N.D3, N.A3], 1.5, 3.7, 0.06);
+        pluck(N.A4, 1.95, 0.45, 0.7); pluck(N.D5, 2.12, 0.45, 0.7); pluck(N.Fs5, 2.3, 0.45, 1.4);
+        [3.1, 3.9, 4.7].forEach(t => pluck(N.D4, t, 0.25, 0.9));
+      },
+      // 4 · close: the app's own closing sound, suspended then resolved
+      () => {
+        pluck(N.E4, 0.5, 0.55, 1.0); pluck(N.A4, 0.57, 0.55, 1.2);
+        thud(1.9, 0.38); pluck(N.D4, 1.91, 0.65, 1.8); pluck(N.Fs4, 1.94, 0.5, 1.8); pluck(N.D5, 1.97, 0.55, 2.0);
+        pad([N.D3, N.Fs4, N.A4], 1.9, 3.3, 0.08);
+      },
+      // 5 · crowded heads: warm chord and a slow lullaby
+      () => {
+        pad([N.D3, N.A3, N.D4, N.Fs4], 0, 7.5, 0.1);
+        [[N.Fs5, 0.6], [N.E5, 1.5], [N.D5, 2.4], [N.A4, 3.6], [N.D5, 5.0]].forEach(([f, t]) => pluck(f, t, 0.38, 2.4));
+      }
+    ];
+    function duck(on) {
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      master.gain.cancelScheduledValues(t);
+      master.gain.setValueAtTime(master.gain.value, t);
+      master.gain.linearRampToValueAtTime(on ? 0.1 : 0.26, t + (on ? 0.25 : 0.8));
+    }
+    return {
+      duck,
+      ctx: () => ensure(),
+      start() { return !!ensure(); },
+      music(i) { if (!ensure()) return; if (!newGroup()) return; try { scenes[i](); } catch (_) {} },
+      stopMusic() { if (ctx) newGroup(); },
+      // Voice-over: five short recorded clips (Kokoro "Heart" voice).
+      say(i, onEnd) { sayClip(i, onEnd); },
+      stopVoice() { voiceTicket++; stopClip(); },
+      preloadVoice() { for (let i = 0; i < 5; i++) loadClip(i); },
+      stopAll() { voiceTicket++; stopClip(); if (ctx) newGroup(); duck(false); }
+    };
+  })();
+
+  // Open ring ("loop") at x,y. sealed = the gap is closed.
+  function wRing(x, y, kind, cls = '', sealed = false, r = 13) {
+    const c = 2 * Math.PI * r;
+    return `<g class="w-ring ${cls}" style="transform-origin:${x}px ${y}px"><circle cx="${x}" cy="${y}" r="${r}" fill="none" class="wk-${kind}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${sealed ? `${c} ${c}` : `${c * 0.74} ${c}`}" transform="rotate(14 ${x} ${y})" filter="url(#ol-clay-sm)"/></g>`;
+  }
+
+  function whySceneSvg(i) {
+    const mind = `<circle class="w-mind" cx="160" cy="100" r="84"/>`;
+    if (i === 0) return `
+      ${mind}
+      ${wRing(118, 70, 'ask', 'w-jit j1')}
+      ${wRing(200, 64, 'decide', 'w-jit j2')}
+      ${wRing(126, 132, 'do', 'w-jit j3')}
+      ${wRing(204, 128, 'schedule', 'w-jit j4')}
+      ${wRing(162, 100, 'let_go', 'w-jit j5')}`;
+    if (i === 1) return `
+      ${mind}
+      ${wRing(118, 70, 'ask', 'w-settle')}
+      ${wRing(200, 64, 'decide', 'w-jit j2')}
+      ${wRing(126, 132, 'do', 'w-jit j3')}
+      ${wRing(204, 128, 'schedule', 'w-jit j4')}
+      ${wRing(162, 100, 'let_go', 'w-jit j5')}
+      <g class="w-tag"><rect x="30" y="24" width="104" height="22" rx="11" class="w-tag-bg"/><text x="82" y="39" text-anchor="middle" class="w-tag-text">Next: email Bilal</text></g>`;
+    if (i === 2) return `
+      <g class="w-now"><rect class="w-now-card" x="176" y="44" width="118" height="92" rx="20"/><text class="w-now-label" x="192" y="66">NOW</text><text class="w-now-step" x="192" y="122">Next: email Bilal</text></g>
+      <rect class="w-tray" x="30" y="128" width="120" height="44" rx="14"/>
+      <text class="w-label" x="90" y="190" text-anchor="middle">Inbox</text>
+      ${wRing(60, 150, 'decide', 'w-drop d1', false, 11)}
+      ${wRing(90, 150, 'do', 'w-drop d2', false, 11)}
+      ${wRing(120, 150, 'ask', 'w-drop d3 w-rise', false, 11)}
+      <text class="w-label w-now-cap" x="235" y="160" text-anchor="middle">One at a time</text>`;
+    if (i === 3) return `
+      <rect class="w-now-card w-static" x="101" y="26" width="118" height="92" rx="20"/>
+      <g class="w-close">${wRing(160, 72, 'ask-on', 'w-seal', false, 16)}</g>
+      <line class="w-shelf" x1="60" y1="178" x2="260" y2="178"/>
+      ${wRing(84, 164, 'do', 'w-shelved', true, 9)}
+      ${wRing(112, 164, 'decide', 'w-shelved', true, 9)}
+      ${wRing(140, 164, 'schedule', 'w-shelved', true, 9)}`;
+    return `
+      ${mind}
+      ${wRing(160, 96, 'ask', 'w-breathe', false, 15)}
+      <line class="w-shelf" x1="70" y1="196" x2="250" y2="196"/>
+      ${wRing(96, 182, 'do', '', true, 9)}${wRing(124, 182, 'decide', '', true, 9)}${wRing(152, 182, 'schedule', '', true, 9)}${wRing(180, 182, 'ask', '', true, 9)}${wRing(208, 182, 'let_go', '', true, 9)}`;
+  }
+
+
+  const story = document.querySelector('.landing-story');
+  if (!story) return;
+  const bars = story.querySelector('.why-bars');
+  bars.innerHTML = WHY_SCENES.map(() => '<span><i></i></span>').join('');
+  const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MS = 5200;
+  let timer = null, visible = false, current = 0, soundOn = false, token = 0;
+  const soundBtn = story.querySelector('.story-sound');
+  function show(i, dir) {
+    const n = WHY_SCENES.length;
+    current = (i + n) % n;
+    story.dataset.scene = String(current);
+    const scene = story.querySelector('.why-scene');
+    scene.innerHTML = whySceneSvg(current);
+    scene.classList.remove('play'); void scene.getBoundingClientRect(); scene.classList.add('play');
+    const s = WHY_SCENES[current];
+    story.querySelector('.why-h1').textContent = s.h;
+    story.querySelector('.why-p').textContent = s.p;
+    story.querySelector('.why-cite').textContent = s.cite || '';
+    if (!calm && dir) story.querySelector('.why-text').animate([{ opacity: 0, transform: 'translateX(' + (dir * 16) + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    bars.querySelectorAll('span').forEach((b, k) => {
+      b.classList.toggle('done', k < current);
+      b.classList.toggle('now', k === current);
+      const f = b.querySelector('i');
+      f.getAnimations().forEach(a => a.cancel());
+      if (k === current && !calm && visible) f.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: soundOn ? MS + 1800 : MS, easing: 'linear', fill: 'forwards' });
+    });
+    story.querySelector('.why-back').hidden = current === 0;
+    const go = story.querySelector('.why-go');
+    go.textContent = current === n - 1 ? 'Open the app' : 'Next';
+    clearTimeout(timer);
+    const my = ++token;
+    if (!visible) return;
+    if (soundOn) {
+      StoryAudio.music(current);
+      StoryAudio.duck(true);
+      let minDone = false, voiceDone = false;
+      const next = () => { if (my === token && minDone && voiceDone && !calm) timer = setTimeout(() => { if (my === token) show(current + 1, 1); }, current === n - 1 ? 2200 : 700); };
+      timer = setTimeout(() => { minDone = true; next(); }, MS - 700);
+      setTimeout(() => { if (my !== token) return; StoryAudio.say(current, () => { if (my !== token) return; StoryAudio.duck(false); voiceDone = true; next(); }); }, 450);
+    } else if (!calm) {
+      timer = setTimeout(() => show(current + 1, 1), current === n - 1 ? MS + 1500 : MS);
+    }
+  }
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    soundBtn.classList.toggle('on', soundOn);
+    soundBtn.setAttribute('aria-pressed', String(soundOn));
+    soundBtn.querySelector('.story-sound-label').textContent = soundOn ? 'Sound on' : 'Sound off';
+    if (soundOn) { StoryAudio.start(); StoryAudio.preloadVoice(); show(current, 0); }
+    else { StoryAudio.stopAll(); show(current, 0); }
+  });
+  story.querySelector('.why-stage').addEventListener('click', () => show(current + 1, 1));
+  story.querySelector('.why-back').addEventListener('click', () => show(current - 1, -1));
+  story.querySelector('.why-go').addEventListener('click', () => {
+    if (current === WHY_SCENES.length - 1) { window.location.href = './open-loops.html'; return; }
+    show(current + 1, 1);
+  });
+  // Only play while the section is on screen.
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(entries => {
+      const was = visible;
+      visible = entries[0].isIntersecting;
+      if (visible && !was) show(current, 0);
+      if (!visible) { clearTimeout(timer); token++; StoryAudio.stopAll(); }
+    }, { threshold: 0.35 }).observe(story);
+  } else { visible = true; }
+  show(0, 0);
+})();
+</script>
 </body>
 </html>
