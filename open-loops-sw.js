@@ -1,4 +1,4 @@
-const CACHE = 'open-loops-v12-motion';
+const CACHE = 'open-loops-v14-flow';
 
 const NETWORK_FIRST = [
   './open-loops.html',

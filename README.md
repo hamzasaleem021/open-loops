@@ -31,8 +31,8 @@ Open Loops is built around one personal workflow:
 
 ## Features
 
-- **Inbox capture** - Capture once from the bottom Capture button. New loops land in Inbox.
-- **Define and route** - Pick a kind, add an optional detail or next step, then send the loop to Active, Parked, or Closed.
+- **Inbox capture** - Capture from the bottom Capture button. Only the text is required; kind is optional. Press Enter to add and write the next one.
+- **Define and route** - Three short steps: pick a kind, answer that kind's next-step question (or skip), then choose Up next, Park, or Close. Let go skips straight to Close.
 - **Active focus cap** - Show 3, 5, or 7 active loops before "Show more". Configure this in Settings. The Active view shows how many focus slots are in use.
 - **Now card** - The top Active loop is shown as a large card in its kind's color, with the rest listed under "Up next".
 - **Up next, not Now** - Loops entering Active (defined, reopened, or brought back from Parked) land in Up next. Only you promote a loop to Now, by reordering.
@@ -171,7 +171,7 @@ open-loops-icon-512-v2.png
 The service worker cache is currently:
 
 ```js
-open-loops-v12-motion
+open-loops-v14-flow
 ```
 
 The icon filenames are versioned (`-v3`, the Clay icon) so browsers and installed PWAs have a clean cache break. If an installed PWA still shows an old icon after deployment, uninstall and reinstall the PWA.

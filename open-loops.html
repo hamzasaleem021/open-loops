@@ -2683,14 +2683,146 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
   .topbar-right { gap: 2px; }
   #sync-pill { padding: 0 10px; }
 }
-.brand-name { white-space: nowrap; }
+.brand-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+/* The page column can never be widened by its content (a wide header used
+   to stretch the whole layout past the screen edge on phones). */
+.app { grid-template-columns: minmax(0, 1fr); }
+.topbar { min-width: 0; }
+button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
+.topbar-right { flex-shrink: 0; }
 @media (max-width: 480px) {
-  /* Theme lives in Settings too; the header needs the room on phones. */
-  #theme-toggle { display: none; }
+  /* Theme and Install live in Settings on phones; sync shows as a dot with
+     its status in the label and title. The header needs the room. */
+  #theme-toggle, #install-btn { display: none !important; }
+  #sync-label { display: none; }
+  #sync-pill { width: 32px; padding: 0; justify-content: center; }
+  #sync-pill.error { width: auto; padding: 0 10px; }
+  #sync-pill.error #sync-label { display: inline; }
 }
-@media (max-width: 360px) {
+@media (max-width: 350px) {
   .brand-why { display: none; }
 }
+.toast { max-width: calc(100vw - 32px); white-space: normal; text-align: center; }
+
+/* ── SHEETS: in-place updates never replay the entrance ── */
+.overlay-card.no-enter { animation: none; }
+
+/* ── CAPTURE ── */
+.capture-input { min-height: 64px; resize: none; overflow: hidden; }
+.capture-added { color: var(--text); font-weight: 600; }
+.capture-kinds { margin-top: 18px; display: grid; gap: 10px; }
+.capture-kinds-label { font-size: 13px; font-weight: 600; color: var(--text-2); }
+.capture-kinds-label span { font-weight: 500; color: var(--text-3); margin-left: 4px; }
+.kind-picks { display: flex; flex-wrap: wrap; gap: 8px; }
+.kind-pick {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 36px; padding: 0 14px 0 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px; font-weight: 600;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .12s ease;
+}
+.kind-pick:active { transform: scale(.96); }
+.kind-pick .kind-dot { width: 8px; height: 8px; }
+.kind-pick.do .kind-dot { background: var(--do); } .kind-pick.decide .kind-dot { background: var(--decide); }
+.kind-pick.ask .kind-dot { background: var(--ask); } .kind-pick.schedule .kind-dot { background: var(--schedule); }
+.kind-pick.let_go .kind-dot { background: var(--let_go); }
+.kind-pick.on { border-color: transparent; }
+.kind-pick.do.on { background: var(--do); color: var(--do-ink); }
+.kind-pick.decide.on { background: var(--decide); color: var(--decide-ink); }
+.kind-pick.ask.on { background: var(--ask); color: var(--ask-ink); }
+.kind-pick.schedule.on { background: var(--schedule); color: var(--schedule-ink); }
+.kind-pick.let_go.on { background: var(--let_go); color: var(--let_go-ink); }
+.kind-pick.on .kind-dot { background: currentColor; }
+
+/* ── DEFINE ── */
+.define-card { overflow-x: hidden; }
+.define-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.define-back { margin-left: -8px; }
+.define-progress { display: flex; gap: 4px; width: 72px; flex-shrink: 0; }
+.define-progress span { flex: 1; height: 4px; border-radius: 2px; background: var(--surface-strong); transition: background-color .25s ease; }
+.define-progress span.on { background: var(--text); }
+.define-stepcount { flex: 1; font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-3); }
+.define-title-input {
+  width: 100%;
+  resize: none;
+  overflow: hidden;
+  border: none;
+  border-bottom: 1px dashed transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  padding: 2px 0 8px;
+  margin: 0 0 6px;
+}
+.define-title-input:hover { border-bottom-color: var(--border); }
+.define-title-input:focus { outline: none; border-bottom-color: var(--text-3); }
+.define-body { display: grid; gap: 12px; }
+.step-q { margin: 6px 0 2px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); line-height: 1.35; }
+.step-kind { display: flex; }
+.step-note { margin: -4px 0 0; font-size: 14px; color: var(--text-2); }
+.define-kind-chip { cursor: pointer; border: none; }
+.define-chip-edit { font-weight: 500; opacity: .6; margin-left: 4px; font-size: 12px; }
+.define-body .overlay-actions { margin-top: 4px; }
+#define-detail-input { min-height: 64px; resize: none; overflow: hidden; }
+
+.kind-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kind-tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  row-gap: 3px;
+  align-items: center;
+  text-align: left;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  border: 1px solid transparent;
+  color: var(--text);
+  transition: background-color .2s ease, color .2s ease, transform .12s ease;
+}
+.kind-tile:active { transform: scale(.97); }
+.kind-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.kind-tile-dot { width: 12px; height: 12px; border-radius: 50%; }
+.kind-tile-label { font-size: 16px; font-weight: 600; }
+.kind-tile-hint { grid-column: 1 / -1; font-size: 13px; line-height: 1.35; color: var(--text-2); }
+.kind-tile.do { background: var(--do-dim); } .kind-tile.do .kind-tile-dot { background: var(--do); }
+.kind-tile.decide { background: var(--decide-dim); } .kind-tile.decide .kind-tile-dot { background: var(--decide); }
+.kind-tile.ask { background: var(--ask-dim); } .kind-tile.ask .kind-tile-dot { background: var(--ask); }
+.kind-tile.schedule { background: var(--schedule-dim); } .kind-tile.schedule .kind-tile-dot { background: var(--schedule); }
+.kind-tile.let_go { background: var(--let_go-dim); } .kind-tile.let_go .kind-tile-dot { background: var(--let_go); }
+.kind-tile.on { border-color: var(--text); }
+.kind-tile:focus-visible, .route-big:focus-visible, .kind-pick:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+.route-bigs { display: grid; gap: 8px; }
+.route-big {
+  display: grid; gap: 3px; text-align: left;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color .15s ease, transform .12s ease, background-color .15s ease;
+}
+.route-big:hover { border-color: var(--text-3); }
+.route-big:active { transform: scale(.98); }
+.route-big.suggested { border-color: var(--text); box-shadow: 0 0 0 3px var(--focus-ring); }
+.route-big-title { font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.route-big-hint { font-size: 14px; color: var(--text-2); }
+.route-suggest { font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-pill); background: var(--text); color: var(--bg); }
+@media (max-width: 360px) {
+  .kind-tiles { grid-template-columns: 1fr; }
+  .kind-tile:last-child:nth-child(odd) { grid-column: auto; }
+}
+
+.overlay-card.swap-enter { animation: sheetSwap .18s ease-out; }
+@keyframes sheetSwap { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 </style>
 </head>
 <body>
@@ -3550,92 +3682,177 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
 
     return html;
   }
+  // ── CAPTURE ──
+  // Capture is only about getting it out of your head. Kind is optional.
+  // Enter adds and keeps the sheet open for the next one (brain-dump mode).
   function renderCapture(ov) {
     if (!ov) return '';
-    const closeBtn = `<button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
+    const closeBtn = `<button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
     const len = (ov.rawText || '').length;
-    const kinds = ['do','decide','ask','schedule','let_go'];
-    const kindOptions = kinds.map(k => {
-      const m = kindMeta[k];
-      const sel = ov.kind === k ? ` selected ${k}` : '';
-      return `
-        <button class="kind-option${sel}" data-action="pick-raw-kind" data-kind="${k}" type="button">
-          <div class="kind-option-dot"></div>
-          <div><span class="kind-option-label">${m.label}</span><span class="kind-option-desc">${esc(m.helper)}</span></div>
-        </button>`;
-    }).join('');
-    const canAdd = ov.rawText.trim() && ov.kind;
+    const added = ov.added || 0;
+    const chips = ['do','decide','ask','schedule','let_go'].map(k => `
+      <button type="button" class="kind-pick ${k}${ov.kind === k ? ' on' : ''}" data-action="pick-raw-kind" data-kind="${k}" aria-pressed="${ov.kind === k}"><span class="kind-dot"></span>${kindMeta[k].label}</button>`).join('');
+    const hasText = !!(ov.rawText || '').trim();
     return `
-      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="capture-title">
+      <div class="overlay-card capture-card" role="dialog" aria-modal="true" aria-labelledby="capture-title">
         <div class="overlay-header">
-          <div class="overlay-meta"><div class="overlay-eyebrow">New loop</div><div class="overlay-step">Capture to Inbox</div></div>
+          <div class="overlay-meta"><div class="overlay-eyebrow">New loop</div></div>
           ${closeBtn}
         </div>
         <h2 class="overlay-title" id="capture-title">Get it out of your head.</h2>
-        <p class="overlay-subtitle">Name the open loop and choose the kind of attention it needs. It will land in Inbox, not Active.</p>
-        <textarea class="big-input" id="capture-input" placeholder="One unfinished thing..." maxlength="${MAX_LOOP_TEXT_LEN}" aria-describedby="capture-counter">${esc(ov.rawText)}</textarea>
+        <p class="overlay-subtitle">It lands in Inbox. Sort it later.</p>
+        <textarea class="big-input capture-input" id="capture-input" rows="2" placeholder="One unfinished thing…" maxlength="${MAX_LOOP_TEXT_LEN}" aria-describedby="capture-hint" enterkeyhint="next">${esc(ov.rawText)}</textarea>
         <div class="input-hint-row">
-          <p class="input-hint">Keep it short enough that Future You recognizes it instantly.</p>
+          <p class="input-hint" id="capture-hint">${added ? `<b class="capture-added">${added} added.</b> ` : ''}Press Enter to add it and write the next one.</p>
           <span class="char-counter" id="capture-counter" aria-live="polite">${len}/${MAX_LOOP_TEXT_LEN}</span>
         </div>
-        <div class="section-label" style="margin:18px 0 8px">Loop type</div>
-        <div class="kind-grid">${kindOptions}</div>
+        <div class="capture-kinds">
+          <div class="capture-kinds-label">Already know the kind? <span>Optional</span></div>
+          <div class="kind-picks" role="group" aria-label="Kind (optional)">${chips}</div>
+        </div>
         <div class="overlay-actions">
-          <button class="btn btn-ghost" data-action="close-overlay">Cancel</button>
-          <button class="btn btn-primary" data-action="save-raw-loop" ${canAdd ? '' : 'disabled'}>Add to Inbox</button>
+          <button class="btn btn-ghost" data-action="close-overlay">${added ? 'Done' : 'Cancel'}</button>
+          <button class="btn btn-primary" data-action="save-raw-loop" ${hasText ? '' : 'disabled'}>Add to Inbox</button>
         </div>
       </div>`;
   }
 
+  // ── DEFINE AND ROUTE ──
+  // Three short steps, one question each:
+  //   1. What kind of attention?  (tap = next)
+  //   2. The kind's own next-step question  (the part that quiets the loop)
+  //   3. Where does it go?  (tap = done)
+  const DEFINE_Q = {
+    do:       { q: "What's the very next step you can see?", ph: 'e.g. Open the doc and write the first line' },
+    decide:   { q: 'What exactly are you deciding?',          ph: 'e.g. Air 15 or X1, decide by Friday' },
+    ask:      { q: 'Who do you need, and for what?',          ph: 'e.g. Bilal: can he start before the 15th?' },
+    schedule: { q: 'When will it happen?',                    ph: 'e.g. Saturday 10am, book it on Thursday' },
+    let_go:   { q: 'What are you letting go of?',             ph: 'Optional' }
+  };
+  const KIND_HINT = {
+    do: 'A concrete action you can start now',
+    decide: "A choice you're holding open",
+    ask: 'Something you need from someone',
+    schedule: 'Needs a real time on the calendar',
+    let_go: 'Choose to release it'
+  };
+
   function renderDefineRaw(loop) {
     if (!loop) return '';
     const ov = view.overlay || {};
-    const selectedKind = ov.kind || loop.kind || null;
-    const selectedStatus = ov.status || 'active';
+    const step = ov.step || 1;
+    const kind = ov.kind || null;
     const rawText = ov.rawText ?? loop.rawText;
-    const promptAnswer = ov.promptAnswer ?? loop.promptAnswer ?? '';
-    const kinds = ['do','decide','ask','schedule','let_go'];
-    const opts = kinds.map(k => {
-      const m = kindMeta[k];
-      const sel = selectedKind === k ? ` selected ${k}` : '';
-      return `
-        <button class="kind-option${sel}" data-action="define-pick-kind" data-kind="${k}" type="button">
-          <div class="kind-option-dot"></div>
-          <div><span class="kind-option-label">${m.label}</span><span class="kind-option-desc">${esc(m.helper)}</span></div>
-        </button>`;
-    }).join('');
-    const statusOptions = [
-      { key: 'active', label: 'Active', hint: 'Now focus' },
-      { key: 'waiting', label: 'Parked', hint: 'Later or waiting' },
-      { key: 'released', label: 'Closed', hint: 'Done or let go' },
-    ].map(s => `
-      <button class="route-option ${selectedStatus === s.key ? 'selected' : ''}" type="button" data-action="define-pick-status" data-status="${s.key}" aria-pressed="${selectedStatus === s.key}">
-        <strong>${s.label}</strong><span>${s.hint}</span>
-      </button>`).join('');
-    const detailLabel = selectedKind ? (kindMeta[selectedKind]?.question || 'What is the useful note?') : 'What is the next useful note?';
-    const len = String(promptAnswer || '').length;
-    return `
-      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="define-title">
-        <div class="overlay-header">
-          <div class="overlay-meta"><div class="overlay-eyebrow">Define loop</div><div class="overlay-step">Route it</div></div>
-          <button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-        </div>
-        <h2 class="overlay-title" id="define-title">Give this loop a shape.</h2>
-        <textarea class="big-input" id="define-raw-input" style="min-height:76px" maxlength="${MAX_LOOP_TEXT_LEN}">${esc(rawText)}</textarea>
-        <div class="kind-grid" style="margin-top:16px">${opts}</div>
-        <p class="overlay-subtitle" style="margin-bottom:8px">${esc(detailLabel)}</p>
-        <textarea class="big-input" id="define-detail-input" placeholder="One clear next move or note..." style="min-height:84px" maxlength="${MAX_LOOP_TEXT_LEN}" aria-describedby="define-detail-counter">${esc(promptAnswer)}</textarea>
+    const close = `<button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
+    const back = step > 1
+      ? `<button class="overlay-close define-back" data-action="define-back" title="Back" aria-label="Back"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`
+      : '';
+    const bars = [1, 2, 3].map(i => `<span class="${i <= step ? 'on' : ''}"></span>`).join('');
+    const kindChip = kind
+      ? `<button type="button" class="kind-chip ${kind} define-kind-chip" data-action="define-change-kind" title="Change kind"><span class="kind-dot"></span>${kindMeta[kind].label}<span class="define-chip-edit">Change</span></button>`
+      : '';
+
+    let body = '';
+    if (step === 1) {
+      const tiles = ['do','decide','ask','schedule','let_go'].map(k => `
+        <button type="button" class="kind-tile ${k}${kind === k ? ' on' : ''}" data-action="define-pick-kind" data-kind="${k}" aria-pressed="${kind === k}">
+          <span class="kind-tile-dot"></span>
+          <span class="kind-tile-label">${kindMeta[k].label}</span>
+          <span class="kind-tile-hint">${KIND_HINT[k]}</span>
+        </button>`).join('');
+      body = `
+        <h3 class="step-q" id="define-step-q">What kind of attention does this need?</h3>
+        <div class="kind-tiles" role="group" aria-labelledby="define-step-q">${tiles}</div>`;
+    } else if (step === 2) {
+      const q = DEFINE_Q[kind] || DEFINE_Q.do;
+      const ans = ov.promptAnswer || '';
+      body = `
+        <div class="step-kind">${kindChip}</div>
+        <h3 class="step-q"><label for="define-detail-input">${q.q}</label></h3>
+        <textarea class="big-input" id="define-detail-input" rows="2" placeholder="${esc(q.ph)}" maxlength="${MAX_LOOP_TEXT_LEN}" enterkeyhint="next" aria-describedby="define-detail-hint">${esc(ans)}</textarea>
         <div class="input-hint-row">
-          <p class="input-hint">Optional for Parked and Closed; useful for Active.</p>
-          <span class="char-counter" id="define-detail-counter" aria-live="polite">${len}/${MAX_LOOP_TEXT_LEN}</span>
+          <p class="input-hint" id="define-detail-hint">One sentence is enough. This is the part that quiets the loop.</p>
+          <span class="char-counter" id="define-detail-counter" aria-live="polite">${ans.length}/${MAX_LOOP_TEXT_LEN}</span>
         </div>
-        <div class="route-grid" role="group" aria-label="Move defined loop to">${statusOptions}</div>
         <div class="overlay-actions">
-          <button class="btn btn-ghost" data-action="close-overlay">Cancel</button>
-          <button class="btn btn-primary" data-action="finish-define-raw" data-loop-id="${esc(loop.id)}" ${selectedKind ? '' : 'disabled'}>Define loop</button>
+          <button class="btn btn-ghost" data-action="define-next" data-skip="1">Skip</button>
+          <button class="btn btn-primary" data-action="define-next">Next</button>
+        </div>`;
+    } else {
+      const active = data.loops.filter(l => l.status === 'active' && l.id !== loop.id).length;
+      const cap = view.loopCap || DEFAULT_LOOP_CAP;
+      const full = active >= cap;
+      const wasActive = loop.status === 'active';
+      const suggest = kind === 'let_go' ? 'released' : (full && !wasActive ? 'waiting' : 'active');
+      const routes = [
+        { key: 'active',   title: wasActive ? 'Keep in Active' : 'Up next', hint: wasActive ? 'Stays where it is in Active.' : 'Into Active, right under your Now card.' },
+        { key: 'waiting',  title: 'Park',  hint: 'Not now. It waits in Parked.' },
+        { key: 'released', title: 'Close', hint: kind === 'let_go' ? 'Let it go. It lands on your shelf.' : 'Already done. It lands on your shelf.' }
+      ].map(r => `
+        <button type="button" class="route-big ${r.key}${suggest === r.key ? ' suggested' : ''}" data-action="finish-define-raw" data-status="${r.key}" data-loop-id="${esc(loop.id)}">
+          <span class="route-big-title">${r.title}${suggest === r.key ? '<span class="route-suggest">Suggested</span>' : ''}</span>
+          <span class="route-big-hint">${r.hint}</span>
+        </button>`).join('');
+      body = `
+        <div class="step-kind">${kindChip}</div>
+        <h3 class="step-q" id="define-route-q">Where does it go?</h3>
+        ${full && !wasActive && kind !== 'let_go' ? `<p class="step-note">Active is full (${active} of ${cap}). Parking keeps your focus clear.</p>` : ''}
+        <div class="route-bigs" role="group" aria-labelledby="define-route-q">${routes}</div>`;
+    }
+
+    return `
+      <div class="overlay-card define-card" role="dialog" aria-modal="true" aria-labelledby="define-title-label">
+        <div class="define-top">
+          ${back}
+          <div class="define-progress" aria-hidden="true">${bars}</div>
+          <span class="define-stepcount" id="define-title-label">Define · ${step} of 3</span>
+          ${close}
         </div>
+        <textarea class="define-title-input" id="define-raw-input" rows="1" maxlength="${MAX_LOOP_TEXT_LEN}" aria-label="Loop text" enterkeyhint="done">${esc(rawText)}</textarea>
+        <div class="define-body" data-step="${step}">${body}</div>
       </div>`;
   }
+
+  // Grow a textarea to fit its text (no inner scrollbar for short loops).
+  function autoGrow(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+
+  // Move the define sheet to another step: the body slides sideways and the
+  // sheet eases to its new height instead of jumping.
+  function goDefineStep(step, dir) {
+    const ov = view.overlay;
+    if (!ov || ov.type !== 'define-raw') return;
+    const card = document.querySelector('#overlay-root .define-card');
+    const h0 = card ? card.getBoundingClientRect().height : 0;
+    ov.step = step;
+    renderOverlay();
+    const card2 = document.querySelector('#overlay-root .define-card');
+    const body = card2 && card2.querySelector('.define-body');
+    autoGrow(document.getElementById('define-raw-input'));
+    const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (card2 && h0 && !calm) {
+      const h1 = card2.getBoundingClientRect().height;
+      if (Math.abs(h1 - h0) > 2) card2.animate([{ height: h0 + 'px' }, { height: h1 + 'px' }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    }
+    if (body && !calm) {
+      body.animate([
+        { transform: `translateX(${dir > 0 ? 28 : -28}px)`, opacity: 0 },
+        { transform: 'none', opacity: 1 }
+      ], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    }
+    if (step === 2) setTimeout(() => {
+      const d = document.getElementById('define-detail-input');
+      if (d) { d.focus(); d.selectionStart = d.selectionEnd = d.value.length; autoGrow(d); }
+    }, 120);
+    else {
+      const first = card2 && (card2.querySelector('.kind-tile.on') || card2.querySelector('.kind-tile') || card2.querySelector('.route-big.suggested'));
+      if (first) setTimeout(() => first.focus({ preventScroll: true }), 60);
+    }
+  }
+
   function renderMenu(loop) {
     if (!loop) return '';
     const m = kindMeta[loop.kind] || kindMeta.inbox;
@@ -3834,6 +4051,13 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
           </div>
         </section>
 
+        ${deferredInstallPrompt ? `
+        <section class="settings-section">
+          <div class="settings-label">Install app</div>
+          <p class="settings-helper">Add Open Loops to your home screen so it opens like an app.</p>
+          <button class="btn btn-ghost" data-action="install-app">Install</button>
+        </section>` : ''}
+
         <section class="settings-section">
           <div class="settings-label">Why Open Loops</div>
           <p class="settings-helper">Why this exists, who it's for, and how to use it best.</p>
@@ -4001,9 +4225,39 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
 
     const isLast = step === ONBOARDING_STEPS.length - 1;
 
+    const content = `
+          <div class="onboarding-step-indicator">${dots}</div>
+          <div class="onboarding-eyebrow">${s.eyebrow}</div>
+          <h2 class="onboarding-title">${s.title}</h2>
+          <p class="onboarding-body">${s.body}</p>
+          ${s.visual}
+          <div class="onboarding-actions">
+            <button class="onboarding-btn-primary" data-action="onboarding-next">${s.next}</button>
+            ${step > 0 ? `<button class="onboarding-btn-ghost" data-action="onboarding-prev">Back</button>` : ''}
+          </div>
+          ${!isLast ? `<div class="onboarding-skip"><button type="button" class="inline-link" data-action="onboarding-skip">Skip tutorial</button></div>` : ''}`;
+    const existing = root.querySelector('.onboarding-card');
+    if (existing) {
+      // Already open: never replay the card's entrance. A new step slides in.
+      const prevStep = Number(existing.dataset.step);
+      existing.style.animation = 'none';
+      if (prevStep === step) return;
+      existing.dataset.step = String(step);
+      existing.innerHTML = content;
+      const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!calm) {
+        const dir = step > prevStep ? 1 : -1;
+        Array.from(existing.children).slice(1).forEach(c => c.animate([
+          { transform: `translateX(${dir * 24}px)`, opacity: 0 },
+          { transform: 'none', opacity: 1 }
+        ], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' }));
+      }
+      return;
+    }
+
     root.innerHTML = `
       <div class="onboarding-overlay">
-        <div class="onboarding-card">
+        <div class="onboarding-card" data-step="${step}">
           <div class="onboarding-step-indicator">${dots}</div>
           <div class="onboarding-eyebrow">${s.eyebrow}</div>
           <h2 class="onboarding-title">${s.title}</h2>
@@ -4260,7 +4514,13 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
       if (hinted) return;
       hinted = true;
       try { localStorage.setItem(SOUND_HINT_KEY, '1'); } catch (_) {}
-      setTimeout(() => toast('Sound is on. You can turn it off in Settings.'), 1700);
+      // Wait until no sheet is open, so the hint never covers a flow.
+      let tries = 0;
+      const show = () => {
+        if (view.overlay && tries++ < 20) { setTimeout(show, 1000); return; }
+        toast('Sound is on. You can turn it off in Settings.');
+      };
+      setTimeout(show, 1700);
     }
 
     return {
@@ -4387,7 +4647,9 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
 
     // Sheet leaves smoothly instead of vanishing; for Capture it shrinks
     // into the pellet that then drops into Inbox.
+    let lastExitAt = 0;
     function exitSheet(ov, toPellet) {
+      lastExitAt = performance.now();
       const r = ov.getBoundingClientRect();
       const L = ensureLayer();
       const g = ov.cloneNode(true);
@@ -4496,6 +4758,30 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
       t.animate(kf, { duration: 640, easing: 'cubic-bezier(.45,0,.25,1)', fill: 'forwards' }).onfinish = () => {
         t.remove();
         bump(target);
+      };
+    }
+
+    // Brain-dump capture: a pellet leaves the text box for the Inbox tab.
+    function pelletToInbox(kind) {
+      const src = document.getElementById('capture-input');
+      const target = tabTarget('inbox');
+      if (!src || reduced()) { Sound.play('capture'); return; }
+      const r = src.getBoundingClientRect();
+      const S = 22;
+      const x0 = r.left + 28, y0 = r.top + 22;
+      let x1, y1;
+      if (target) { const tr = target.getBoundingClientRect(); x1 = tr.left + tr.width / 2 - S / 2; y1 = tr.top + tr.height / 2 - S / 2; }
+      else { x1 = x0; y1 = y0 - 120; }
+      const t = token(kindColor(kind), S);
+      place(t, 0, 0, S, S);
+      const kf = arc(x0, y0, x1, y1, 90, 12, (p, x, y) => ({
+        transform: `translate(${x}px, ${y}px) scale(${p < 0.15 ? 0.3 + p * 4.6 : 1 - 0.35 * p})`,
+        opacity: target ? 1 : 1 - p
+      }));
+      t.animate(kf, { duration: 560, easing: 'cubic-bezier(.45,0,.25,1)', fill: 'forwards' }).onfinish = () => {
+        t.remove();
+        Sound.play('capture');
+        if (target) bump(target);
       };
     }
 
@@ -4685,7 +4971,7 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
     function soundFor(cue) {
       const { from, to } = cue;
       if (to === null || to === 'released') return null;       // delete is silent; closing scores itself
-      if (from === null) return gesture && gesture.action === 'save-raw-loop' ? null : 'up';
+      if (from === null) return gesture && /^save-raw-loop/.test(gesture.action || '') ? null : 'up';
       if (from === 'released') return 'reopen';
       if (to === 'active') return from === 'waiting' ? 'wake' : 'up';
       return 'down';
@@ -4702,8 +4988,13 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
       const calm = reduced();
       const tabChanged = prevTab !== view.activeTab;
       const cue = local ? pickCue(snap.statuses, now) : null;
+      const gAction = gesture && gesture.action;
       let sound = cue ? soundFor(cue) : null;
       if (cue) gesture = null;   // one gesture, one cue
+      if (cue && cue.from === null && gAction === 'save-raw-loop-more') {
+        pelletToInbox(cue.kind);
+        sound = null;
+      }
       let ceremony = false;
 
       // The panel's fade-in is for switching tabs only. Re-renders within the
@@ -4799,6 +5090,13 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
     }
 
     return {
+      // Any sheet that closes without its own exit (Cancel, ✕, backdrop,
+      // Escape) slides away instead of vanishing in one frame.
+      dismissSheet() {
+        if (performance.now() - lastExitAt < 80) return;
+        const ov = document.querySelector('#overlay-root .overlay-card');
+        if (ov) exitSheet(ov, false);
+      },
       init() {
         ensureLayer();
         document.addEventListener('click', onGesture, true);
@@ -4845,7 +5143,7 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
     const root = document.getElementById('overlay-root');
     if (!root) return;
     const ov = view.overlay;
-    if (!ov) { root.innerHTML = ''; return; }
+    if (!ov) { root.innerHTML = ''; delete root.dataset.sheet; return; }
 
     let inner = '';
     if      (ov.type === 'capture')        inner = renderCapture(ov);
@@ -4858,12 +5156,37 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
     else if (ov.type === 'primary-action') inner = renderPrimaryAction(getLoop(ov.loopId));
     else if (ov.type === 'confirm-delete') inner = renderConfirmDelete(getLoop(ov.loopId));
 
-    root.innerHTML = `
-      <div class="overlay-backdrop" data-action="close-overlay"></div>
-      <div class="overlay-panel">${inner}</div>`;
+    const key = `${ov.type}:${ov.loopId || ''}`;
+    const panel = root.querySelector('.overlay-panel');
+    if (panel && root.dataset.sheet === key) {
+      // Same sheet, new state: swap contents in place. No replayed slide-up,
+      // no focus jump, no keyboard popping back open.
+      const scroller = panel.querySelector('.overlay-card');
+      const scrollTop = scroller ? scroller.scrollTop : 0;
+      panel.innerHTML = inner;
+      const card = panel.querySelector('.overlay-card');
+      if (card) { card.classList.add('no-enter'); card.scrollTop = scrollTop; }
+      return;
+    }
+    const switching = !!(panel && root.querySelector('.overlay-backdrop'));
+    root.dataset.sheet = key;
+    if (switching) {
+      // One sheet replacing another (menu → delete, action → define): keep
+      // the backdrop as is and swap the card with a short crossfade instead
+      // of flashing the backdrop and sliding up from scratch.
+      panel.innerHTML = inner;
+      const card = panel.querySelector('.overlay-card');
+      if (card) card.classList.add('swap-enter');
+    } else {
+      root.innerHTML = `
+        <div class="overlay-backdrop" data-action="close-overlay"></div>
+        <div class="overlay-panel">${inner}</div>`;
+    }
+    autoGrow(document.getElementById('define-raw-input'));
 
     // Focus first input/button so keyboard users don't have to hunt.
-    const firstInput = root.querySelector('textarea, input[type="email"], input[type="text"]');
+    // Define's title is editable but not the first job, so skip it.
+    const firstInput = root.querySelector('textarea:not(#define-raw-input), input[type="email"], input[type="text"]');
     if (firstInput) {
       setTimeout(() => firstInput.focus(), 50);
     } else {
@@ -4879,6 +5202,8 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
     if (pill && label) {
       pill.className = `pill-btn ${view.syncStatus}`;
       label.textContent = view.syncText;
+      pill.title = view.syncText;
+      pill.setAttribute('aria-label', `Sync: ${view.syncText}`);
     }
     const archive = document.getElementById('archive-btn');
     if (archive) {
@@ -4922,6 +5247,7 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
 
   function closeOverlay() {
     const opener = view.overlayOpenerEl;
+    if (view.overlay) Motion.dismissSheet();
     view.overlay = null;
     renderOverlay();
     view.overlayOpenerEl = null;
@@ -5038,7 +5364,7 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
         const status = target.status === 'inbox'
           ? (target.kind === 'let_go' ? 'released' : 'active')
           : target.status;
-        view.overlay = { type: 'define-raw', loopId, rawText: target.rawText, kind: target.kind || null, promptAnswer: target.promptAnswer || '', status };
+        view.overlay = { type: 'define-raw', loopId, rawText: target.rawText, kind: target.kind || null, promptAnswer: target.promptAnswer || '', status, step: target.kind ? 2 : 1 };
         renderOverlay();
       }
       return;
@@ -5046,49 +5372,83 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
 
     // Capture flow
     if (action === 'pick-raw-kind') {
-      if (view.overlay?.type === 'capture') {
-        view.overlay.kind = el.dataset.kind;
-        renderOverlay();
+      const ov = view.overlay;
+      if (ov?.type === 'capture') {
+        // Optional: tap again to clear. Update the chips in place only.
+        ov.kind = ov.kind === el.dataset.kind ? null : el.dataset.kind;
+        document.querySelectorAll('#overlay-root .kind-pick').forEach(b => {
+          const on = b.dataset.kind === ov.kind;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-pressed', String(on));
+        });
       }
       return;
     }
-    if (action === 'save-raw-loop') {
+    if (action === 'save-raw-loop' || action === 'save-raw-loop-more') {
       if (requireLogin()) return;
       const ov = view.overlay;
       if (!ov || ov.type !== 'capture') return;
-      const raw = document.getElementById('capture-input')?.value.trim();
-      if (!raw || !ov.kind) return;
-      const l = createLoop({ rawText: raw, kind: ov.kind, promptAnswer: '', status: 'inbox' });
+      const input = document.getElementById('capture-input');
+      const raw = (input ? input.value : ov.rawText || '').trim();
+      if (!raw) return;
+      const l = createLoop({ rawText: raw, kind: ov.kind || null, promptAnswer: '', status: 'inbox' });
+      if (action === 'save-raw-loop-more') {
+        // Brain-dump mode: keep the sheet, clear the text, count it.
+        ov.rawText = '';
+        ov.kind = null;
+        ov.added = (ov.added || 0) + 1;
+        persistAndRender();
+        Sync.createLoop(l);
+        const again = document.getElementById('capture-input');
+        if (again) again.focus();
+        return;
+      }
       view.activeTab = 'inbox';
+      const n = (ov.added || 0) + 1;
       closeOverlay();
       await persistAndRender();
       Sync.createLoop(l);
-      toast('Added to Inbox.');
+      toast(n > 1 ? `${n} loops added to Inbox.` : 'Added to Inbox.');
       return;
     }
     if (action === 'define-pick-kind') {
-      if (view.overlay?.type === 'define-raw') {
-        view.overlay.kind = el.dataset.kind;
-        if (view.overlay.kind === 'let_go') view.overlay.status = 'released';
-        renderOverlay();
-        setTimeout(() => document.getElementById('define-detail-input')?.focus(), 80);
+      const ov = view.overlay;
+      if (ov?.type === 'define-raw') {
+        ov.kind = el.dataset.kind;
+        // Let go skips the next-step question: releasing is the whole move.
+        goDefineStep(ov.kind === 'let_go' ? 3 : 2, 1);
       }
       return;
     }
-    if (action === 'define-pick-status') {
-      if (view.overlay?.type === 'define-raw') {
-        view.overlay.status = el.dataset.status;
-        renderOverlay();
+    if (action === 'define-next') {
+      const ov = view.overlay;
+      if (ov?.type === 'define-raw') {
+        const d = document.getElementById('define-detail-input');
+        if (el.dataset.skip) ov.promptAnswer = ov.promptAnswer || '';
+        else if (d) ov.promptAnswer = d.value;
+        goDefineStep(3, 1);
       }
+      return;
+    }
+    if (action === 'define-back') {
+      const ov = view.overlay;
+      if (ov?.type === 'define-raw') {
+        const prev = ov.step === 3 && ov.kind !== 'let_go' ? 2 : 1;
+        goDefineStep(prev, -1);
+      }
+      return;
+    }
+    if (action === 'define-change-kind') {
+      if (view.overlay?.type === 'define-raw') goDefineStep(1, -1);
       return;
     }
     if (action === 'finish-define-raw') {
       if (requireLogin()) return;
       const ov = view.overlay;
       if (!ov || ov.type !== 'define-raw' || !ov.kind) return;
-      const raw = document.getElementById('define-raw-input')?.value.trim() || ov.rawText;
-      const ans = document.getElementById('define-detail-input')?.value.trim() || '';
-      const status = ov.status || (ov.kind === 'let_go' ? 'released' : 'active');
+      const raw = (document.getElementById('define-raw-input')?.value || ov.rawText || '').trim() || getLoop(ov.loopId)?.rawText || '';
+      const ans = (ov.promptAnswer || '').trim();
+      const status = el.dataset.status || ov.status || (ov.kind === 'let_go' ? 'released' : 'active');
       const patch = { rawText: raw, kind: ov.kind, promptAnswer: ans, status, completedAt: status === 'released' ? nowIso() : null };
       const prevStatus = getLoop(ov.loopId)?.status;
       const upNext = status === 'active' && prevStatus !== 'active' ? upNextPosition(ov.loopId) : null;
@@ -5148,7 +5508,7 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
       closeOverlay();
       const l = getLoop(loopId);
       if (l) {
-        view.overlay = { type: 'define-raw', loopId, rawText: l.rawText, kind: l.kind, promptAnswer: l.promptAnswer, status: l.status };
+        view.overlay = { type: 'define-raw', loopId, rawText: l.rawText, kind: l.kind, promptAnswer: l.promptAnswer, status: l.status, step: l.kind ? 2 : 1 };
         renderOverlay();
       }
       return;
@@ -5370,6 +5730,7 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
       }
       const btn = document.getElementById('install-btn');
       if (btn) btn.hidden = true;
+      if (view.overlay && view.overlay.type === 'settings') renderOverlay();
       return;
     }
 
@@ -5497,11 +5858,13 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
     if (ov && ov.type === 'define-raw') {
       if (e.target.id === 'define-raw-input') {
         ov.rawText = e.target.value;
+        autoGrow(e.target);
         return;
       }
       if (e.target.id === 'define-detail-input') {
         ov.promptAnswer = e.target.value;
         updateCounter('define-detail-counter', e.target.value.length);
+        autoGrow(e.target);
         return;
       }
     }
@@ -5510,9 +5873,34 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
       ov.rawText = e.target.value;
       updateCounter('capture-counter', e.target.value.length);
       const btn = document.querySelector('[data-action="save-raw-loop"]');
-      if (btn) btn.disabled = !(e.target.value.trim() && ov.kind);
+      if (btn) btn.disabled = !e.target.value.trim();
+      autoGrow(e.target);
     }
   });
+
+  // Enter inside the capture and define sheets (Shift+Enter = newline):
+  //   capture text → add and keep going · next-step answer → Next
+  //   loop title  → done editing
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || e.shiftKey || e.isComposing) return;
+    const id = e.target && e.target.id;
+    if (id === 'capture-input') {
+      e.preventDefault();
+      if (!e.target.value.trim()) return;
+      const b = document.createElement('button');
+      b.dataset.action = 'save-raw-loop-more';
+      b.hidden = true;
+      document.getElementById('overlay-root').appendChild(b);
+      b.click();
+      b.remove();
+    } else if (id === 'define-detail-input') {
+      e.preventDefault();
+      document.querySelector('#overlay-root [data-action="define-next"]:not([data-skip])')?.click();
+    } else if (id === 'define-raw-input') {
+      e.preventDefault();
+      e.target.blur();
+    }
+  }, true);
 
   // Enter key on auth gate email → submit
   document.addEventListener('keydown', e => {
