@@ -1,4 +1,4 @@
-const CACHE = 'open-loops-v16-voice';
+const CACHE = 'open-loops-v17-wakeups';
 
 const NETWORK_FIRST = [
   './open-loops.html',

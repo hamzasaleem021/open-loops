@@ -37,13 +37,21 @@ Open Loops is built around one personal workflow:
 - **Now card** - The top Active loop is shown as a large card in its kind's color, with the rest listed under "Up next".
 - **Up next, not Now** - Loops entering Active (defined, reopened, or brought back from Parked) land in Up next. Only you promote a loop to Now, by reordering.
 - **Motion and sound** - Every move shows where the loop went. Closing seals the loop into a clay ring that lands in the Closed archive in the header. Sounds can be turned off in Settings.
-- **Closed shelf** - The Closed view shows one clay ring per loop closed this week; the archive button shows the weekly count.
+- **Closed shelf** - The Closed view shows one clay ring per loop closed this week (a pebble for each loop you let go of); the archive button shows the weekly count.
 - **Why Open Loops** - Tap the logo (or Settings → Why Open Loops) for a five-scene animated story: why unfinished things nag, the research behind next steps, how the app works, and who it's for. The landing page plays the same story. Music follows the Sounds setting; the voice-over is opt-in (Voice button in the sheet). On the landing page both start muted behind a Sound button.
 - **Quiet feedback** - Moves that animate don't also show a toast. Screen readers still hear each change. Toasts remain for Undo, errors and sync.
 - **Archive/Closed** - Closed loops live behind the small archive button in the header instead of taking a main tab.
 - **Created and closed dates** - Loop cards show when they were captured. Closed loops also show when they were closed.
 - **Inline editing** - Click a loop title to edit it in place.
-- **Primary actions** - Each kind has a contextual check-in for completion, progress, or updating the next step.
+- **Buttons that do what they say** - Each kind's main button does its job instead of only asking "did you?":
+  - **Do → Done**: "All done, close it", or "Did the step, set the next one". A Do holds your next step, and finishing the step isn't always finishing the loop.
+  - **Decide → I decided**: name the decision in a line (options like "Air 15 or X1" become one-tap choices), then optionally turn it into the next Do, which lands in Up next.
+  - **Ask → Reach out**: the ask is drafted from your note and sent through your phone's share sheet (or copied). Sending doesn't close it; it parks until it's time to check back, then asks "Did Bilal reply?" with Got it / Nudge / Wait longer.
+  - **Schedule → Add to calendar**: reads the time from your note ("Saturday 10am"), then opens a ready-made Google Calendar event or downloads an `.ics` file for Apple, Outlook and others. No sign-in. Once it's saved, the loop closes, because the calendar holds it now.
+  - **Let go → Let go**: its own ending. Finished loops sit on the Closed shelf as rings; loops you let go of sit there as pebbles.
+- **Not yet asks "when?"** - Every "not yet" and every Park asks when the loop should come back: tonight, tomorrow morning, this weekend, next week, a day you pick, or no date.
+- **Wake-ups** - A parked loop with a wake time comes back to Up next on its own (never straight to Now) when the app opens, returns to the foreground, or is already open. Parked shows the soonest wake time first.
+- **Reasons on cards** - A small label says why a card is where it is: "Woke today", "Waiting on Bilal · back Thu 9:00 AM", "Checking back", "From your decision".
 - **Reorder active loops** - Drag on desktop, or use the up/down controls. Order syncs across devices.
 - **Magic-link sign-in** - Sign in with email; no password required.
 - **Offline queue** - Signed-in edits made during brief connection drops are queued locally and retried.
@@ -112,6 +120,7 @@ This creates:
 - `public.loops`
 - Row-level security policies
 - `completed_at`, `deleted_at`, `position`, and timestamp fields
+- `wake_at` (when a parked loop comes back) and `details` (how a loop is moving or how it ended)
 - `batch_upsert_loops`
 - Realtime publication setup
 
@@ -146,6 +155,8 @@ https://YOUR_USERNAME.github.io/REPO_NAME/open-loops.html
 
 ## Upgrade / Upload Checklist
 
+**Run `open-loops-supabase.sql` in the Supabase SQL editor first.** This version adds two columns (`wake_at`, `details`). The statements are idempotent, so running the whole file again is safe. If the app is deployed before the SQL runs, it keeps syncing everything else and keeps wake times on the device until the columns exist; a console warning says so.
+
 When deploying this version, upload the full app folder or at least:
 
 ```text
@@ -172,7 +183,7 @@ open-loops-icon-512-v2.png
 The service worker cache is currently:
 
 ```js
-open-loops-v16-voice
+open-loops-v17-wakeups
 ```
 
 The icon filenames are versioned (`-v3`, the Clay icon) so browsers and installed PWAs have a clean cache break. If an installed PWA still shows an old icon after deployment, uninstall and reinstall the PWA.
@@ -195,6 +206,8 @@ Key pieces:
 - **Auth lock safety** - Supabase auth callbacks stay synchronous and defer heavier async work.
 - **Account-safe local storage** - Local data, queue, onboarding, focus cap, and diagnostics are scoped to the signed-in user.
 - **Completed dates** - Closing a loop writes `completed_at`; reopening clears it.
+- **Wake times** - Parking writes `wake_at`. Whichever signed-in device is open when it passes moves the loop back to Up next; doing it twice is harmless.
+- **Newer columns, older database** - If `wake_at`/`details` don't exist yet, writes retry without them instead of filling the dead queue, and pulls keep this device's copy of those two fields.
 
 If something looks wrong, open DevTools and use:
 
@@ -221,6 +234,10 @@ After deploying, test on the real URL:
 7. Open Archive/Closed and confirm the Closed date appears.
 8. Reopen it and confirm the Closed date disappears.
 9. Confirm no stale "Still saving" banner remains when sync is healthy.
+10. Park a loop with "Pick a day and time" set a minute or two ahead. Confirm it comes back to Up next (not Now) on both devices.
+11. Ask: Reach out → Send… → In 3 days. Confirm it shows "Waiting on …" in Parked, and `wake_at` / `details.sentAt` are set in Supabase.
+12. Schedule: Add to calendar → Google Calendar opens with the right day and time; the .ics file opens in Apple Calendar.
+13. Let go of a loop and confirm a pebble (not a ring) appears on the Closed shelf.
 
 ---
 
