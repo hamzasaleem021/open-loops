@@ -183,8 +183,17 @@ open-loops-icon-512-v2.png
 The service worker cache is currently:
 
 ```js
-open-loops-v17-wakeups
+open-loops-v18-updates
 ```
+
+**On every release, bump both** `CACHE` in `open-loops-sw.js` and `APP_VERSION` in `open-loops.html` (number and date). The new cache name is what tells installed apps there's a new version; `APP_VERSION` is what Settings → App version shows, so you can see which version a phone is running.
+
+How installed apps pick up a release:
+
+- The app checks for a new version whenever it's opened or brought back from the background, and once a minute while it stays open.
+- The new version installs in the background, takes over, and the page reloads itself. It waits until no sheet is open and nothing is being typed, so a half-written loop is never lost.
+- The page and config are always re-checked with the server, so GitHub Pages' 10-minute browser cache can't keep showing the old page after a release.
+- Settings → App version shows the version number and has a **Check for update** button.
 
 The icon filenames are versioned (`-v3`, the Clay icon) so browsers and installed PWAs have a clean cache break. If an installed PWA still shows an old icon after deployment, uninstall and reinstall the PWA.
 
@@ -238,6 +247,7 @@ After deploying, test on the real URL:
 11. Ask: Reach out → Send… → In 3 days. Confirm it shows "Waiting on …" in Parked, and `wake_at` / `details.sentAt` are set in Supabase.
 12. Schedule: Add to calendar → Google Calendar opens with the right day and time; the .ics file opens in Apple Calendar.
 13. Let go of a loop and confirm a pebble (not a ring) appears on the Closed shelf.
+14. On the installed phone app, open Settings → App version and confirm it shows the version you just released (tap Check for update if not).
 
 ---
 

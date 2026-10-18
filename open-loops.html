@@ -3074,6 +3074,11 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
   const LEGACY_STORAGE_QUARANTINE_KEY = `${STORAGE_KEY_BASE}_legacy_unscoped`;
   const IS_FILE = location.protocol === 'file:';
 
+  // Shown in Settings so you can tell which version a phone is running.
+  // Bump together with CACHE in open-loops-sw.js on every release.
+  const APP_VERSION = { number: 18, date: '19 Oct 2026' };
+  let swRegistration = null;
+
   // UX constraints
   const MAX_LOOP_TEXT_LEN = 500;
   const ALLOWED_LOOP_CAPS = [3, 5, 7];
@@ -4904,6 +4909,12 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
           <div class="settings-label">Tutorial</div>
           <p class="settings-helper">Show the four-step intro again whenever you want a reset.</p>
           <button class="btn btn-ghost" data-action="reset-onboarding">Show tutorial again</button>
+        </section>
+
+        <section class="settings-section">
+          <div class="settings-label">App version</div>
+          <p class="settings-helper" id="app-version">Version ${APP_VERSION.number} · ${esc(APP_VERSION.date)}. New versions install on their own when you open the app.</p>
+          ${swRegistration ? `<button class="btn btn-ghost" data-action="check-update">Check for update</button>` : ''}
         </section>
 
         <div class="overlay-actions">
@@ -7025,6 +7036,34 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
       return;
     }
 
+    if (action === 'check-update') {
+      const reg = swRegistration;
+      if (!reg || el.disabled) return;
+      el.disabled = true;
+      el.textContent = 'Checking…';
+      let found = false;
+      try {
+        await reg.update();
+        found = !!(reg.installing || reg.waiting);
+      } catch (_) {
+        el.disabled = false;
+        el.textContent = 'Check for update';
+        toast("Couldn't check for an update. Are you online?");
+        return;
+      }
+      if (found) {
+        // The new version takes over in a moment; the page reloads itself
+        // (see SERVICE WORKER below). Close Settings so nothing holds it up.
+        closeOverlay();
+        toast('Getting the new version…');
+      } else {
+        el.disabled = false;
+        el.textContent = 'Check for update';
+        toast("You're on the latest version.");
+      }
+      return;
+    }
+
     // Settings overlay
     if (action === 'open-why') {
       rememberOverlayOpener(el);
@@ -8262,27 +8301,47 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
   };
 
   // ── SERVICE WORKER ──
-  // Install handler in open-loops-sw.js calls skipWaiting(), so a new worker
-  // takes control immediately after installing. We watch for the 'activated'
-  // state (not 'installed') and reload once it's actually in charge.
+  // open-loops-sw.js calls skipWaiting() and clients.claim(), so a new version
+  // takes over this page as soon as it installs. When that happens we reload
+  // so the page itself is the new version too, but never while a sheet is
+  // open or someone is typing: that waits until they're done.
+  //
+  // Phones pause timers while an installed app sits in the background and
+  // don't re-check for updates when it comes back, so we also check every
+  // time the app returns to the foreground, not just once a minute.
   if ('serviceWorker' in navigator && !IS_FILE) {
+    let hadController = !!navigator.serviceWorker.controller;
+    let reloadPending = false;
+
+    const isBusy = () => {
+      if (view.overlay) return true;
+      const a = document.activeElement;
+      return !!(a && a.matches && a.matches('input, textarea, select, [contenteditable="true"]'));
+    };
+    const reloadWhenSafe = () => {
+      if (isBusy()) { setTimeout(reloadWhenSafe, 1000); return; }
+      if (document.hidden) { window.location.reload(); return; }
+      toast('Updated — reloading…', { duration: 1500 });
+      setTimeout(() => (isBusy() ? reloadWhenSafe() : window.location.reload()), 1500);
+    };
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // First install: the page was already loaded from the network.
+      if (!hadController) { hadController = true; return; }
+      if (reloadPending) return;
+      reloadPending = true;
+      reloadWhenSafe();
+    });
+
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./open-loops-sw.js')
         .then(registration => {
-          // Poll for updates once a minute
-          setInterval(() => registration.update(), 60000);
-
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            if (!newWorker) return;
-            newWorker.addEventListener('statechange', () => {
-              // Only reload when the new worker is actually controlling the
-              // page. Reloading earlier (on 'installed') serves the old cache.
-              if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-                toast('Updated — reloading…', { duration: 1500 });
-                setTimeout(() => window.location.reload(), 1500);
-              }
-            });
+          swRegistration = registration;
+          if (view.overlay && view.overlay.type === 'settings') renderOverlay();
+          const checkForUpdate = () => { registration.update().catch(() => {}); };
+          setInterval(checkForUpdate, 60000);
+          document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) checkForUpdate();
           });
         })
         .catch(() => {});

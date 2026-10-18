@@ -1,4 +1,5 @@
-const CACHE = 'open-loops-v17-wakeups';
+// Bump on every release, together with APP_VERSION in open-loops.html.
+const CACHE = 'open-loops-v18-updates';
 
 const NETWORK_FIRST = [
   './open-loops.html',
@@ -24,7 +25,9 @@ const EXTERNAL_HOSTS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE)
-      .then(cache => cache.addAll(ASSETS))
+      // cache: 'reload' skips the browser's own HTTP cache, so a new version
+      // never stores an older copy of the page the browser had lying around.
+      .then(cache => cache.addAll(ASSETS.map(url => new Request(url, { cache: 'reload' }))))
       .then(() => self.skipWaiting())
   );
 });
@@ -42,10 +45,21 @@ function pathMatches(request, candidates) {
   return candidates.some(path => url.pathname.endsWith(path.replace('./', '/')));
 }
 
+// no-cache: always ask the server whether the file changed (a tiny "not
+// modified" reply when it didn't). GitHub Pages lets browsers reuse a copy for
+// 10 minutes, which could otherwise show the old version after a release.
+function fresh(request) {
+  // Some browsers refuse to copy a page load with new options, so a page load
+  // is rebuilt from its URL; redirects are handed back to the browser as before.
+  return request.mode === 'navigate'
+    ? new Request(request.url, { cache: 'no-cache', credentials: 'same-origin', redirect: 'manual' })
+    : new Request(request, { cache: 'no-cache' });
+}
+
 async function networkFirst(request) {
   const cache = await caches.open(CACHE);
   try {
-    const response = await fetch(request);
+    const response = await fetch(fresh(request));
     if (response && response.ok && response.type === 'basic') {
       await cache.put(request, response.clone());
     }

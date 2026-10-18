@@ -74,21 +74,33 @@ grant usage  on schema public to authenticated;
 grant select, insert, update on table public.loops to authenticated;
 revoke all   on table public.loops from anon;
 
+-- Older setups also have underscored copies of these rules
+-- (users_read_own_loops etc.). They repeat the rules below and make Postgres
+-- check everything twice, so remove them.
+drop policy if exists users_read_own_loops   on public.loops;
+drop policy if exists users_insert_own_loops on public.loops;
+drop policy if exists users_update_own_loops on public.loops;
+
+-- (select auth.uid()) is looked up once per query instead of once per row.
+-- The rules only apply to signed-in users; anon has no access at all.
 drop policy if exists "users read own loops"   on public.loops;
 create policy "users read own loops"
   on public.loops for select
-  using (auth.uid() = user_id);
+  to authenticated
+  using ((select auth.uid()) = user_id);
 
 drop policy if exists "users insert own loops" on public.loops;
 create policy "users insert own loops"
   on public.loops for insert
-  with check (auth.uid() = user_id);
+  to authenticated
+  with check ((select auth.uid()) = user_id);
 
 drop policy if exists "users update own loops" on public.loops;
 create policy "users update own loops"
   on public.loops for update
-  using  (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  to authenticated
+  using      ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 -- ── BATCH UPSERT (used when seeding server from local data) ──────────────
 -- p_loops is a JSON array whose items use camelCase keys to match the JS
