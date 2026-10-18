@@ -2699,7 +2699,8 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
   #sync-pill.error { width: auto; padding: 0 10px; }
   #sync-pill.error #sync-label { display: inline; }
 }
-@media (max-width: 350px) {
+@media (max-width: 420px) {
+  /* The logo still opens the Why story; the pill makes room for Your head. */
   .brand-why { display: none; }
 }
 .toast { max-width: calc(100vw - 32px); white-space: normal; text-align: center; }
@@ -2985,6 +2986,217 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
   transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
 .choice-chip.on { background: var(--decide); color: var(--decide-ink); border-color: transparent; }
+/* ══ BATCH 2 · THE DAILY RITUAL ══════════════════════════════════ */
+
+/* ── Drying clay: untouched cards go matte, then crack ── */
+.loop-card.is-drying, .loop-card.is-cracked { position: relative; isolation: isolate; }
+.loop-card.is-drying { filter: saturate(.72); }
+.loop-card.is-cracked { filter: saturate(.5); }
+.loop-card.is-drying::after, .loop-card.is-cracked::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .39 0 0 0 0 .3 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: .22; mix-blend-mode: multiply;
+}
+.loop-card.is-cracked::after {
+  opacity: .42;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='84' viewBox='0 0 120 84' fill='none' stroke='%237a6a52' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M118 6 L104 14 L108 24 L94 32'/%3E%3Cpath d='M104 14 L96 8'/%3E%3Cpath d='M116 52 L102 58 L106 68 L92 78'/%3E%3Cpath d='M106 68 L116 74'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .39 0 0 0 0 .3 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: no-repeat, repeat;
+  background-position: right 10px top 10px, 0 0;
+}
+:root[data-theme="dark"] .loop-card.is-drying::after,
+:root[data-theme="dark"] .loop-card.is-cracked::after { mix-blend-mode: screen; opacity: .14; }
+:root[data-theme="dark"] .loop-card.is-cracked::after { opacity: .3; }
+.loop-card.is-drying > *, .loop-card.is-cracked > * { position: relative; z-index: 1; }
+.loop-reason.dry { border-style: dashed; }
+.still-yours-btn { border-style: dashed !important; }
+.loop-card.is-focus .still-yours-btn { color: inherit; border-color: color-mix(in srgb, currentColor 40%, transparent) !important; background: transparent; }
+
+/* ── Mascot ── */
+.mascot { display: block; overflow: visible; }
+.mascot .mascot-z { fill: var(--text-3); font-family: var(--sans); }
+.mascot-bob .mascot-body { animation: mascot-bob 3s ease-in-out infinite; }
+.mascot-awake .mascot-eyes, .mascot-bob .mascot-eyes { transform-box: fill-box; transform-origin: center; animation: mascot-blink 4.2s infinite; }
+.mascot-sealing .mascot-seal { stroke-dashoffset: 79; animation: mascot-seal 800ms cubic-bezier(.55,0,.2,1) 200ms forwards; }
+@keyframes mascot-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes mascot-blink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+@keyframes mascot-seal { from { stroke-dashoffset: 79; } to { stroke-dashoffset: 0; } }
+@keyframes ol-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes ol-card-in { from { opacity: 0; transform: translateX(36px) rotate(1.5deg); } to { opacity: 1; transform: none; } }
+@keyframes ol-pop { 0% { transform: scale(.4); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+/* ── Sweep banner (Active) ── */
+.sweep-banner {
+  display: flex; align-items: center; gap: 14px;
+  margin: 0 0 18px; padding: 14px 14px 14px 10px;
+  border-radius: var(--r-xl);
+  background: var(--surface-3);
+  animation: ol-rise 420ms ease-out both;
+}
+.sweep-banner-art { flex-shrink: 0; width: 76px; }
+.sweep-banner-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.sweep-banner-hello { font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-3); }
+.sweep-banner-text strong { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; color: var(--text); }
+.sweep-banner-sub { font-size: 13px; color: var(--text-2); }
+.sweep-banner-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.sweep-banner-actions .btn { height: 44px; padding: 0 18px; }
+.sweep-banner-later {
+  width: 44px; height: 44px; border: none; border-radius: var(--r-pill);
+  background: transparent; color: var(--text-3); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.sweep-banner-later:hover { color: var(--text); background: var(--surface-strong); }
+@media (max-width: 420px) {
+  .sweep-banner { flex-wrap: wrap; padding: 14px; }
+  .sweep-banner-art { width: 60px; }
+  .sweep-banner-actions { width: 100%; }
+  .sweep-banner-actions .btn { flex: 1; }
+}
+
+/* ── Sweep sheet ── */
+.sweep-sheet .act-list { margin-top: 4px; }
+.sweep-hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 4px 4px 2px; }
+.sweep-h { margin: 18px 0 8px; font-size: 30px; font-weight: 500; line-height: 1.1; letter-spacing: -0.04em; color: var(--text); text-wrap: balance; }
+.sweep-p { text-wrap: balance; }
+.sweep-h.small { font-size: 22px; letter-spacing: -0.02em; text-align: left; margin: 4px 0 14px; }
+.sweep-p { margin: 0 0 22px; font-size: 16px; line-height: 1.5; color: var(--text-2); max-width: 320px; }
+.sweep-go { width: 100%; height: 54px; font-size: 16px; }
+.sweep-later-btn, .sweep-back { margin-top: 10px; width: 100%; height: 48px; }
+.rise { animation: ol-rise 500ms ease-out both; }
+.sweep-hero .rise:nth-of-type(1) { animation-delay: 300ms; }
+.sweep-p.rise { animation-delay: 420ms; }
+.sweep-chips.rise { animation-delay: 540ms; }
+.sweep-go.rise { animation-delay: 660ms; }
+.sweep-dots { display: flex; gap: 6px; margin: 2px 0 16px; }
+.sweep-dot { flex: 1; height: 6px; border-radius: var(--r-pill); background: var(--surface-strong); transition: background 200ms; }
+.sweep-dot.on { background: var(--text-3); }
+.sweep-dot.done { background: var(--text); }
+.sweep-loop {
+  border-radius: var(--r-xl); padding: 22px 22px 20px; min-height: 220px;
+  display: flex; flex-direction: column;
+  animation: ol-card-in 380ms cubic-bezier(.2,.8,.2,1) both;
+}
+.sweep-loop.kind-do       { background: var(--do);       color: var(--do-ink); }
+.sweep-loop.kind-decide   { background: var(--decide);   color: var(--decide-ink); }
+.sweep-loop.kind-ask      { background: var(--ask);      color: var(--ask-ink); }
+.sweep-loop.kind-schedule { background: var(--schedule); color: var(--schedule-ink); }
+.sweep-loop.kind-let_go   { background: var(--let_go);   color: var(--let_go-ink); }
+.sweep-loop.kind-inbox    { background: var(--inbox);    color: var(--inbox-ink); }
+.sweep-loop .kind-chip { background: color-mix(in srgb, currentColor 14%, transparent); color: inherit; }
+.sweep-loop .kind-dot { background: currentColor !important; }
+.sweep-loop-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.sweep-count { font-size: 13px; font-weight: 600; opacity: .85; }
+.sweep-reason { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+.sweep-reason svg { width: 15px; height: 15px; flex-shrink: 0; }
+.sweep-loop-title { margin: 0 0 10px; font-size: 26px; font-weight: 600; line-height: 1.18; letter-spacing: -0.03em; color: inherit; }
+.sweep-loop-next { margin: 0; font-size: 15px; line-height: 1.5; opacity: .9; }
+.sweep-loop-next span { font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; margin-right: 8px; opacity: .8; }
+.sweep-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.sweep-grid .btn { height: 54px; width: 100%; justify-content: center; font-size: 15px; }
+.sweep-note { margin: 12px 2px 0; font-size: 13px; line-height: 1.45; color: var(--text-3); text-align: center; }
+.sweep-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 24px; }
+.sweep-chip { height: 32px; padding: 0 12px; border-radius: var(--r-pill); background: var(--surface-3); display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--text); }
+
+/* ── Still yours? ── */
+.still-sheet .overlay-header { align-items: flex-start; }
+.still-art { width: 88px; margin: -4px 0 0 -6px; }
+.still-actions { display: grid; gap: 10px; margin-top: 18px; }
+.still-actions .btn { width: 100%; height: 52px; justify-content: center; }
+
+/* ── Music that builds ── */
+.combo-meter { display: inline-flex; align-items: center; gap: 10px; margin-top: 12px; }
+.combo-beads { display: inline-flex; gap: 5px; }
+.combo-bead { width: 12px; height: 12px; border-radius: 50%; background: var(--surface-strong); }
+.combo-bead.on { box-shadow: inset -2px -2px 3px rgba(0,0,0,.18), inset 2px 2px 3px rgba(255,255,255,.35); }
+.combo-bead.pop { animation: ol-pop 420ms ease-out both; }
+.combo-label { font-size: 13px; font-weight: 500; color: var(--text-3); }
+.empty-state.cleared .mascot { margin: 0 auto 6px; }
+
+/* ── Date chip on capture ── */
+.capture-when { min-height: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 2px 0 14px; }
+.capture-when:empty { margin: 0; }
+.when-chip {
+  height: 40px; padding: 0 14px; border-radius: var(--r-pill);
+  border: 1px solid var(--border); background: var(--surface-3); color: var(--text);
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 600 14px/1 var(--sans); cursor: pointer;
+  animation: ol-rise 260ms ease-out both;
+}
+.when-chip svg { width: 15px; height: 15px; }
+.when-chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.when-chip-hint { font-size: 13px; color: var(--text-3); }
+
+/* ── Closed shelf opens Your head ── */
+button.closed-shelf { border: none; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: right; }
+button.closed-shelf:hover .shelf-more { color: var(--text); }
+.shelf-more { font-weight: 600; color: var(--text-2); white-space: nowrap; }
+
+/* ══ BATCH 3 · REACH AND PAYOFF ══════════════════════════════════ */
+
+/* ── Your head ── */
+.head-sheet { padding-bottom: 28px; }
+.head-hero { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; }
+.head-hero .mascot { flex-shrink: 0; }
+.head-title { margin: 0; }
+.head-since { margin: 4px 0 0; font-size: 15px; color: var(--text-2); }
+.head-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 22px; }
+.head-tile { padding: 14px 12px; border-radius: var(--r-lg); background: var(--surface-3); display: grid; gap: 2px; }
+.head-tile b { font-size: 28px; font-weight: 600; letter-spacing: -0.03em; color: var(--text); }
+.head-tile span { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.head-tile.t-done { background: var(--do-dim); }
+.head-tile.t-letgo { background: var(--let_go-dim); }
+.head-label { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 2px 10px; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-3); }
+.head-hint { font-size: 13px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.head-shelf { display: flex; flex-wrap: wrap; gap: 1px; padding: 14px 10px; margin-bottom: 22px; border-radius: var(--r-lg); background: var(--surface-3); }
+.head-shelf .clay-ring { width: 24px; height: 24px; }
+.head-more { align-self: center; margin-left: 6px; font-size: 13px; font-weight: 600; color: var(--text-2); }
+.head-card { padding: 16px 18px; margin-bottom: 22px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--border); }
+.head-longest { display: flex; align-items: center; gap: 14px; }
+.head-longest .clay-ring { width: 44px; height: 44px; flex-shrink: 0; }
+.head-longest b { display: block; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
+.head-longest span { display: block; margin-top: 2px; font-size: 14px; color: var(--text-2); }
+.head-speeds { display: grid; gap: 12px; }
+.head-speed { display: grid; grid-template-columns: 74px minmax(0, 1fr) 84px; align-items: center; gap: 10px; }
+.head-speed-kind { font-size: 14px; font-weight: 600; color: var(--text); }
+.head-bar { height: 12px; border-radius: var(--r-pill); background: var(--surface-strong); overflow: hidden; }
+.head-bar span { display: block; height: 100%; border-radius: var(--r-pill); }
+.head-speed-days { font-size: 14px; color: var(--text-2); text-align: right; }
+.head-speeds + .head-insight { margin: -12px 2px 22px; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+.head-list { padding: 0 16px; }
+.head-row { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border-soft); font-size: 15px; font-weight: 500; color: var(--text); }
+.head-row:last-child { border-bottom: none; }
+.head-date { flex-shrink: 0; font-size: 13px; font-weight: 500; color: var(--text-3); }
+.head-share { width: 100%; height: 54px; justify-content: center; gap: 8px; font-size: 16px; }
+.head-fine { margin: 10px 2px 0; font-size: 13px; line-height: 1.45; color: var(--text-3); text-align: center; }
+.head-empty { padding: 18px 8px 8px; }
+
+/* ── Share card ── */
+.share-preview { display: block; width: 100%; max-width: 360px; aspect-ratio: 4 / 5; margin: 6px auto 4px; border-radius: var(--r-lg); box-shadow: 0 12px 36px rgba(40,30,10,.14); background: #fffaf0; }
+.share-preview.is-loading { animation: ol-pulse 1.2s ease-in-out infinite; }
+@keyframes ol-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+
+/* ── Daily nudge settings ── */
+.nudge-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; font-size: 15px; font-weight: 500; color: var(--text); }
+.nudge-row .seg-row { margin: 0; }
+.nudge-time { height: 40px; padding: 0 10px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--surface); color: var(--text); font: 500 15px var(--sans); }
+.nudge-sample { margin: 2px 0 12px; font-size: 13px; line-height: 1.45; color: var(--text-3); }
+.nudge-switches { display: grid; margin: 4px 0 12px; border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+.nudge-switch {
+  min-height: 48px; padding: 0 14px; border: none; border-bottom: 1px solid var(--border-soft);
+  background: var(--surface); color: var(--text); font: 500 15px var(--sans);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; cursor: pointer;
+}
+.nudge-switch:last-child { border-bottom: none; }
+.nudge-switch .switch { flex-shrink: 0; position: relative; width: 44px; height: 26px; border-radius: var(--r-pill); background: var(--surface-strong); transition: background 160ms; }
+.nudge-switch .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--bg); box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform 160ms; }
+.nudge-switch.on .switch { background: var(--text); }
+.nudge-switch.on .switch::after { transform: translateX(18px); }
+.nudge-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-bob .mascot-body, .mascot-eyes, .sweep-loop, .rise, .sweep-banner, .when-chip, .combo-bead.pop { animation: none !important; }
+  .mascot-sealing .mascot-seal { animation: none; stroke-dashoffset: 0; }
+}
 </style>
 </head>
 <body>
@@ -3025,6 +3237,9 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
       </button>
       <button class="icon-btn" id="theme-toggle" type="button" data-action="toggle-theme" title="Toggle theme" aria-label="Toggle theme">
         <svg id="theme-icon-dark" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="icon-btn" id="head-btn" type="button" data-action="open-profile" title="Your head" aria-label="Your head: everything you’ve closed">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.6" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" stroke="currentColor" stroke-width="1.5"/></svg>
       </button>
       <button class="icon-btn" id="settings-btn" type="button" data-action="open-settings" title="Settings" aria-label="Settings">
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4"/><path d="M12.5 8c0-.3 0-.7-.1-1l1.4-1.1-1-1.7-1.7.7c-.5-.4-1-.7-1.6-.9L9.2 2H6.8l-.3 2c-.6.2-1.1.5-1.6.9l-1.7-.7-1 1.7L3.6 7C3.5 7.3 3.5 7.7 3.5 8s0 .7.1 1l-1.4 1.1 1 1.7 1.7-.7c.5.4 1 .7 1.6.9l.3 2h2.4l.3-2c.6-.2 1.1-.5 1.6-.9l1.7.7 1-1.7L12.4 9c.1-.3.1-.7.1-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
@@ -3076,7 +3291,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 18, date: '19 Oct 2026' };
+  const APP_VERSION = { number: 19, date: '19 Oct 2026' };
   let swRegistration = null;
 
   // UX constraints
@@ -3387,10 +3602,10 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
     return Math.max(max, nowPosition()) + 1;
   }
 
-  function createLoop({rawText, kind, promptAnswer, status, details}) {
+  function createLoop({rawText, kind, promptAnswer, status, details, wakeAt}) {
     const l = sanitize({
       id: uid('l'),
-      rawText, kind, promptAnswer, status, details,
+      rawText, kind, promptAnswer, status, details, wakeAt: wakeAt || null,
       position: topPosition(),
       createdAt: nowIso(),
       updatedAt: nowIso()
@@ -3403,7 +3618,10 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
   function updateLoop(id, patch) {
     const l = getLoop(id);
     if (!l) return null;
+    const wasReleased = l.status === 'released';
     Object.assign(l, patch, { updatedAt: nowIso() });
+    // A close made on this device adds a note to this sitting's tune.
+    if (!wasReleased && l.status === 'released' && !isLetGo(l)) Combo.hit(l.kind);
     // Warn rather than silently coerce: a bad value here usually means a
     // schema drift, a future feature flag, or a corrupted sync payload.
     if (l.kind !== null && l.kind !== undefined && !VALID_KINDS.has(l.kind)) {
@@ -3830,7 +4048,9 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
     renderAll();
     patches.forEach(([id, patch]) => Sync.updateLoop(id, patch));
     if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
-    if (!opts.quiet) {
+    // On Active the sweep banner already says what woke up.
+    const bannerSaysIt = view.activeTab === 'now' && sweepBannerItems().length > 0;
+    if (!opts.quiet && !bannerSaysIt) {
       const first = due[due.length - 1].rawText || '';
       const short = first.length > 42 ? first.slice(0, 40).trimEnd() + '…' : first;
       toast(due.length === 1 ? `Back in Up next: ${short}` : `${due.length} loops woke up. They're in Up next.`);
@@ -3921,7 +4141,8 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
   const REASON_ICON = {
     sun:    '<path d="M3 11.5h10M5 11.5a3 3 0 0 1 6 0M8 3.5v2M3.8 6.3l1.2 1.1M12.2 6.3 11 7.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
     person: '<circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M3 13.5a5 5 0 0 1 10 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
-    fork:   '<path d="M8 2v4M8 6 4 10v4M8 6l4 4v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'
+    fork:   '<path d="M8 2v4M8 6 4 10v4M8 6l4 4v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+    dry:    '<path d="M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM8 5.2V8l2 1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'
   };
   function reasonFor(loop) {
     const d = loop.details || {};
@@ -3932,12 +4153,14 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
         const who = parseAsk(loop.promptAnswer).who || 'them';
         return { icon: 'person', text: wake ? `Waiting on ${who} · back ${formatWake(loop.wakeAt)}` : `Waiting on ${who}` };
       }
-      return wake ? { icon: 'sun', text: `Wakes ${formatWake(loop.wakeAt)}` } : { text: 'No wake time', quiet: true };
+      if (wake) return { icon: 'sun', text: `Wakes ${formatWake(loop.wakeAt)}` };
+      return dryReason(loop) || { text: 'No wake time', quiet: true };
     }
     if (loop.status === 'active') {
       if (isSentAsk) return { icon: 'person', text: wake && wake <= Date.now() ? 'Checking back' : `Sent ${relativeDay(d.sentAt)}` };
       if (wake && wake <= Date.now() && isSameDay(new Date(wake), new Date())) return { icon: 'sun', text: 'Woke today' };
       if (d.origin === 'decision') return { icon: 'fork', text: 'From your decision' };
+      return dryReason(loop);
     }
     return null;
   }
@@ -3945,7 +4168,728 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
     const r = reasonFor(loop);
     if (!r) return '';
     const icon = REASON_ICON[r.icon] ? `<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">${REASON_ICON[r.icon]}</svg>` : '';
-    return `<span class="loop-reason${r.quiet ? ' quiet' : ''}">${icon}<span>${esc(r.text)}</span></span>`;
+    return `<span class="loop-reason${r.quiet ? ' quiet' : ''}${r.dry ? ' dry' : ''}">${icon}<span>${esc(r.text)}</span></span>`;
+  }
+
+  // ── DRYING CLAY ──
+  // Clay dries out when nobody touches it. Ten days untouched and a card
+  // starts to dry; after three weeks it cracks and asks "Still yours?".
+  // Touching it (keeping it, editing it, moving it) makes it fresh again.
+  // Parked loops with a wake time are asleep on purpose, so they never dry.
+  const DRY_DAYS = 10;
+  const CRACK_DAYS = 21;
+  function untouchedDays(loop) {
+    const t = new Date(loop.updatedAt || loop.createdAt).getTime();
+    return Number.isFinite(t) ? Math.max(0, Math.floor((Date.now() - t) / 86400000)) : 0;
+  }
+  function dryness(loop) {
+    if (!loop || (loop.status !== 'active' && loop.status !== 'waiting')) return null;
+    if (loop.status === 'waiting' && loop.wakeAt) return null;
+    const days = untouchedDays(loop);
+    if (days >= CRACK_DAYS) return { level: 'cracked', days };
+    if (days >= DRY_DAYS) return { level: 'drying', days };
+    return null;
+  }
+  function dryReason(loop) {
+    const dry = dryness(loop);
+    if (!dry) return null;
+    return { icon: 'dry', dry: dry.level, text: dry.level === 'cracked' ? `Untouched ${dry.days} days · cracking` : `Untouched ${dry.days} days` };
+  }
+  function dryClass(loop) {
+    const dry = dryness(loop);
+    return dry ? ` is-${dry.level}` : '';
+  }
+  function stillYoursBtn(loop) {
+    const dry = dryness(loop);
+    return dry && dry.level === 'cracked'
+      ? `<button class="btn-action still-yours-btn" data-action="open-still-yours" data-loop-id="${esc(loop.id)}">Still yours?</button>`
+      : '';
+  }
+  function shortText(text, max = 48) {
+    const s = String(text || '').replace(/\s+/g, ' ').trim();
+    return s.length > max ? s.slice(0, max - 1).trimEnd() + '…' : s;
+  }
+
+  // ── MASCOT ──
+  // The open C from the logo, in the same clay, with a face. All it wants is
+  // to close. Moods: sleepy · awake · curious · cheeky · proud · calm.
+  let mascotSeq = 0;
+  function clayFilterDefs(id, blur = 5, surface = 5) {
+    return `<filter id="${id}" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="${blur}" result="b"/>
+        <feDiffuseLighting in="b" surfaceScale="${surface}" diffuseConstant="1.05" lighting-color="#fff" result="d"><feDistantLight azimuth="235" elevation="48"/></feDiffuseLighting>
+        <feComposite in="SourceGraphic" in2="d" operator="arithmetic" k1="1.05" result="lit"/>
+        <feSpecularLighting in="b" surfaceScale="${surface}" specularConstant="0.55" specularExponent="16" lighting-color="#fff" result="s"><feDistantLight azimuth="235" elevation="55"/></feSpecularLighting>
+        <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+        <feComposite in="lit" in2="s2" operator="arithmetic" k2="1" k3="0.6" result="o"/>
+        <feComposite in="o" in2="SourceAlpha" operator="in"/>
+      </filter>
+      <filter id="${id}-sh" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"/></filter>`;
+  }
+  function mascotSvg(mood = 'awake', opts = {}) {
+    const id = `ol-mascot-${++mascotSeq}`;
+    const w = opts.width || 200;
+    const h = Math.round(w * 220 / 300);
+    const ink = '#0a0a0a';
+    const C = '<path d="M 196 72 A 58 58 0 1 0 200 150" fill="none" stroke="#ffb084" stroke-width="32" stroke-linecap="round"/>';
+    const dot = '<circle cx="236" cy="104" r="10" fill="#ff4d8b"/>';
+    const eye = (cx, cy, rx = 6, ry = 8) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${ink}"/>`;
+    const line = (d, sw = 4) => `<path d="${d}" fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    const spark = (x, y, s, fill) => `<path d="M${x} ${y - s}l${s * 0.4} ${s * 0.6}l${s * 0.6} ${s * 0.4}l-${s * 0.6} ${s * 0.4}l-${s * 0.4} ${s * 0.6}l-${s * 0.4} -${s * 0.6}l-${s * 0.6} -${s * 0.4}l${s * 0.6} -${s * 0.4}Z" fill="${fill}"/>`;
+    let clay = C + dot;
+    let face = '';
+    let extra = '';
+    let tilt = '';
+    if (mood === 'sleepy') {
+      face = line('M128 54 Q136 60 144 54') + line('M156 54 Q164 60 172 54') + line('M144 66 Q150 69 156 66', 3);
+      extra = '<text class="mascot-z" x="214" y="50" font-size="26" font-weight="700">z</text><text class="mascot-z" x="236" y="28" font-size="18" font-weight="700">z</text>';
+    } else if (mood === 'curious') {
+      tilt = 'transform="rotate(-8 150 112)"';
+      face = eye(136, 51, 8, 10) + eye(166, 51, 8, 10) + '<circle cx="139" cy="47" r="3" fill="#fff"/><circle cx="169" cy="47" r="3" fill="#fff"/>' + `<circle cx="151" cy="66" r="4" fill="${ink}"/>`;
+    } else if (mood === 'cheeky') {
+      face = eye(136, 52) + line('M157 53 Q164 47 171 53') + line('M140 63 Q152 69 161 60', 3.5);
+    } else if (mood === 'proud') {
+      clay = '<circle class="mascot-seal" cx="150" cy="112" r="58" fill="none" stroke="#ffb084" stroke-width="32" stroke-linecap="round" stroke-dasharray="364.4" transform="rotate(39 150 112)"/>';
+      face = line('M129 56 Q136 46 143 56', 4.5) + line('M157 56 Q164 46 171 56', 4.5) + line('M139 63 Q150 73 161 63', 3.5);
+      extra = spark(242, 50, 12, '#e8b94a') + spark(62, 58, 8, '#b8a4ed');
+    } else if (mood === 'calm') {
+      clay = C + '<ellipse cx="248" cy="58" rx="12" ry="9" fill="#ffb084"/>';
+      face = line('M129 52 Q136 57 143 52') + line('M157 52 Q164 57 171 52') + line('M142 63 Q150 68 158 63', 3);
+    } else {
+      face = `<g class="mascot-eyes">${eye(136, 52)}${eye(164, 52)}</g>` + line('M141 63 Q150 69 159 63', 3);
+    }
+    const a11y = opts.label ? `role="img" aria-label="${esc(opts.label)}"` : 'aria-hidden="true" focusable="false"';
+    return `<svg class="mascot mascot-${mood}${opts.className ? ' ' + opts.className : ''}" width="${w}" height="${h}" viewBox="0 0 300 220" ${a11y}>
+      <defs>${clayFilterDefs(id)}</defs>
+      <ellipse cx="150" cy="196" rx="90" ry="10" fill="#3a2a10" opacity=".13" filter="url(#${id}-sh)"/>
+      <g class="mascot-body" ${tilt}><g filter="url(#${id})">${clay}</g>${face}${extra}</g>
+    </svg>`;
+  }
+
+  // ── SWEEP ──
+  // The daily ritual. Loops that woke up since your last sweep, plus any that
+  // have dried out, one card at a time: make it Now, keep it in Up next, park
+  // it again, or let it go. About thirty seconds. Nothing else moves.
+  const SWEEP_KEY_BASE = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_sweep' : 'open_loops_sweep';
+  function sweepState() {
+    const key = scopedKey(SWEEP_KEY_BASE);
+    if (!key) return {};
+    try {
+      const v = JSON.parse(localStorage.getItem(key) || '{}');
+      return v && typeof v === 'object' ? v : {};
+    } catch (_) { return {}; }
+  }
+  function saveSweepState(patch) {
+    const key = scopedKey(SWEEP_KEY_BASE);
+    if (!key) return;
+    try { localStorage.setItem(key, JSON.stringify({ ...sweepState(), ...patch })); } catch (_) {}
+  }
+  function sweepItems() {
+    const now = Date.now();
+    const st = sweepState();
+    const since = st.sweptAt ? new Date(st.sweptAt).getTime() : now - 36 * 3600000;
+    const woke = data.loops
+      .filter(l => l.status === 'active' && l.wakeAt)
+      .filter(l => { const t = new Date(l.wakeAt).getTime(); return t <= now && t > since; })
+      .sort((a, b) => new Date(a.wakeAt) - new Date(b.wakeAt));
+    const seen = new Set(woke.map(l => l.id));
+    const dry = data.loops
+      .filter(l => !seen.has(l.id) && (dryness(l) || {}).level === 'cracked')
+      .sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt))
+      .slice(0, 3);
+    return woke.map(l => ({ id: l.id, why: 'woke' }))
+      .concat(dry.map(l => ({ id: l.id, why: 'dry' })))
+      .slice(0, 6);
+  }
+  // The banner stays while there's something to sweep, unless you said
+  // "Later" today and nothing new has turned up since.
+  function sweepBannerItems() {
+    const items = sweepItems();
+    if (!items.length) return [];
+    const st = sweepState();
+    if (st.laterOn !== localDateValue(new Date())) return items;
+    const snoozed = new Set(st.laterIds || []);
+    return items.some(it => !snoozed.has(it.id)) ? items : [];
+  }
+  function greeting() {
+    const h = new Date().getHours();
+    return h < 12 ? 'Good morning.' : h < 17 ? 'Good afternoon.' : 'Good evening.';
+  }
+  function sweepHeadline(items) {
+    const woke = items.filter(i => i.why === 'woke').length;
+    const dry = items.length - woke;
+    if (woke && dry) return `${woke} woke up, ${dry} drying out.`;
+    if (woke) return woke === 1 ? '1 loop woke up.' : `${woke} loops woke up.`;
+    return dry === 1 ? '1 loop is drying out.' : `${dry} loops are drying out.`;
+  }
+  function sweepBannerHtml(items) {
+    const woke = items.some(i => i.why === 'woke');
+    return `
+      <section class="sweep-banner" aria-label="Sweep">
+        <span class="sweep-banner-art">${mascotSvg(woke ? 'awake' : 'cheeky', { width: 76 })}</span>
+        <div class="sweep-banner-text">
+          <span class="sweep-banner-hello">${greeting()}</span>
+          <strong>${esc(sweepHeadline(items))}</strong>
+          <span class="sweep-banner-sub">Sort ${items.length > 1 ? 'them' : 'it'} in about 30 seconds.</span>
+        </div>
+        <div class="sweep-banner-actions">
+          <button type="button" class="btn btn-primary" data-action="open-sweep">Sweep</button>
+          <button type="button" class="sweep-banner-later" data-action="sweep-later" title="Later" aria-label="Later. Hide this until something new comes up.">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </section>`;
+  }
+  function sweepable(item) {
+    const l = item && getLoop(item.id);
+    return !!(l && (l.status === 'active' || l.status === 'waiting'));
+  }
+  function renderSweep(ov) {
+    const items = ov.items || [];
+    const sheet = (body) => `
+      <div class="overlay-card sweep-sheet" role="dialog" aria-modal="true" aria-labelledby="sweep-title">
+        <div class="overlay-header">
+          <div class="overlay-meta"><div class="overlay-eyebrow">Sweep</div></div>
+          ${SHEET_CLOSE}
+        </div>
+        ${body}
+      </div>`;
+    if (ov.step === 'intro') {
+      return sheet(`
+        <div class="sweep-hero">
+          ${mascotSvg('awake', { width: 210, className: 'mascot-bob', label: 'The Open Loops mascot, just awake' })}
+          <h2 class="sweep-h" id="sweep-title">${greeting()}<br>${esc(sweepHeadline(items))}</h2>
+          <p class="sweep-p">Decide where each one goes. About 30 seconds.</p>
+          <button type="button" class="btn btn-primary sweep-go" data-action="sweep-start">Start the sweep</button>
+          <button type="button" class="btn btn-ghost sweep-later-btn" data-action="sweep-later">Later</button>
+        </div>`);
+    }
+    if (ov.step === 'done') {
+      const count = k => ov.picks.filter(p => p === k).length;
+      const nowLoop = ov.nowId ? getLoop(ov.nowId) : null;
+      const line = nowLoop && nowLoop.status === 'active'
+        ? `Your Now is “${esc(shortText(nowLoop.rawText, 60))}”. Everything else knows where it lives.`
+        : 'Everything knows where it lives.';
+      const chips = [['now', 'Now'], ['next', 'Up next'], ['park', 'Parked'], ['go', 'Let go']]
+        .filter(([k]) => count(k))
+        .map(([k, label]) => `<span class="sweep-chip">${label}: ${count(k)}</span>`).join('');
+      return sheet(`
+        <div class="sweep-hero">
+          ${mascotSvg('proud', { width: 210, className: 'mascot-sealing', label: 'The mascot, proud, closed into a ring' })}
+          <h2 class="sweep-h rise" id="sweep-title">Swept.</h2>
+          <p class="sweep-p rise">${line}</p>
+          <div class="sweep-chips rise">${chips}</div>
+          <button type="button" class="btn btn-primary sweep-go rise" data-action="sweep-finish">Go to Active</button>
+        </div>`);
+    }
+    const it = items[ov.idx];
+    const loop = it && getLoop(it.id);
+    if (!loop) return '';
+    const dots = items.map((_, i) => `<span class="sweep-dot${i < ov.idx ? ' done' : i === ov.idx ? ' on' : ''}"></span>`).join('');
+    const progress = `<div class="sweep-dots" role="img" aria-label="Loop ${ov.idx + 1} of ${items.length}">${dots}</div>`;
+    if (ov.step === 'park') {
+      const presets = wakePresets('park')
+        .filter(p => p.label !== 'Tonight' && p.label !== 'In 3 hours')
+        .map(p => actBtn({
+          action: 'sweep-park', label: p.label, sub: formatWake(p.when), loopId: loop.id,
+          attrs: `data-when="${p.when.toISOString()}"`, icon: ACT_ICON.clock
+        })).join('');
+      return sheet(`
+        ${progress}
+        <h2 class="sweep-h small" id="sweep-title">When should “${esc(shortText(loop.rawText, 40))}” come back?</h2>
+        <div class="act-list">
+          ${presets}
+          ${actBtn({ action: 'sweep-park', label: 'No date', sub: 'It waits in Parked until you bring it back', loopId: loop.id, attrs: 'data-when=""', icon: ACT_ICON.next })}
+        </div>
+        <button type="button" class="btn btn-ghost sweep-back" data-action="sweep-back">Back</button>`);
+    }
+    let reason;
+    if (it.why === 'woke') {
+      const d = loop.details || {};
+      reason = loop.kind === 'ask' && d.sentAt
+        ? { icon: 'person', text: `Checking back on ${parseAsk(loop.promptAnswer).who || 'them'}` }
+        : { icon: 'sun', text: `You parked it until ${formatWake(loop.wakeAt)}` };
+    } else {
+      reason = { icon: 'dry', text: `Untouched ${untouchedDays(loop)} days. Still yours?` };
+    }
+    const detail = loop.promptAnswer ? `<p class="sweep-loop-next"><span>Next</span>${esc(loop.promptAnswer)}</p>` : '';
+    const nowLoop = byStatus('active')[0];
+    const hasOtherNow = !!(nowLoop && nowLoop.id !== loop.id);
+    const dry = it.why === 'dry';
+    return sheet(`
+        ${progress}
+        <h2 class="sr-only" id="sweep-title">Where does this one go?</h2>
+        <article class="sweep-loop kind-${loop.kind || 'inbox'}">
+          <div class="sweep-loop-top">${chipHtml(loop.kind)}<span class="sweep-count">${ov.idx + 1} of ${items.length}</span></div>
+          <div class="sweep-reason"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true">${REASON_ICON[reason.icon]}</svg><span>${esc(reason.text)}</span></div>
+          <h3 class="sweep-loop-title">${esc(loop.rawText)}</h3>
+          ${detail}
+        </article>
+        <div class="sweep-grid">
+          <button type="button" class="btn btn-primary" data-action="sweep-pick" data-pick="now">Make it Now</button>
+          <button type="button" class="btn btn-ghost" data-action="sweep-pick" data-pick="next">${dry ? 'Keep it' : 'Up next'}</button>
+          <button type="button" class="btn btn-ghost" data-action="sweep-pick" data-pick="park">${dry ? 'Park it' : 'Park again'}</button>
+          <button type="button" class="btn btn-ghost" data-action="sweep-pick" data-pick="go">Let go</button>
+        </div>
+        <p class="sweep-note">${hasOtherNow ? 'Make it Now puts it above your current Now. Up next leaves your Now as it is.' : 'Make it Now puts it at the top of Active.'}</p>`);
+  }
+  // One card's choice, applied to the loop. Returns what to sync.
+  function sweepApply(loop, pick, wakeAt) {
+    const top = byStatus('active')[0];
+    const isNow = !!(top && top.id === loop.id);
+    let patch;
+    let rebalance = false;
+    if (pick === 'now') {
+      patch = isNow ? { position: loop.position } : { status: 'active', position: topPosition() };
+    } else if (pick === 'next') {
+      if (isNow) patch = { position: loop.position };
+      else { const up = upNextPosition(loop.id); patch = { status: 'active', position: up.position }; rebalance = up.rebalance; }
+    } else if (pick === 'park') {
+      patch = { status: 'waiting', wakeAt: wakeAt || null };
+    } else {
+      patch = { status: 'released', completedAt: nowIso(), details: cleanDetails({ ...loop.details, outcome: 'let_go' }) };
+    }
+    updateLoop(loop.id, patch);
+    return { patch, positionChanges: rebalance ? rebalanceActivePositions() : null };
+  }
+
+  // "Still yours?" for one cracked loop.
+  function renderStillYours(loop) {
+    if (!loop) return '';
+    const days = untouchedDays(loop);
+    return `
+      <div class="overlay-card still-sheet" role="dialog" aria-modal="true" aria-labelledby="still-title">
+        <div class="overlay-header">
+          <div class="still-art">${mascotSvg('cheeky', { width: 88 })}</div>
+          ${SHEET_CLOSE}
+        </div>
+        <h2 class="overlay-title" id="still-title">Still yours?</h2>
+        <p class="overlay-subtitle">“${esc(shortText(loop.rawText, 80))}” has sat for ${days} days. Clay dries out when nobody touches it.</p>
+        <div class="still-actions">
+          <button type="button" class="btn btn-primary" data-action="still-keep" data-loop-id="${esc(loop.id)}">Yes, keep it</button>
+          <button type="button" class="btn btn-ghost" data-action="open-when" data-loop-id="${esc(loop.id)}">Park it until…</button>
+          <button type="button" class="btn btn-ghost" data-action="still-let-go" data-loop-id="${esc(loop.id)}">Let it go</button>
+        </div>
+      </div>`;
+  }
+
+  // ── MUSIC THAT BUILDS ──
+  // Every loop you close in one sitting adds a note to the landing chord; a
+  // sitting ends after half an hour without a close. Clearing Active after
+  // two or more closes plays the whole chord.
+  const Combo = (() => {
+    const SITTING_MS = 30 * 60000;
+    let kinds = [];
+    let lastAt = 0;
+    const live = () => Date.now() - lastAt <= SITTING_MS;
+    return {
+      hit(kind) { if (!live()) kinds = []; kinds.push(kind || 'inbox'); lastAt = Date.now(); },
+      count() { return live() ? kinds.length : 0; },
+      kinds() { return live() ? kinds.slice() : []; },
+      fresh() { return Date.now() - lastAt < 4000; }
+    };
+  })();
+  function comboMeterHtml() {
+    const kinds = Combo.kinds();
+    if (!kinds.length) return '';
+    const n = kinds.length;
+    const shown = Math.min(n, 5);
+    const beads = Array.from({ length: 5 }, (_, i) => {
+      const k = kinds[i];
+      const pop = k && i === shown - 1 && Combo.fresh() ? ' pop' : '';
+      return `<span class="combo-bead${k ? ' on' : ''}${pop}"${k ? ` style="background:var(--${k})"` : ''}></span>`;
+    }).join('');
+    const label = n >= 5 ? 'Full chord' : `${n} of 5 notes`;
+    return `<div class="combo-meter" role="img" aria-label="${n} ${n === 1 ? 'close' : 'closes'} this sitting. ${label}."><span class="combo-beads">${beads}</span><span class="combo-label">${label}</span></div>`;
+  }
+
+  // ── YOUR HEAD ──
+  // A look back, built only from loops you've already closed: your shelf,
+  // how long things take, and what you decided. Nothing here leaves the app.
+  const KIND_PLURAL = { do: 'Do loops', decide: 'Decisions', ask: 'Asks', schedule: 'Schedules' };
+  const SHARE_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10V2.5M8 2.5 5 5.5M8 2.5l3 3M3 9v3.5A1.5 1.5 0 0 0 4.5 14h7a1.5 1.5 0 0 0 1.5-1.5V9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function monthYear(t) { return new Date(t).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); }
+  function dayMonth(v) { return new Date(v).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); }
+  function daysText(d) {
+    if (d < 1) return 'under a day';
+    const n = Math.round(d);
+    return n === 1 ? '1 day' : `${n} days`;
+  }
+  function heldDays(l) { return Math.max(0, (new Date(l.completedAt) - new Date(l.createdAt)) / 86400000); }
+  function headStats() {
+    const closed = data.loops
+      .filter(l => l.status === 'released' && l.completedAt)
+      .sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
+    const done = closed.filter(l => !isLetGo(l));
+    const letGo = closed.filter(isLetGo);
+    const open = data.loops.filter(l => l.status !== 'released').length;
+    let first = Infinity;
+    data.loops.forEach(l => { const t = new Date(l.createdAt).getTime(); if (Number.isFinite(t) && t < first) first = t; });
+    const longest = done.reduce((best, l) => (!best || heldDays(l) > heldDays(best) ? l : best), null);
+    const speeds = ['schedule', 'ask', 'do', 'decide'].map(kind => {
+      const ds = done.filter(l => l.kind === kind).map(heldDays).sort((a, b) => a - b);
+      if (ds.length < 2) return null;
+      const mid = Math.floor(ds.length / 2);
+      return { kind, days: ds.length % 2 ? ds[mid] : (ds[mid - 1] + ds[mid]) / 2 };
+    }).filter(Boolean);
+    const decisions = done.filter(l => l.details && l.details.decision).slice(-6).reverse();
+    return { closed, done, letGo, open, first, longest, speeds, decisions };
+  }
+  function renderProfile() {
+    const s = headStats();
+    const since = Number.isFinite(s.first) ? `Emptying it since ${monthYear(s.first)}` : 'Nothing here yet';
+    let body = `
+        <div class="head-hero">
+          ${mascotSvg(s.closed.length ? 'proud' : 'curious', { width: 104 })}
+          <div><h2 class="overlay-title head-title" id="head-title">Your head</h2><p class="head-since">${esc(since)}</p></div>
+        </div>
+        <div class="head-tiles">
+          <div class="head-tile t-done"><b>${s.done.length}</b><span>closed</span></div>
+          <div class="head-tile t-letgo"><b>${s.letGo.length}</b><span>let go</span></div>
+          <div class="head-tile t-open"><b>${s.open}</b><span>open now</span></div>
+        </div>`;
+    if (!s.closed.length) {
+      body += `<div class="empty-state head-empty"><strong>Nothing on your shelf yet.</strong>Close a loop and it lands here as a clay ring. Let one go and it becomes a pebble.</div>`;
+    } else {
+      const shelfItems = s.closed.slice(-210);
+      const more = s.closed.length - shelfItems.length;
+      body += `
+        <div class="head-label"><span>Your shelf</span><span class="head-hint">Rings closed, pebbles let go</span></div>
+        <div class="head-shelf" role="img" aria-label="${s.done.length} rings and ${s.letGo.length} pebbles">${shelfItems.map(shelfItemHtml).join('')}${more ? `<span class="head-more">+${more}</span>` : ''}</div>`;
+      if (s.longest) {
+        body += `
+        <div class="head-label"><span>Longest held, finally closed</span></div>
+        <div class="head-card head-longest">${clayRingHtml(s.longest.kind)}<div><b>${esc(s.longest.rawText)}</b><span>Open ${daysText(heldDays(s.longest))} · closed ${esc(dayMonth(s.longest.completedAt))}</span></div></div>`;
+      }
+      if (s.speeds.length) {
+        const max = Math.max(...s.speeds.map(x => x.days), 0.5);
+        const rows = s.speeds.map(x => `
+          <div class="head-speed"><span class="head-speed-kind">${esc(kindMeta[x.kind].label)}</span><span class="head-bar"><span style="width:${Math.max(4, Math.round(x.days / max * 100))}%;background:var(--${x.kind})"></span></span><span class="head-speed-days">${daysText(x.days)}</span></div>`).join('');
+        let insight = '';
+        if (s.speeds.length >= 2) {
+          const slow = s.speeds.reduce((a, b) => (b.days > a.days ? b : a));
+          const fast = s.speeds.reduce((a, b) => (b.days < a.days ? b : a));
+          if (slow.days - fast.days >= 1) insight = `<p class="head-insight">${KIND_PLURAL[slow.kind]} sit longest. ${KIND_PLURAL[fast.kind]} close fastest.</p>`;
+        }
+        body += `
+        <div class="head-label"><span>How fast you close</span><span class="head-hint">Typical time</span></div>
+        <div class="head-card head-speeds">${rows}</div>${insight}`;
+      }
+      if (s.decisions.length) {
+        body += `
+        <div class="head-label"><span>Decisions you made</span></div>
+        <div class="head-card head-list">${s.decisions.map(l => `<div class="head-row"><span>${esc(l.details.decision)}</span><span class="head-date">${esc(dayMonth(l.completedAt))}</span></div>`).join('')}</div>`;
+      }
+    }
+    const monthName = new Date().toLocaleDateString(undefined, { month: 'long' });
+    body += monthCloses().length
+      ? `<button type="button" class="btn btn-primary head-share no-autofocus" data-action="open-share">${SHARE_ICON}Share your ${esc(monthName)}</button>
+         <p class="head-fine">The card shows colours and counts. Never what your loops say.</p>`
+      : `<p class="head-fine">Close something this month to make a card you can share.</p>`;
+    return `
+      <div class="overlay-card head-sheet" role="dialog" aria-modal="true" aria-labelledby="head-title">
+        <div class="overlay-header"><div class="overlay-meta"><div class="overlay-eyebrow">Profile</div></div>${SHEET_CLOSE}</div>
+        ${body}
+      </div>`;
+  }
+
+  // ── SHARE CARD ──
+  // Your month as clay: colours and counts only, never what your loops say.
+  const SHARE_COLORS = { do: '#1a3a3a', decide: '#e8b94a', ask: '#ff4d8b', schedule: '#b8a4ed', let_go: '#ffb084', inbox: '#d6cfbd' };
+  let shareBlob = null;
+  function monthCloses(d = new Date()) {
+    return data.loops.filter(l => {
+      if (l.status !== 'released' || !l.completedAt) return false;
+      const c = new Date(l.completedAt);
+      return c.getFullYear() === d.getFullYear() && c.getMonth() === d.getMonth();
+    }).sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
+  }
+  function shareRoundRect(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  }
+  function shareRing(g, x, y, r, w, color) {
+    g.save();
+    g.shadowColor = 'rgba(58,42,16,0.22)'; g.shadowBlur = 18; g.shadowOffsetY = 8;
+    g.lineWidth = w; g.strokeStyle = color;
+    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke();
+    g.restore();
+    g.save();
+    g.lineWidth = w * 0.28; g.lineCap = 'round'; g.strokeStyle = 'rgba(255,255,255,0.4)';
+    g.beginPath(); g.arc(x, y, r, Math.PI * 1.05, Math.PI * 1.55); g.stroke();
+    g.restore();
+  }
+  function sharePebble(g, x, y, r, color) {
+    g.save();
+    g.shadowColor = 'rgba(58,42,16,0.22)'; g.shadowBlur = 18; g.shadowOffsetY = 8;
+    g.fillStyle = color; g.beginPath(); g.ellipse(x, y + r * 0.2, r, r * 0.72, 0, 0, Math.PI * 2); g.fill();
+    g.restore();
+    g.save();
+    g.fillStyle = 'rgba(255,255,255,0.38)'; g.beginPath(); g.ellipse(x - r * 0.35, y - r * 0.1, r * 0.32, r * 0.16, -0.4, 0, Math.PI * 2); g.fill();
+    g.restore();
+  }
+  async function drawShareCard() {
+    const list = monthCloses();
+    const W = 1080, H = 1350, P = 96;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const g = canvas.getContext('2d');
+    try { await Promise.all(['500 112px Inter', '600 40px Inter'].map(f => document.fonts.load(f))); } catch (_) {}
+    const font = (w, s) => `${w} ${s}px Inter, -apple-system, "Segoe UI", Roboto, sans-serif`;
+    g.fillStyle = '#fffaf0'; g.fillRect(0, 0, W, H);
+
+    // Brand: the open C and its dot
+    g.save(); g.translate(P - 8, 86); g.scale(2.4, 2.4);
+    g.lineWidth = 6; g.lineCap = 'round'; g.strokeStyle = '#ffb084';
+    g.stroke(new Path2D('M22 7.6A10 10 0 1 0 22.6 21.6'));
+    g.fillStyle = '#ff4d8b'; g.beginPath(); g.arc(24.4, 14.6, 2.6, 0, Math.PI * 2); g.fill();
+    g.restore();
+    g.textBaseline = 'middle';
+    g.fillStyle = '#0a0a0a'; g.font = font(600, 40); g.fillText('Open Loops', P + 76, 122);
+    g.fillStyle = '#6b665b'; g.font = font(600, 28); g.textAlign = 'right';
+    if ('letterSpacing' in g) g.letterSpacing = '4px';
+    g.fillText(new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase(), W - P, 122);
+    if ('letterSpacing' in g) g.letterSpacing = '0px';
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+
+    // Headline
+    const n = list.length;
+    g.fillStyle = '#0a0a0a'; g.font = font(500, 112);
+    if ('letterSpacing' in g) g.letterSpacing = '-5px';
+    g.fillText(`${n} thing${n === 1 ? '' : 's'} out`, P - 6, 330);
+    g.fillText('of my head.', P - 6, 452);
+    if ('letterSpacing' in g) g.letterSpacing = '0px';
+
+    // One clay ring per close, a pebble per let go
+    const cols = 7, cell = (W - 2 * P) / cols;
+    list.slice(-35).forEach((l, i) => {
+      const cx = P + cell * (i % cols) + cell / 2;
+      const cy = 570 + Math.floor(i / cols) * cell * 0.92 + cell / 2;
+      if (isLetGo(l)) sharePebble(g, cx, cy, cell * 0.34, SHARE_COLORS.let_go);
+      else shareRing(g, cx, cy, cell * 0.25, cell * 0.17, SHARE_COLORS[l.kind] || SHARE_COLORS.inbox);
+    });
+
+    // Counts
+    const done = list.filter(l => !isLetGo(l));
+    const letGo = n - done.length;
+    const longest = done.reduce((m, l) => Math.max(m, heldDays(l)), 0);
+    const tiles = [
+      [String(done.length), 'closed', '#d9e6e2'],
+      [String(letGo), 'let go', '#ffe2d1'],
+      [daysText(longest).replace('under a day', '< 1 day'), 'longest held', '#f7e7bd']
+    ];
+    const gap = 24, tw = (W - 2 * P - 2 * gap) / 3, th = 168, ty = H - P - th;
+    tiles.forEach(([big, small, bg], i) => {
+      const x = P + i * (tw + gap);
+      g.fillStyle = bg; shareRoundRect(g, x, ty, tw, th, 32); g.fill();
+      g.fillStyle = '#0a0a0a'; g.font = font(600, 56); g.fillText(big, x + 30, ty + 86);
+      g.fillStyle = '#3a3a3a'; g.font = font(500, 30); g.fillText(small, x + 30, ty + 132);
+    });
+    return canvas;
+  }
+  function canShareFiles() {
+    try { return !!(navigator.canShare && navigator.canShare({ files: [new File([''], 'card.png', { type: 'image/png' })] })); } catch (_) { return false; }
+  }
+  function renderShare(ov) {
+    return `
+      <div class="overlay-card share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-title">
+        <div class="overlay-header"><div class="overlay-meta"><div class="overlay-eyebrow">Share card</div></div>${SHEET_CLOSE}</div>
+        <h2 class="overlay-title" id="share-title">Your ${esc(ov.month)}, in clay.</h2>
+        <p class="overlay-subtitle">Colours and counts only. Never what your loops say.</p>
+        ${ov.img ? `<img class="share-preview" src="${ov.img}" alt="Share card: ${ov.count} things out of my head this ${esc(ov.month)}.">` : '<div class="share-preview is-loading" aria-hidden="true"></div>'}
+        <div class="overlay-actions">
+          <button type="button" class="btn btn-ghost" data-action="share-save" ${ov.img ? '' : 'disabled'}>Save image</button>
+          ${canShareFiles() ? `<button type="button" class="btn btn-primary" data-action="share-send" ${ov.img ? '' : 'disabled'}>Share</button>` : ''}
+        </div>
+      </div>`;
+  }
+  function saveShareImage(name) {
+    if (!shareBlob) return;
+    const url = URL.createObjectURL(shareBlob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  // ── DAILY NUDGES (web push) ──
+  // At most one a day, at a time you pick, and only when something is
+  // waiting. The phone's permission lives in push_subscriptions; a small
+  // Supabase function decides what to say and sends it.
+  const Push = (() => {
+    const KEY_BASE = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_push' : 'open_loops_push';
+    const DEFAULTS = { on: false, time: '09:00', voice: 'cheeky', wakeups: true, stale: true, recap: true };
+    const key = () => scopedKey(KEY_BASE);
+    function supported() {
+      return !IS_FILE && !!CFG.VAPID_PUBLIC_KEY && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    }
+    function permission() { return 'Notification' in window ? Notification.permission : 'denied'; }
+    function prefs() {
+      try { return { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(key()) || '{}') || {}) }; } catch (_) { return { ...DEFAULTS }; }
+    }
+    function store(p) { try { if (key()) localStorage.setItem(key(), JSON.stringify(p)); } catch (_) {} }
+    function keyBytes(b64) {
+      const s = String(b64).replace(/-/g, '+').replace(/_/g, '/');
+      const bin = atob(s + '='.repeat((4 - (s.length % 4)) % 4));
+      return Uint8Array.from(bin, c => c.charCodeAt(0));
+    }
+    async function registration() {
+      if (swRegistration) return swRegistration;
+      // ready never settles if the service worker couldn't register; don't hang the button.
+      return Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('no-service-worker')), 8000))
+      ]);
+    }
+    async function subscribe(reg) {
+      return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(CFG.VAPID_PUBLIC_KEY) });
+    }
+    function timeZone() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (_) { return 'UTC'; } }
+    async function enable() {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return perm;
+      const reg = await registration();
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await subscribe(reg);
+      const p = { ...prefs(), on: true, tz: timeZone() };
+      try {
+        await Sync.savePush(sub.toJSON(), p);
+      } catch (e) {
+        // This browser's subscription may still belong to an account that
+        // signed out without tidying up. Start a fresh one for this account.
+        await sub.unsubscribe().catch(() => {});
+        sub = await subscribe(reg);
+        await Sync.savePush(sub.toJSON(), p);
+      }
+      store({ ...p, endpoint: sub.endpoint, dirty: false });
+      return 'granted';
+    }
+    async function save(patch) {
+      const p = { ...prefs(), ...patch };
+      store({ ...p, dirty: true });
+      if (!p.on) return;
+      const reg = await registration();
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) return;
+      await Sync.savePush(sub.toJSON(), p);
+      store({ ...p, endpoint: sub.endpoint, tz: timeZone(), dirty: false });
+    }
+    async function disable() {
+      store({ ...prefs(), on: false, endpoint: null, dirty: false });
+      if (!supported()) return;
+      const reg = await registration();
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) return;
+      await Sync.deletePush(sub.endpoint).catch(() => {});
+      await sub.unsubscribe().catch(() => {});
+    }
+    async function test() {
+      const reg = await registration();
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) throw new Error('not-subscribed');
+      return Sync.testPush(sub.endpoint);
+    }
+    // On every open: keep the server's copy in step with this phone (a new
+    // subscription, a new time zone, or a change that couldn't sync offline).
+    async function resync() {
+      if (!supported() || !Sync.isLoggedIn()) return;
+      const p = prefs();
+      if (!p.on) return;
+      if (permission() !== 'granted') { store({ ...p, on: false }); return; }
+      const reg = await registration();
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await subscribe(reg);
+      if (sub.endpoint === p.endpoint && p.tz === timeZone() && !p.dirty) return;
+      await Sync.savePush(sub.toJSON(), p);
+      store({ ...p, endpoint: sub.endpoint, tz: timeZone(), dirty: false });
+    }
+    return { supported, permission, prefs, enable, save, disable, test, resync };
+  })();
+  function nudgeSettingsHtml() {
+    if (!Push.supported()) {
+      const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+      return `<p class="settings-helper">${ios && !standalone
+        ? 'On iPhone, nudges only arrive once Open Loops is on your Home Screen. Tap Share, then Add to Home Screen, and turn this on from there.'
+        : 'This browser can’t show notifications.'}</p>`;
+    }
+    if (Push.permission() === 'denied') {
+      return `<p class="settings-helper">Notifications are blocked for Open Loops on this device. Allow them in your browser’s site settings, then come back here.</p>`;
+    }
+    const p = Push.prefs();
+    if (!p.on) {
+      return `
+          <p class="settings-helper">At most one a day, at a time you pick, and only when something is waiting: loops waking up, a Sunday recap, or one that’s gone stale.</p>
+          <button type="button" class="btn btn-ghost" data-action="push-enable">Turn on nudges</button>`;
+    }
+    const sw = (k, label) => `<button type="button" class="nudge-switch${p[k] ? ' on' : ''}" data-action="push-toggle" data-key="${k}" aria-pressed="${!!p[k]}"><span>${label}</span><span class="switch" aria-hidden="true"></span></button>`;
+    const sample = p.voice === 'plain'
+      ? 'Like: “Morning sweep. 3 parked loops are back in Up next today.”'
+      : 'Like: “3 loops woke up. Thirty seconds to sort them?”';
+    return `
+          <p class="settings-helper">On for this device. At most one a day, only when something is waiting.</p>
+          <div class="nudge-row"><label for="nudge-time">Time</label><input type="time" id="nudge-time" class="nudge-time" min="05:00" max="21:00" step="900" value="${esc(p.time)}"></div>
+          <div class="nudge-row"><span>Voice</span>
+            <div class="seg-row" role="group" aria-label="Nudge voice">
+              <button type="button" data-action="push-voice" data-voice="cheeky" class="${p.voice !== 'plain' ? 'active' : ''}" aria-pressed="${p.voice !== 'plain'}">Cheeky</button>
+              <button type="button" data-action="push-voice" data-voice="plain" class="${p.voice === 'plain' ? 'active' : ''}" aria-pressed="${p.voice === 'plain'}">Plain</button>
+            </div>
+          </div>
+          <p class="nudge-sample">${esc(sample)}</p>
+          <div class="nudge-switches">${sw('wakeups', 'Loops waking up')}${sw('stale', 'Still yours? checks, weekly')}${sw('recap', 'Sunday recap')}</div>
+          <div class="nudge-actions">
+            <button type="button" class="btn btn-ghost" data-action="push-test">Send a test</button>
+            <button type="button" class="btn btn-ghost" data-action="push-disable">Turn off</button>
+          </div>`;
+  }
+  async function savePushPrefs(patch) {
+    try { await Push.save(patch); }
+    catch (_) { toast('Saved here. It will sync next time you’re online.'); }
+    if (view.overlay && view.overlay.type === 'settings') renderOverlay();
+  }
+
+  // ── DEEP LINKS ──
+  // Notifications open the app at the right place:
+  //   ?sweep=1 → the sweep · ?profile=1 → Your head · ?loop=<id> → that loop
+  function takeDeepLink(search) {
+    let params;
+    try { params = new URLSearchParams(search || ''); } catch (_) { return; }
+    const sweep = params.has('sweep');
+    const profile = params.has('profile');
+    const loopId = params.get('loop');
+    if (!sweep && !profile && !loopId) return;
+    if (search === location.search) {
+      try { history.replaceState({}, document.title, location.pathname); } catch (_) {}
+    }
+    if (!Sync.isLoggedIn() || view.onboardingStep >= 0) return;
+    if (sweep) {
+      const items = sweepItems();
+      if (!items.length) { toast('All swept. Nothing is waiting.'); return; }
+      view.overlay = { type: 'sweep', step: 'intro', items, idx: 0, picks: [] };
+      renderOverlay();
+      return;
+    }
+    if (profile) {
+      view.overlay = { type: 'profile' };
+      renderOverlay();
+      return;
+    }
+    const l = getLoop(loopId);
+    if (!l || l.status === 'released') return;
+    if ((dryness(l) || {}).level === 'cracked') {
+      view.overlay = { type: 'still', loopId: l.id };
+      renderOverlay();
+      return;
+    }
+    view.activeTab = l.status === 'waiting' ? 'later' : l.status === 'inbox' ? 'inbox' : 'now';
+    view.highlightedId = l.id;
+    renderAll();
+    setTimeout(() => { if (view.highlightedId === l.id) { view.highlightedId = null; renderMain(); } }, 2400);
   }
 
   // What the card's main button says. An Ask that was sent asks the real
@@ -4054,7 +4998,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
 
     const focus = opts.focus ? ' is-focus' : '';
     return `
-      <article class="loop-card kind-${loop.kind || 'inbox'}${hl}${focus}" style="${delay}" data-loop-id="${esc(loop.id)}"${draggable}>
+      <article class="loop-card kind-${loop.kind || 'inbox'}${hl}${focus}${dryClass(loop)}" style="${delay}" data-loop-id="${esc(loop.id)}"${draggable}>
         ${opts.focus ? `<div class="focus-eyebrow">Now</div>` : ''}
         <div class="loop-card-top">
           <div class="loop-card-top-left">${handle}${chipHtml(loop.kind)}${reasonHtml(loop)}</div>
@@ -4073,6 +5017,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
         ${loopMetaHtml(loop)}
         <div class="loop-card-bottom">
           <button class="btn-action kind-${loop.kind || 'inbox'}" data-action="primary-action" data-loop-id="${esc(loop.id)}">${esc(actionLabel(loop))}</button>
+          ${stillYoursBtn(loop)}
         </div>
       </article>`;
   }
@@ -4111,7 +5056,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
         const letGoCount = week.filter(isLetGo).length;
         const doneCount = week.length - letGoCount;
         const label = letGoCount ? `${doneCount} closed · ${letGoCount} let go this week` : `${doneCount} closed this week`;
-        meter = `<div class="cap-meter closed-shelf"><div class="ring-shelf" role="img" aria-label="${esc(label)}">${shown.map(shelfItemHtml).join('')}</div><div class="cap-meter-label">${esc(label)}</div></div>`;
+        meter = `<button type="button" class="cap-meter closed-shelf" data-action="open-profile" title="See your whole shelf"><div class="ring-shelf" role="img" aria-label="${esc(label)}">${shown.map(shelfItemHtml).join('')}</div><div class="cap-meter-label">${esc(label)} <span class="shelf-more">Your head →</span></div></button>`;
       }
     }
     html += `
@@ -4119,6 +5064,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
         <div>
           <h1 class="page-title">${head.title}</h1>
           <p class="page-sub">${head.sub}</p>
+          ${tabKey === 'now' ? comboMeterHtml() : ''}
         </div>
         ${meter}
       </header>`;
@@ -4138,11 +5084,16 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
 
     if (view.activeTab === 'now') {
       html += `<div class="tab-panel active" id="tab-now">`;
+      const sweepNow = sweepBannerItems();
+      if (sweepNow.length) html += sweepBannerHtml(sweepNow);
       if (visible.length) {
         html += `<div class="loop-stack" data-active-stack="1">${visible.map((l,i) => (i === 1 ? `<div class="up-next-label">Up next</div>` : '') + cardHtml(l,i, { draggable: true, total: visible.length, focus: i === 0 })).join('')}</div>`;
         if (hidden > 0 && !view.expanded) {
           html += `<button class="show-more" data-action="show-more">Show ${hidden} more loop${hidden > 1 ? 's' : ''}</button>`;
         }
+      } else if (Combo.count() >= 2) {
+        const n = Combo.count();
+        html += `<div class="empty-state cleared">${mascotSvg('proud', { width: 210, className: Combo.fresh() ? 'mascot-sealing' : '', label: 'The mascot, proud, closed into a ring' })}<strong>Active is clear.</strong>${n} closes, one full chord. Enjoy the quiet.</div>`;
       } else {
         html += `<div class="empty-state">${clayArtHtml('closed')}<strong>Your head is clear.</strong>Capture a loop, then define it when you're ready.</div>`;
       }
@@ -4161,7 +5112,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
         });
         byWake.forEach((loop, i) => {
           html += `
-            <article class="loop-card kind-${loop.kind || 'inbox'}" data-loop-id="${esc(loop.id)}" style="animation-delay:${i*0.04}s">
+            <article class="loop-card kind-${loop.kind || 'inbox'}${dryClass(loop)}" data-loop-id="${esc(loop.id)}" style="animation-delay:${i*0.04}s">
               <div class="loop-card-top"><div class="loop-card-top-left">${chipHtml(loop.kind)}${reasonHtml(loop)}</div><button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
               <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '-')}</span></div>
@@ -4169,6 +5120,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
               <div class="loop-card-bottom">
                 <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Make active</button>
                 <button class="btn-action" data-action="open-when" data-loop-id="${esc(loop.id)}">${loop.wakeAt ? 'Change time' : 'Set a time'}</button>
+                ${stillYoursBtn(loop)}
               </div>
             </article>`;
         });
@@ -4258,15 +5210,60 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
           <p class="input-hint" id="capture-hint">${added ? `<b class="capture-added">${added} added.</b> ` : ''}Press Enter to add it and write the next one.</p>
           <span class="char-counter" id="capture-counter" aria-live="polite">${len}/${MAX_LOOP_TEXT_LEN}</span>
         </div>
+        <div class="capture-when" id="capture-when" aria-live="polite">${captureWhenHtml(ov)}</div>
         <div class="capture-kinds">
           <div class="capture-kinds-label">Already know the kind? <span>Optional</span></div>
           <div class="kind-picks" role="group" aria-label="Kind (optional)">${chips}</div>
         </div>
         <div class="overlay-actions">
           <button class="btn btn-ghost" data-action="close-overlay">${added ? 'Done' : 'Cancel'}</button>
-          <button class="btn btn-primary" data-action="save-raw-loop" ${hasText ? '' : 'disabled'}>Add to Inbox</button>
+          <button class="btn btn-primary" data-action="save-raw-loop" ${hasText ? '' : 'disabled'}>${esc(captureSaveLabel(ov))}</button>
         </div>
       </div>`;
+  }
+
+  // A day or time typed into a new loop ("call the bank friday") becomes an
+  // offer, never an automatic change: "Wake it Fri 9:00 AM?". Accepting it
+  // parks the loop until then instead of adding it to Inbox.
+  function captureWhen(ov) {
+    const text = (ov && ov.rawText || '').trim();
+    if (!text) return null;
+    const hit = parseWhen(text);
+    if (!hit || !hit.date || hit.date.getTime() <= Date.now() + 60000) return null;
+    return hit.date;
+  }
+  function captureWakeOn(ov) {
+    const d = captureWhen(ov);
+    return !!(d && ov.wakeFor && ov.wakeFor === d.toISOString());
+  }
+  function captureWhenHtml(ov) {
+    const d = captureWhen(ov);
+    if (!d) return '';
+    const on = captureWakeOn(ov);
+    const label = formatWake(d.toISOString());
+    const icon = on
+      ? '<path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+      : REASON_ICON.sun;
+    return `
+      <button type="button" class="when-chip${on ? ' on' : ''}" data-action="capture-when-toggle" aria-pressed="${on}">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">${icon}</svg><span>${on ? `Wakes ${esc(label)}` : `Wake it ${esc(label)}?`}</span>
+      </button>
+      <span class="when-chip-hint">${on ? 'It goes to Parked until then. Tap to undo.' : 'Back in Up next then, instead of Inbox.'}</span>`;
+  }
+  function captureSaveLabel(ov) {
+    if (!captureWakeOn(ov)) return 'Add to Inbox';
+    const d = captureWhen(ov);
+    return `Park until ${formatWake(d.toISOString())}`;
+  }
+  function refreshCaptureWhen(ov) {
+    const box = document.getElementById('capture-when');
+    if (box) {
+      const html = captureWhenHtml(ov);
+      const sig = html.replace(/\s+/g, ' ');
+      if (box.dataset.sig !== sig) { box.innerHTML = html; box.dataset.sig = sig; }
+    }
+    const btn = document.querySelector('#overlay-root [data-action="save-raw-loop"]');
+    if (btn) btn.textContent = captureSaveLabel(ov);
   }
 
   // ── DEFINE AND ROUTE ──
@@ -4880,6 +5877,17 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
             <button type="button" data-action="set-sound" data-sound="on" class="${Sound.enabled ? 'active' : ''}" aria-pressed="${Sound.enabled}">On</button>
             <button type="button" data-action="set-sound" data-sound="off" class="${!Sound.enabled ? 'active' : ''}" aria-pressed="${!Sound.enabled}">Off</button>
           </div>
+        </section>
+
+        <section class="settings-section" id="nudge-settings">
+          <div class="settings-label">Daily nudge</div>
+          ${nudgeSettingsHtml()}
+        </section>
+
+        <section class="settings-section">
+          <div class="settings-label">Your head</div>
+          <p class="settings-helper">Everything you’ve closed, how long things take, and what you decided.</p>
+          <button class="btn btn-ghost" data-action="open-profile">Open Your head</button>
         </section>
 
         <section class="settings-section">
@@ -5582,7 +6590,20 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
       softLand: () => { pluck(N.B4, 0, 0.32, 1.6); pluck(N.Fs5, 0.07, 0.22, 1.8); },
       // reopen: the closing chord, backwards
       reopen:   () => { pluck(N.D5, 0, 0.5, 0.6); pluck(N.A4, 0.07, 0.45, 0.6); pluck(N.E4, 0.14, 0.5, 1.0); },
+      // Music that builds: the nth close in a sitting adds the nth note on
+      // top of the landing chord. Clearing Active plays the whole chord.
+      comboNote: (step) => { const n = COMBO_LADDER[Math.min(step, COMBO_LADDER.length - 1)]; if (n) pluck(n, 0.12, 0.55, 1.4); },
+      cleared:  () => { pluck(N.D4, 0, 0.5, 2.8); pluck(N.D5, 0.04, 0.8, 2.6); pluck(N.Fs5, 0.09, 0.55, 2.6); pluck(880, 0.14, 0.45, 2.8); },
+      // The sweep: each card placed plays the next note up; the last one resolves.
+      sweepNote: (i) => { pluck(SWEEP_LADDER[Math.min(i || 0, SWEEP_LADDER.length - 1)], 0, 0.8, 1.2); },
+      sweepDone: () => { pluck(N.D5, 0, 0.9, 2); pluck(N.Fs5, 0.03, 0.5, 2); pluck(880, 0.06, 0.35, 2.2); },
+      // "Yes, keep it": wet clay again
+      fresh:    () => { pluck(N.D5, 0, 0.6, 0.7); pluck(N.Fs5, 0.1, 0.5, 1.0); },
+      // a small "hm?" for a sheet that asks something
+      ask:      () => { pluck(N.B4, 0, 0.35, 0.4); },
     };
+    const COMBO_LADDER = [null, N.E5, N.Fs5, 880, 987.77, 1174.66];
+    const SWEEP_LADDER = [N.D4, N.Fs4, N.A4, N.B4, N.D5, N.E5];
 
     function hint() {
       if (hinted) return;
@@ -5608,11 +6629,11 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
         } catch (_) {}
       },
       unlock,
-      play(name) {
+      play(name, arg) {
         if (!enabled) return;
         const fn = cues[name];
         if (!fn) return;
-        try { fn(); } catch (_) {}
+        try { fn(arg); } catch (_) {}
         hint();
       }
     };
@@ -5627,7 +6648,8 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
     const MUTATING = new Set([
       'save-raw-loop', 'finish-define-raw', 'complete-done',
       'move-released', 'restore-active', 'confirm-delete', 'set-kind-direct',
-      'park-until', 'ask-park', 'do-save-step', 'decide-close'
+      'park-until', 'ask-park', 'do-save-step', 'decide-close',
+      'still-keep', 'still-let-go'
     ]);
     let layer = null;
     let gesture = null;
@@ -5839,9 +6861,9 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
     }
 
     // Brain-dump capture: a pellet leaves the text box for the Inbox tab.
-    function pelletToInbox(kind) {
+    function pelletToInbox(kind, tab = 'inbox') {
       const src = document.getElementById('capture-input');
-      const target = tabTarget('inbox');
+      const target = tabTarget(tab);
       if (!src || reduced()) { Sound.play('capture'); return; }
       const r = src.getBoundingClientRect();
       const S = 22;
@@ -6024,7 +7046,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
           fill: 'forwards'
         }).onfinish = () => {
           ring.remove();
-          Sound.play(letGo ? 'softLand' : quick ? 'quickLand' : 'land');
+          landSound(letGo, quick);
           if (letGo) {
             archive.animate([{ opacity: 1 }, { opacity: 0.55 }, { opacity: 1 }], { duration: 420, easing: 'ease-in-out' });
           } else {
@@ -6043,6 +7065,16 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
           }
         };
       }, T.flyAt);
+    }
+
+    // A close lands with its chord; in a sitting of several closes the chord
+    // gains a note each time, and clearing Active plays the whole thing.
+    function landSound(letGo, quick) {
+      Sound.play(letGo ? 'softLand' : quick ? 'quickLand' : 'land');
+      if (letGo) return;
+      const step = Combo.count() - 1;
+      if (step > 0) Sound.play('comboNote', step);
+      if (Combo.count() >= 2 && !data.loops.some(l => l.status === 'active')) setTimeout(() => Sound.play('cleared'), 380);
     }
 
     function soundFor(cue) {
@@ -6069,7 +7101,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
       let sound = cue ? soundFor(cue) : null;
       if (cue) gesture = null;   // one gesture, one cue
       if (cue && cue.from === null && gAction === 'save-raw-loop-more') {
-        pelletToInbox(cue.kind);
+        pelletToInbox(cue.kind, cue.to === 'waiting' ? 'later' : 'inbox');
         sound = null;
       }
       let ceremony = false;
@@ -6141,7 +7173,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
         const g = ghostOf(b);
         if (!local || calm) {
           fadeOut(g, 180);
-          if (isCue && cue.to === 'released') Sound.play(cue.letGo ? 'softLand' : 'land');
+          if (isCue && cue.to === 'released') landSound(cue.letGo, false);
           return;
         }
         const n = now.get(id), p = snap.statuses.get(id);
@@ -6161,7 +7193,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
         const vw = window.innerWidth, vh = window.innerHeight;
         closeCeremony(null, { left: vw / 2 - 1, top: vh / 2 - 1, width: 2, height: 2 }, cue.kind, cue.letGo);
       } else if (cue && cue.to === 'released' && calm && !ceremony) {
-        Sound.play(cue.letGo ? 'softLand' : 'land');
+        landSound(cue.letGo, false);
       }
       if (sound) Sound.play(sound);
     }
@@ -6178,6 +7210,8 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
         ensureLayer();
         document.addEventListener('click', onGesture, true);
       },
+      // The sweep plays its own notes; skip the flight and cue for its taps.
+      forget() { gesture = null; },
       snapshot(main) {
         const s = snapshot(main);
         s.overlayRect = gesture ? gesture.overlayRect : null;
@@ -6242,6 +7276,11 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
     else if (ov.type === 'primary-action') inner = renderPrimaryAction(getLoop(ov.loopId));
     else if (ov.type === 'when')           inner = renderWhen(getLoop(ov.loopId));
     else if (ov.type === 'confirm-delete') inner = renderConfirmDelete(getLoop(ov.loopId));
+    else if (ov.type === 'still')          inner = renderStillYours(getLoop(ov.loopId));
+    else if (ov.type === 'sweep')          inner = renderSweep(ov);
+    else if (ov.type === 'profile')        inner = renderProfile();
+    else if (ov.type === 'share')          inner = renderShare(ov);
+    if (!inner) { view.overlay = null; root.innerHTML = ''; delete root.dataset.sheet; return; }
 
     const key = `${ov.type}:${ov.loopId || ''}`;
     const panel = root.querySelector('.overlay-panel');
@@ -6278,7 +7317,10 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
       setTimeout(() => firstInput.focus(), 50);
     } else {
       // No text input — focus the first actionable button instead.
-      const firstBtn = root.querySelector('.overlay-card button:not([data-action="close-overlay"]):not([disabled])');
+      // Long reading sheets (Your head) start at the top: focus the close
+      // button instead of a button at the bottom that would scroll the sheet.
+      const firstBtn = root.querySelector('.overlay-card button:not([data-action="close-overlay"]):not([disabled]):not(.no-autofocus)')
+        || root.querySelector('.overlay-card .overlay-close');
       if (firstBtn) setTimeout(() => firstBtn.focus(), 50);
     }
   }
@@ -6479,24 +7521,44 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
       const input = document.getElementById('capture-input');
       const raw = (input ? input.value : ov.rawText || '').trim();
       if (!raw) return;
-      const l = createLoop({ rawText: raw, kind: ov.kind || null, promptAnswer: '', status: 'inbox' });
+      ov.rawText = raw;
+      const wake = captureWakeOn(ov) ? captureWhen(ov) : null;
+      const l = createLoop({
+        rawText: raw, kind: ov.kind || null, promptAnswer: '',
+        status: wake ? 'waiting' : 'inbox', wakeAt: wake ? wake.toISOString() : null
+      });
+      const parkedNote = wake ? `Parked until ${formatWake(wake.toISOString())}.` : '';
       if (action === 'save-raw-loop-more') {
         // Brain-dump mode: keep the sheet, clear the text, count it.
         ov.rawText = '';
         ov.kind = null;
+        ov.wakeFor = null;
         ov.added = (ov.added || 0) + 1;
         persistAndRender();
         Sync.createLoop(l);
         const again = document.getElementById('capture-input');
         if (again) again.focus();
+        if (parkedNote) announce(parkedNote);
         return;
       }
-      view.activeTab = 'inbox';
+      view.activeTab = wake ? 'later' : 'inbox';
       const n = (ov.added || 0) + 1;
       closeOverlay();
       await persistAndRender();
       Sync.createLoop(l);
-      announce(n > 1 ? `${n} loops added to Inbox.` : 'Added to Inbox.');
+      if (wake) toast(parkedNote);
+      else announce(n > 1 ? `${n} loops added to Inbox.` : 'Added to Inbox.');
+      return;
+    }
+    if (action === 'capture-when-toggle') {
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'capture') return;
+      const d = captureWhen(ov);
+      if (!d) return;
+      const on = captureWakeOn(ov);
+      ov.wakeFor = on ? null : d.toISOString();
+      Sound.play(on ? 'down' : 'ask');
+      refreshCaptureWhen(ov);
       return;
     }
     if (action === 'define-pick-kind') {
@@ -6982,6 +8044,8 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
       return;
     }
     if (action === 'sign-out') {
+      // This phone shouldn't keep getting nudges for an account that left it.
+      await Push.disable().catch(() => {});
       await Sync.signOut();
       closeOverlay();
       return;
@@ -7061,6 +8125,198 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
         el.textContent = 'Check for update';
         toast("You're on the latest version.");
       }
+      return;
+    }
+
+    // ── Still yours? ──
+    if (action === 'open-still-yours') {
+      if (!getLoop(loopId)) return;
+      rememberOverlayOpener(el);
+      view.overlay = { type: 'still', loopId };
+      renderOverlay();
+      Sound.play('ask');
+      return;
+    }
+    if (action === 'still-keep') {
+      if (requireLogin()) return;
+      const target = getLoop(loopId);
+      if (!target) { closeOverlay(); return; }
+      // Touching it is the point: the write makes it fresh clay again.
+      const patch = { position: target.position };
+      updateLoop(loopId, patch);
+      closeOverlay();
+      await persistAndRender();
+      Sync.updateLoop(loopId, patch);
+      Sound.play('fresh');
+      toast('Fresh again. It counts as touched today.');
+      return;
+    }
+    if (action === 'still-let-go') {
+      if (requireLogin()) return;
+      const target = getLoop(loopId);
+      if (!target) { closeOverlay(); return; }
+      const patch = { status: 'released', completedAt: nowIso(), details: cleanDetails({ ...target.details, outcome: 'let_go' }) };
+      updateLoop(loopId, patch);
+      closeOverlay();
+      await persistAndRender();
+      Sync.updateLoop(loopId, patch);
+      toast('Let go. One less thing drying out on you.');
+      return;
+    }
+
+    // ── Sweep ──
+    if (action === 'open-sweep') {
+      if (requireLogin()) return;
+      const items = sweepItems();
+      if (!items.length) { toast('Nothing to sweep right now.'); renderMain(); return; }
+      rememberOverlayOpener(el);
+      view.overlay = { type: 'sweep', step: 'card', items, idx: 0, picks: [] };
+      renderOverlay();
+      return;
+    }
+    if (action === 'sweep-start' || action === 'sweep-back') {
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'sweep') return;
+      ov.step = 'card';
+      renderOverlay();
+      return;
+    }
+    if (action === 'sweep-later') {
+      saveSweepState({ laterOn: localDateValue(new Date()), laterIds: sweepItems().map(i => i.id) });
+      if (view.overlay && view.overlay.type === 'sweep') closeOverlay();
+      renderMain();
+      return;
+    }
+    if (action === 'sweep-pick' || action === 'sweep-park') {
+      if (requireLogin()) return;
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'sweep') return;
+      const it = ov.items[ov.idx];
+      const loop = it && getLoop(it.id);
+      const pick = action === 'sweep-park' ? 'park' : el.dataset.pick;
+      if (loop && action === 'sweep-pick' && pick === 'park') { ov.step = 'park'; renderOverlay(); return; }
+      let result = null;
+      if (loop && sweepable(it)) {
+        const wakeAt = action === 'sweep-park' && el.dataset.when ? validIso(el.dataset.when) : null;
+        result = sweepApply(loop, pick, wakeAt);
+        if (pick === 'now') ov.nowId = loop.id;
+      }
+      ov.picks.push(pick);
+      Sound.play('sweepNote', ov.picks.length - 1);
+      ov.idx += 1;
+      while (ov.idx < ov.items.length && !sweepable(ov.items[ov.idx])) ov.idx += 1;
+      if (ov.idx >= ov.items.length) {
+        ov.step = 'done';
+        saveSweepState({ sweptAt: nowIso(), laterOn: null, laterIds: [] });
+        setTimeout(() => Sound.play('sweepDone'), 420);
+      } else {
+        ov.step = 'card';
+      }
+      Motion.forget();
+      persistAndRender();
+      if (result) {
+        Sync.updateLoop(loop.id, result.patch);
+        if (result.positionChanges) syncPositionChanges({ ok: true, changes: result.positionChanges });
+      }
+      return;
+    }
+    if (action === 'sweep-finish') {
+      view.activeTab = 'now';
+      closeOverlay();
+      renderAll();
+      return;
+    }
+
+    // ── Your head, share card ──
+    if (action === 'open-profile') {
+      if (requireLogin()) return;
+      rememberOverlayOpener(el);
+      view.overlay = { type: 'profile' };
+      renderOverlay();
+      return;
+    }
+    if (action === 'open-share') {
+      const month = new Date().toLocaleDateString(undefined, { month: 'long' });
+      shareBlob = null;
+      view.overlay = { type: 'share', month, count: monthCloses().length };
+      renderOverlay();
+      try {
+        const canvas = await drawShareCard();
+        shareBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const ov = view.overlay;
+        if (!ov || ov.type !== 'share') return;
+        ov.img = canvas.toDataURL('image/png');
+        renderOverlay();
+      } catch (err) {
+        console.warn('[open-loops] share card failed', err);
+        toast('Couldn’t draw the card. Try again.');
+      }
+      return;
+    }
+    if (action === 'share-send' || action === 'share-save') {
+      if (!shareBlob) return;
+      const ov = view.overlay || {};
+      const name = `open-loops-${fileSlug(ov.month || 'month')}-${new Date().getFullYear()}.png`;
+      if (action === 'share-send') {
+        const file = new File([shareBlob], name, { type: 'image/png' });
+        try {
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'My month in Open Loops' });
+            return;
+          }
+        } catch (err) {
+          if (err && err.name === 'AbortError') return;
+        }
+      }
+      saveShareImage(name);
+      toast('Saved the image.');
+      return;
+    }
+
+    // ── Daily nudges ──
+    if (action === 'push-enable') {
+      if (requireLogin()) return;
+      el.disabled = true;
+      el.textContent = 'Turning on…';
+      let result;
+      try { result = await Push.enable(); }
+      catch (err) { console.warn('[open-loops] nudges could not be turned on', err); result = 'error'; }
+      if (result === 'granted') toast('Nudges are on. Send a test to see one.');
+      else if (result === 'denied') toast('Notifications are blocked. Allow them in your browser’s settings.');
+      else if (result === 'default') toast('No problem. Turn them on whenever you like.');
+      else toast('Couldn’t turn on nudges. Check your connection and try again.');
+      if (view.overlay && view.overlay.type === 'settings') renderOverlay();
+      return;
+    }
+    if (action === 'push-disable') {
+      await Push.disable().catch(() => {});
+      toast('Nudges are off for this device.');
+      if (view.overlay && view.overlay.type === 'settings') renderOverlay();
+      return;
+    }
+    if (action === 'push-voice') {
+      await savePushPrefs({ voice: el.dataset.voice === 'plain' ? 'plain' : 'cheeky' });
+      return;
+    }
+    if (action === 'push-toggle') {
+      const k = el.dataset.key;
+      if (!['wakeups', 'stale', 'recap'].includes(k)) return;
+      await savePushPrefs({ [k]: !Push.prefs()[k] });
+      return;
+    }
+    if (action === 'push-test') {
+      if (requireLogin()) return;
+      el.disabled = true;
+      el.textContent = 'Sending…';
+      try {
+        await Push.test();
+        toast('Sent. It should arrive in a few seconds.');
+      } catch (err) {
+        console.warn('[open-loops] test nudge failed', err);
+        toast('Couldn’t send a test. Turn nudges off and on again, then retry.');
+      }
+      el.disabled = false;
+      el.textContent = 'Send a test';
       return;
     }
 
@@ -7232,6 +8488,7 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
       const btn = document.querySelector('[data-action="save-raw-loop"]');
       if (btn) btn.disabled = !e.target.value.trim();
       autoGrow(e.target);
+      refreshCaptureWhen(ov);
     }
   });
 
@@ -7267,6 +8524,16 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
       document.querySelector('#overlay-root [data-action="decide-close"][data-spawn]:not([disabled])')?.click();
     }
   }, true);
+
+  // Nudge time: snapped to the quarter hour, between 05:00 and 21:00.
+  document.addEventListener('change', e => {
+    if (!e.target || e.target.id !== 'nudge-time') return;
+    const m = /^(\d{1,2}):(\d{2})/.exec(e.target.value || '');
+    if (!m) return;
+    const mins = Math.min(21 * 60, Math.max(5 * 60, Math.round((+m[1] * 60 + +m[2]) / 15) * 15));
+    const time = `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+    savePushPrefs({ time }).then(() => toast(`Saved. Nudges come around ${time}.`));
+  });
 
   // Enter key on auth gate email → submit
   document.addEventListener('keydown', e => {
@@ -7381,6 +8648,9 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
         ensureRealtime: () => {},
         sendMagicLink: async () => { throw new Error(supabaseClientIssue() || 'Supabase sign-in is not ready.'); },
         signOut:       async () => {},
+        savePush:      async () => { throw new Error('Sign in first.'); },
+        deletePush:    async () => {},
+        testPush:      async () => { throw new Error('Sign in first.'); },
         isLoggedIn:    () => false
       };
     }
@@ -8100,7 +9370,8 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
             await pullAll();
             setupRealtime({ skipInitialPull: true });
             if (foundLegacy) toast('Older local data was kept aside for safety.');
-            else wakeDueLoops();
+            else wakeDueLoops({ quiet: /[?&](sweep|loop)=/.test(location.search) });
+            Push.resync().catch(() => {});
           }
         } catch(e) {
           console.error('Sync init error:', e);
@@ -8113,6 +9384,8 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
           renderAuthGate();
         } else if (!hasCompletedOnboarding()) {
           startOnboarding();
+        } else {
+          takeDeepLink(location.search);
         }
       },
 
@@ -8179,7 +9452,37 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
       },
 
       async signOut() { await db.auth.signOut(); },
-      isLoggedIn() { return !!currentUser; }
+      isLoggedIn() { return !!currentUser; },
+
+      // Daily nudges: this device's push subscription and its settings.
+      async savePush(sub, p) {
+        if (!currentUser) throw new Error('Sign in first.');
+        const keys = (sub && sub.keys) || {};
+        const row = {
+          endpoint: sub.endpoint,
+          user_id: currentUser.id,
+          p256dh: keys.p256dh,
+          auth: keys.auth,
+          tz: (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (_) { return 'UTC'; } })(),
+          nudge_time: p.time || '09:00',
+          voice: p.voice === 'plain' ? 'plain' : 'cheeky',
+          wakeups: !!p.wakeups,
+          stale: !!p.stale,
+          recap: !!p.recap
+        };
+        const { error } = await db.from('push_subscriptions').upsert(row, { onConflict: 'endpoint' });
+        if (error) throw error;
+      },
+      async deletePush(endpoint) {
+        if (!currentUser || !endpoint) return;
+        const { error } = await db.from('push_subscriptions').delete().eq('endpoint', endpoint);
+        if (error) throw error;
+      },
+      async testPush(endpoint) {
+        const { data, error } = await db.functions.invoke('push', { body: { job: 'test', endpoint } });
+        if (error) throw error;
+        return data;
+      }
     };
   })();
 
@@ -8324,6 +9627,18 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
       toast('Updated — reloading…', { duration: 1500 });
       setTimeout(() => (isBusy() ? reloadWhenSafe() : window.location.reload()), 1500);
     };
+
+    // A tapped notification on a phone that already has the app open: the
+    // service worker focuses this window and says where to go. After a
+    // notification button (Done / Tomorrow) changed a loop, pull it in.
+    navigator.serviceWorker.addEventListener('message', e => {
+      const msg = e.data || {};
+      if (msg.type === 'open' && msg.url) {
+        try { takeDeepLink(new URL(msg.url, location.href).search); } catch (_) {}
+      } else if (msg.type === 'loops-changed' && Sync.isLoggedIn()) {
+        Sync.retry();
+      }
+    });
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       // First install: the page was already loaded from the network.

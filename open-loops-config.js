@@ -6,5 +6,9 @@ window.OL_CONFIG = Object.freeze({
   // need a custom redirect (e.g., forcing staging to redirect to production).
   EMAIL_REDIRECT_TO: null,
 
+  // Public half of the key that signs daily nudges (web push). The private
+  // half lives in Supabase Vault. null turns nudges off.
+  VAPID_PUBLIC_KEY: 'BElqKwXhYnzUe75oSOnXB6glvU5BkQw8dC6BhKPjOn8C0jD0lQYk_BV4l-AHejLpi89dVCEZRVqLZx0WeqDnQR4',
+
   STORAGE_KEY: 'open_loops_data'
 });

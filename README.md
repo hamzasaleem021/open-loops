@@ -52,6 +52,14 @@ Open Loops is built around one personal workflow:
 - **Not yet asks "when?"** - Every "not yet" and every Park asks when the loop should come back: tonight, tomorrow morning, this weekend, next week, a day you pick, or no date.
 - **Wake-ups** - A parked loop with a wake time comes back to Up next on its own (never straight to Now) when the app opens, returns to the foreground, or is already open. Parked shows the soonest wake time first.
 - **Reasons on cards** - A small label says why a card is where it is: "Woke today", "Waiting on Bilal · back Thu 9:00 AM", "Checking back", "From your decision".
+- **The sweep** - The daily ritual. When loops wake up or dry out, a banner on Active offers a sweep: one card at a time, Make it Now / Up next / Park again / Let go, in about thirty seconds. Each choice plays the next note up; the last one resolves. "Later" hides the banner for the day unless something new comes up. Nothing else on the list moves.
+- **Drying clay** - Clay dries when nobody touches it. A loop untouched for 10 days goes matte; after 21 days it cracks and asks **Still yours?** (Yes, keep it / Park it until… / Let it go). Keeping it makes it fresh again. Parked loops with a wake time are asleep on purpose and never dry.
+- **Music that builds** - Each loop you close in one sitting adds a note on top of the landing chord, with a bead per close next to the Active title. Clearing Active after two or more closes plays the whole chord and shows the mascot closed into a ring.
+- **The mascot** - The open C from the logo, in the same clay, with a face: awake in the sweep, cheeky when asking "Still yours?", proud when you finish.
+- **A date in a new loop becomes an offer** - Type "call the bank friday" and Capture offers "Wake it Fri 9:00 AM?". Accept it and the loop goes to Parked until then instead of Inbox. Nothing changes unless you tap it.
+- **Your head** - A look back built from loops you've already closed (header ring button, the Closed shelf, or Settings): your shelf of rings and pebbles, the longest-held loop you finally closed, how long each kind typically takes, and the decisions you made.
+- **Share card** - "Share your October" draws a 1080×1350 card of your month in clay: counts and colours only, never what your loops say. Share it through the phone's share sheet or save the image.
+- **Daily nudges** - Optional web push, at most one a day at a time you pick, and only when something is waiting: loops waking up (with Done / Tomorrow buttons when it's just one), a Sunday recap, or a weekly "Still yours?". Cheeky or Plain voice, copy that doesn't repeat, never streaks. Settings → Daily nudge has Send a test. On iPhone, nudges need Open Loops on the Home Screen.
 - **Reorder active loops** - Drag on desktop, or use the up/down controls. Order syncs across devices.
 - **Magic-link sign-in** - Sign in with email; no password required.
 - **Offline queue** - Signed-in edits made during brief connection drops are queued locally and retried.
@@ -123,8 +131,29 @@ This creates:
 - `wake_at` (when a parked loop comes back) and `details` (how a loop is moving or how it ended)
 - `batch_upsert_loops`
 - Realtime publication setup
+- `public.push_subscriptions` (one row per phone that allowed nudges) and the helpers the push sender uses: `push_due_subscriptions`, `push_apply_action`, `push_config` (service role only)
+- The nudge schedule (`pg_cron` + `pg_net`, both on the free plan)
 
 The SQL is written to be safe to re-run.
+
+### 2b. Daily nudges (optional)
+
+Nudges need the `push` Edge Function in `supabase/functions/push` and five values in Supabase Vault. Everything stays on the free plan: the schedule runs every 15 minutes inside Postgres and only calls the function when a phone's nudge time has come, so it is roughly one call per phone per day.
+
+1. Make a key pair for signing nudges: `npx web-push generate-vapid-keys`. Put the public key in `open-loops-config.js` as `VAPID_PUBLIC_KEY`.
+2. Store the secrets in Vault (SQL editor), with your own values:
+
+```sql
+select vault.create_secret('https://YOUR_PROJECT.supabase.co/functions/v1/push', 'open_loops_push_url');
+select vault.create_secret('<public key>',  'open_loops_vapid_public');
+select vault.create_secret('<private key>', 'open_loops_vapid_private');
+select vault.create_secret('<random string>', 'open_loops_cron_secret');
+select vault.create_secret('<another random string>', 'open_loops_action_secret');
+```
+
+3. Deploy the function with JWT checks off (it checks every request itself: the scheduler's secret, a signed token for Done / Tomorrow, or the signed-in user for Send a test): `supabase functions deploy push --no-verify-jwt`.
+
+Leave `VAPID_PUBLIC_KEY: null` to hide nudges entirely.
 
 ### 3. Configure The App
 
@@ -136,6 +165,7 @@ window.OL_CONFIG = Object.freeze({
   SUPABASE_URL: 'https://YOUR_PROJECT.supabase.co',
   SUPABASE_KEY: 'YOUR_PUBLISHABLE_KEY',
   EMAIL_REDIRECT_TO: null,
+  VAPID_PUBLIC_KEY: null,   // see "Daily nudges" below
   STORAGE_KEY: 'open_loops_data'
 });
 ```
@@ -155,7 +185,7 @@ https://YOUR_USERNAME.github.io/REPO_NAME/open-loops.html
 
 ## Upgrade / Upload Checklist
 
-**Run `open-loops-supabase.sql` in the Supabase SQL editor first.** This version adds two columns (`wake_at`, `details`). The statements are idempotent, so running the whole file again is safe. If the app is deployed before the SQL runs, it keeps syncing everything else and keeps wake times on the device until the columns exist; a console warning says so.
+**Run `open-loops-supabase.sql` in the Supabase SQL editor first.** Version 17 added two columns (`wake_at`, `details`); version 19 adds `push_subscriptions` and the nudge schedule. The statements are idempotent, so running the whole file again is safe. If the app is deployed before the SQL runs, it keeps syncing everything else; wake times stay on the device until the columns exist, and nudges can't be turned on until the table exists.
 
 When deploying this version, upload the full app folder or at least:
 
@@ -166,7 +196,9 @@ open-loops-manifest.json
 open-loops-sw.js
 open-loops-icon-192-v3.png
 open-loops-icon-512-v3.png
+open-loops-badge-96.png
 open-loops-supabase.sql
+supabase/functions/push/
 index.html
 README.md
 ```
@@ -183,7 +215,7 @@ open-loops-icon-512-v2.png
 The service worker cache is currently:
 
 ```js
-open-loops-v18-updates
+open-loops-v19-ritual
 ```
 
 **On every release, bump both** `CACHE` in `open-loops-sw.js` and `APP_VERSION` in `open-loops.html` (number and date). The new cache name is what tells installed apps there's a new version; `APP_VERSION` is what Settings → App version shows, so you can see which version a phone is running.
@@ -248,6 +280,10 @@ After deploying, test on the real URL:
 12. Schedule: Add to calendar → Google Calendar opens with the right day and time; the .ics file opens in Apple Calendar.
 13. Let go of a loop and confirm a pebble (not a ring) appears on the Closed shelf.
 14. On the installed phone app, open Settings → App version and confirm it shows the version you just released (tap Check for update if not).
+15. Park two loops for a minute ahead, wait, and open Active: the sweep banner appears. Sweep them; each card's choice lands where it says.
+16. Capture "call the bank friday", accept "Wake it Fri 9:00 AM?" and confirm it lands in Parked with that wake time.
+17. Open Your head from the header ring button; tap Share your month and save the image. It shows counts and colours only.
+18. Settings → Daily nudge → Turn on nudges, then Send a test. The test notification arrives on the phone within seconds.
 
 ---
 
@@ -256,11 +292,13 @@ After deploying, test on the real URL:
 ```text
 open-loops.html              Main app: HTML, CSS, and JS
 open-loops-config.js         Supabase credentials and app config
-open-loops-supabase.sql      Database schema, RLS policies, RPC, realtime setup
-open-loops-sw.js             Service worker and offline cache
+open-loops-supabase.sql      Database schema, RLS policies, RPC, realtime, nudge table and schedule
+open-loops-sw.js             Service worker: offline cache, updates, nudges (push + buttons)
 open-loops-manifest.json     PWA manifest
 open-loops-icon-192-v3.png   Current PWA icon (Clay)
 open-loops-icon-512-v3.png   Current large PWA icon (Clay)
+open-loops-badge-96.png      Small one-colour icon Android shows in the status bar for nudges
+supabase/functions/push/     The nudge sender (Edge Function): what to say, when, and Web Push
 open-loops-icon-192-v2.png   Previous icon kept for cache compatibility
 open-loops-icon-512-v2.png   Previous large icon kept for cache compatibility
 open-loops-icon-192.png      Legacy icon kept for cache compatibility
