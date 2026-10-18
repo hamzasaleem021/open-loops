@@ -33,12 +33,25 @@ update public.loops
 alter table public.loops alter column position set not null;
 alter table public.loops alter column position set default extract(epoch from now());
 
+-- Wake times and loop details (idempotent; safe to run again).
+--   wake_at  — when a parked loop comes back to Up next on its own
+--   details  — small facts about how a loop is moving or how it ended:
+--              { sentAt, nudges, steps, decision, outcome, origin }
+-- Run this before deploying the app version that adds wake-ups. Until it
+-- runs, that app version still syncs everything else and keeps wake times
+-- on the device.
+alter table public.loops add column if not exists wake_at timestamptz;
+alter table public.loops add column if not exists details jsonb not null default '{}'::jsonb;
+
 -- Fast per-user queries
 create index if not exists loops_user_id_idx         on public.loops (user_id);
 create index if not exists loops_user_deleted_idx    on public.loops (user_id, deleted_at);
 -- Fast ordered pulls (user's live rows, newest position first)
 create index if not exists loops_user_position_idx   on public.loops (user_id, position desc)
   where deleted_at is null;
+-- Parked loops by wake time (for wake-ups and, later, reminders)
+create index if not exists loops_user_wake_idx       on public.loops (user_id, wake_at)
+  where deleted_at is null and status = 'waiting' and wake_at is not null;
 
 -- Auto-bump updated_at on every write
 create or replace function public.set_updated_at()
@@ -79,7 +92,8 @@ create policy "users update own loops"
 
 -- ── BATCH UPSERT (used when seeding server from local data) ──────────────
 -- p_loops is a JSON array whose items use camelCase keys to match the JS
--- client: { id, rawText, kind, status, promptAnswer, position, createdAt }.
+-- client: { id, rawText, kind, status, promptAnswer, position, createdAt,
+-- wakeAt, details }.
 -- Every inserted row is stamped with auth.uid() as user_id regardless of
 -- what the payload contains, so a caller cannot impersonate another user.
 -- RLS on public.loops blocks updates to rows owned by a different user, so
@@ -101,7 +115,7 @@ begin
   for item in select * from jsonb_array_elements(p_loops)
   loop
     insert into public.loops
-      (id, user_id, raw_text, kind, status, prompt_answer, position, created_at)
+      (id, user_id, raw_text, kind, status, prompt_answer, position, created_at, wake_at, details)
     values (
       item->>'id',
       auth.uid(),
@@ -111,7 +125,9 @@ begin
       coalesce(item->>'promptAnswer', ''),
       coalesce((item->>'position')::double precision,
                extract(epoch from coalesce((item->>'createdAt')::timestamptz, now()))),
-      coalesce((item->>'createdAt')::timestamptz, now())
+      coalesce((item->>'createdAt')::timestamptz, now()),
+      nullif(item->>'wakeAt', '')::timestamptz,
+      case when jsonb_typeof(item->'details') = 'object' then item->'details' else '{}'::jsonb end
     )
     on conflict (id) do update
       set raw_text      = excluded.raw_text,
@@ -119,6 +135,8 @@ begin
           status        = excluded.status,
           prompt_answer = excluded.prompt_answer,
           position      = excluded.position,
+          wake_at       = excluded.wake_at,
+          details       = excluded.details,
           deleted_at    = null,
           updated_at    = now();
   end loop;

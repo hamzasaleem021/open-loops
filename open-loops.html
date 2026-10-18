@@ -2909,6 +2909,82 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
 .why-voice-toggle.on .wv-on { display: inline; }
 .why-voice-toggle.on .wv-off { display: none; }
 .why-voice-toggle:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+/* ── REASONS: why a card is where it is ── */
+.loop-card-top-left { flex-wrap: wrap; min-width: 0; }
+.loop-reason {
+  display: inline-flex; align-items: center; gap: 6px;
+  max-width: 100%; height: 26px; padding: 0 10px; box-sizing: border-box;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  font-size: 12px; font-weight: 600; line-height: 1; color: var(--text-2);
+  white-space: nowrap;
+}
+.loop-reason > span { overflow: hidden; text-overflow: ellipsis; }
+.loop-reason svg { width: 13px; height: 13px; flex-shrink: 0; }
+.loop-reason.quiet { border-style: dashed; }
+.loop-card.is-focus .loop-reason { border-color: color-mix(in srgb, currentColor 32%, transparent); color: inherit; }
+.loop-card-bottom { gap: 8px; flex-wrap: wrap; }
+
+/* ── ACTION SHEETS: each kind's button does what it says ── */
+.act-body { display: grid; gap: 12px; }
+.act-title { margin-bottom: 0; }
+.act-sub { margin: -6px 0 0; }
+.act-loop {
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-size: 14px; line-height: 1.5; color: var(--text-2);
+}
+.act-loop-title { font-weight: 600; color: var(--text); }
+.act-list { display: grid; gap: 8px; }
+.act-btn {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 54px; padding: 10px 16px; box-sizing: border-box;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit; text-align: left; cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease, transform .12s ease, opacity .15s ease;
+}
+.act-btn:hover { border-color: var(--text-3); }
+.act-btn:active { transform: scale(.985); }
+.act-btn:focus-visible, .act-link:focus-visible, .choice-chip:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.act-btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.act-btn.primary:hover { background: var(--accent-hot); }
+.act-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.act-btn-text { display: grid; gap: 2px; min-width: 0; }
+.act-btn-label { font-size: 15px; font-weight: 600; }
+.act-btn-sub { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.act-btn.primary .act-btn-sub { color: inherit; opacity: .78; }
+.act-btn-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.act-field { display: grid; gap: 6px; min-width: 0; }
+.act-label { font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-2); }
+.act-input { width: 100%; min-width: 0; min-height: 0; box-sizing: border-box; }
+textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
+.act-msg { background: var(--ask-dim); border-radius: 16px 16px 16px 6px; }
+.act-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.act-row .act-input { padding-left: 12px; padding-right: 10px; }
+.act-pick { display: grid; gap: 10px; padding: 12px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--surface); }
+.act-pick-go { width: 100%; }
+.act-link {
+  justify-self: start;
+  padding: 6px 2px; border: none; background: none;
+  font: inherit; font-size: 14px; font-weight: 600; color: var(--text-2);
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.act-link:hover { color: var(--text); }
+.choice-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice-chip {
+  height: 40px; padding: 0 16px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface); color: var(--text);
+  font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.choice-chip.on { background: var(--decide); color: var(--decide-ink); border-color: transparent; }
 </style>
 </head>
 <body>
@@ -3052,11 +3128,11 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
   const VALID_STATUSES = new Set(['active', 'waiting', 'released', 'inbox']);
 
   const kindMeta = {
-    do:       { label: 'Do',       action: 'Mark done',  question: 'What is the one next visible step?', helper: 'Concrete enough that you could start right now without planning.' },
-    decide:   { label: 'Decide',   action: 'Decide',     question: 'What decision needs to be made?',    helper: 'Name the decision cleanly — stop holding the whole swirl.' },
-    ask:      { label: 'Ask',      action: 'Reach out',  question: 'Who do you need something from?',    helper: 'One person, one ask. Nothing more.' },
-    schedule: { label: 'Schedule', action: 'Add to cal', question: 'What needs time on a calendar?',     helper: 'Treat time as the missing ingredient.' },
-    let_go:   { label: 'Let go',   action: 'Release',    question: 'What are you choosing to release?',  helper: 'The goal is relief, not proving the thought was silly.' },
+    do:       { label: 'Do',       action: 'Done',            question: 'What is the one next visible step?', helper: 'Concrete enough that you could start right now without planning.' },
+    decide:   { label: 'Decide',   action: 'I decided',       question: 'What decision needs to be made?',    helper: 'Name the decision cleanly — stop holding the whole swirl.' },
+    ask:      { label: 'Ask',      action: 'Reach out',       question: 'Who do you need something from?',    helper: 'One person, one ask. Nothing more.' },
+    schedule: { label: 'Schedule', action: 'Add to calendar', question: 'What needs time on a calendar?',     helper: 'Treat time as the missing ingredient.' },
+    let_go:   { label: 'Let go',   action: 'Let go',          question: 'What are you choosing to release?',  helper: 'The goal is relief, not proving the thought was silly.' },
     inbox:    { label: 'Inbox', action: 'Define',    question: '',                                   helper: '' }
   };
 
@@ -3101,8 +3177,44 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       position: pos,
       createdAt: loop.createdAt || nowIso(),
       updatedAt: loop.updatedAt || nowIso(),
-      completedAt: loop.completedAt || loop.completed_at || null
+      completedAt: loop.completedAt || loop.completed_at || null,
+      wakeAt: validIso(loop.wakeAt !== undefined ? loop.wakeAt : loop.wake_at),
+      details: cleanDetails(loop.details)
     };
+  }
+
+  function validIso(value) {
+    if (!value) return null;
+    const t = new Date(value).getTime();
+    return Number.isFinite(t) ? new Date(t).toISOString() : null;
+  }
+
+  // details: small, known facts about how a loop is moving or how it ended.
+  //   sentAt   — an Ask was sent; it now waits on someone else
+  //   nudges   — follow-ups sent for that Ask
+  //   steps    — next steps finished on a Do
+  //   decision — what a Decide loop settled on
+  //   outcome  — 'done' or 'let_go' once closed (rings vs pebbles)
+  //   origin   — 'decision' when a Do was born from a decision
+  function cleanDetails(d) {
+    const src = d && typeof d === 'object' && !Array.isArray(d) ? d : {};
+    const out = {};
+    const sentAt = validIso(src.sentAt);
+    if (sentAt) out.sentAt = sentAt;
+    const nudges = parseInt(src.nudges, 10);
+    if (nudges > 0) out.nudges = Math.min(nudges, 99);
+    const steps = parseInt(src.steps, 10);
+    if (steps > 0) out.steps = Math.min(steps, 999);
+    if (typeof src.decision === 'string' && src.decision.trim()) out.decision = src.decision.trim().slice(0, MAX_LOOP_TEXT_LEN);
+    if (src.outcome === 'done' || src.outcome === 'let_go') out.outcome = src.outcome;
+    if (src.origin === 'decision') out.origin = 'decision';
+    return out;
+  }
+
+  function isLetGo(loop) {
+    if (!loop) return false;
+    if (loop.details && loop.details.outcome) return loop.details.outcome === 'let_go';
+    return loop.kind === 'let_go';
   }
 
   // ── STATE ──
@@ -3270,10 +3382,10 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
     return Math.max(max, nowPosition()) + 1;
   }
 
-  function createLoop({rawText, kind, promptAnswer, status}) {
+  function createLoop({rawText, kind, promptAnswer, status, details}) {
     const l = sanitize({
       id: uid('l'),
-      rawText, kind, promptAnswer, status,
+      rawText, kind, promptAnswer, status, details,
       position: topPosition(),
       createdAt: nowIso(),
       updatedAt: nowIso()
@@ -3426,6 +3538,301 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
     }
   }
 
+  // ── TIME ──
+  // Wake times and calendar helpers. Choices are made in this device's local
+  // time; timestamps are stored as ISO strings so every device agrees.
+  function atTime(d, h, m = 0) { const x = new Date(d); x.setHours(h, m, 0, 0); return x; }
+  function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function isSameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+  function clockText(d) { return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
+
+  // "today 8:00 PM" · "tomorrow 9:00 AM" · "Sat 10:00 AM" · "Mon, Oct 26"
+  function formatWake(value) {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    const now = new Date();
+    if (isSameDay(d, now)) return `today ${clockText(d)}`;
+    if (isSameDay(d, addDays(now, 1))) return `tomorrow ${clockText(d)}`;
+    const days = Math.round((atTime(d, 0) - atTime(now, 0)) / 86400000);
+    if (days > 1 && days < 7) return `${d.toLocaleDateString(undefined, { weekday: 'short' })} ${clockText(d)}`;
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  // "today" · "yesterday" · "on Monday" · "on Oct 3"
+  function relativeDay(value) {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    const now = new Date();
+    if (isSameDay(d, now)) return 'today';
+    if (isSameDay(d, addDays(now, -1))) return 'yesterday';
+    const days = Math.round((atTime(now, 0) - atTime(d, 0)) / 86400000);
+    if (days > 1 && days < 7) return `on ${d.toLocaleDateString(undefined, { weekday: 'long' })}`;
+    return `on ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+  }
+
+  // The next given weekday (0 = Sunday) at least minDays away, at that hour.
+  function nextWeekday(now, dow, hour, minDays) {
+    let n = (dow - now.getDay() + 7) % 7;
+    while (n < minDays) n += 7;
+    return atTime(addDays(now, n), hour);
+  }
+
+  // Choices for "When should it come back?". A loop lands in Up next then.
+  function wakePresets(mode, now = new Date()) {
+    if (mode === 'ask') {
+      return [
+        { label: 'Tomorrow',  when: atTime(addDays(now, 1), 9) },
+        { label: 'In 3 days', when: atTime(addDays(now, 3), 9) },
+        { label: 'Next week', when: atTime(addDays(now, 7), 9) }
+      ];
+    }
+    const list = [];
+    const tonight = atTime(now, 20);
+    if (tonight - now > 45 * 60000) list.push({ label: 'Tonight', when: tonight });
+    else list.push({ label: 'In 3 hours', when: new Date(now.getTime() + 3 * 3600000) });
+    list.push({ label: 'Tomorrow morning', when: atTime(addDays(now, 1), 9) });
+    const sat = nextWeekday(now, 6, 10, 2);
+    list.push({ label: (sat - now) / 86400000 < 7 ? 'This weekend' : 'Next weekend', when: sat });
+    list.push({ label: 'Next week', when: nextWeekday(now, 1, 9, 2) });
+    return list;
+  }
+
+  function localDateValue(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function localTimeValue(d) {
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+  function fromLocalInputs(dateStr, timeStr) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr || '');
+    if (!m) return null;
+    const t = /^(\d{1,2}):(\d{2})/.exec(timeStr || '') || [null, '9', '00'];
+    const d = new Date(+m[1], +m[2] - 1, +m[3], +t[1], +t[2], 0, 0);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  // Reads a day and a time out of a note like "Saturday 10am" or
+  // "Oct 24, 4:30pm". Returns { date, text } or null when it finds neither.
+  // Numeric dates (10/24) are skipped on purpose: day/month vs month/day
+  // is a coin flip, and a wrong guess is worse than no guess.
+  const WEEKDAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const MONTH_NAMES = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  function parseWhen(text, now = new Date()) {
+    const src = String(text || '');
+    const t = src.toLowerCase();
+    const MON = '(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?';
+    let day = null, dayHit = null, kind = null, evening = false, m;
+
+    let monthIdx = -1, dom = 0;
+    if ((m = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+${MON}`).exec(t))) {
+      dom = +m[1]; monthIdx = MONTH_NAMES.indexOf(m[2]); dayHit = m;
+    } else if ((m = new RegExp(`\\b${MON}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`).exec(t))) {
+      dom = +m[2]; monthIdx = MONTH_NAMES.indexOf(m[1]); dayHit = m;
+    }
+    if (dayHit) {
+      const candidate = new Date(now.getFullYear(), monthIdx, dom);
+      // Reject impossible dates like "31 Feb" instead of rolling them over.
+      if (monthIdx >= 0 && dom >= 1 && candidate.getMonth() === monthIdx) { day = candidate; kind = 'date'; }
+      else dayHit = null;
+    }
+    if (!day) {
+      const rel = [
+        { re: /\btoday\b/, offset: 0 },
+        { re: /\btonight\b/, offset: 0, evening: true },
+        { re: /\b(?:tomorrow|tmrw|tmr)\b/, offset: 1 }
+      ];
+      for (const r of rel) {
+        const x = r.re.exec(t);
+        if (x && (!dayHit || x.index < dayHit.index)) {
+          day = atTime(addDays(now, r.offset), 0); dayHit = x; kind = 'relative'; evening = !!r.evening;
+        }
+      }
+      WEEKDAY_NAMES.forEach((name, i) => {
+        const x = new RegExp(`\\b(next\\s+)?(?:${name}|${name.slice(0, 3)})\\b`).exec(t);
+        if (x && (!dayHit || x.index < dayHit.index)) {
+          let n = (i - now.getDay() + 7) % 7;
+          if (x[1] && n === 0) n = 7; // "next Monday", said on a Monday
+          day = atTime(addDays(now, n), 0); dayHit = x; kind = 'weekday'; evening = false;
+        }
+      });
+    }
+
+    let hour = null, minute = 0, timeHit = null;
+    if ((m = /\b(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)/.exec(t))) {
+      const h = +m[1];
+      hour = h > 12 ? Math.min(h, 23) : (h % 12) + (m[3][0] === 'p' ? 12 : 0);
+      minute = m[2] ? Math.min(+m[2], 59) : 0; timeHit = m;
+    } else if ((m = /\b([01]?\d|2[0-3])[:.]([0-5]\d)\b/.exec(t))) {
+      hour = +m[1]; minute = +m[2]; timeHit = m;
+    } else if ((m = /\bnoon\b/.exec(t))) { hour = 12; timeHit = m; }
+    else if ((m = /\bmorning\b/.exec(t))) { hour = 9; timeHit = m; }
+    else if ((m = /\bafternoon\b/.exec(t))) { hour = 14; timeHit = m; }
+    else if ((m = /\bevening\b/.exec(t))) { hour = 18; timeHit = m; }
+
+    if (!day && hour === null) return null;
+    let date;
+    if (day) {
+      date = new Date(day);
+      date.setHours(hour !== null ? hour : (evening ? 20 : 9), minute, 0, 0);
+      if (kind === 'weekday' && date <= now) date = addDays(date, 7);
+      if (kind === 'date' && date < atTime(now, 0)) date.setFullYear(date.getFullYear() + 1);
+    } else {
+      date = atTime(now, hour, minute);
+      if (date <= now) date = addDays(date, 1);
+    }
+    const pick = x => src.substr(x.index, x[0].length).trim();
+    const hits = [dayHit, timeHit].filter(Boolean).sort((a, b) => a.index - b.index);
+    return { date, text: hits.map(pick).join(' ') };
+  }
+
+  // ── ASKS ──
+  // "Bilal: can he start before the 15th?" → { who: 'Bilal', ask: '…' }
+  function parseAsk(text) {
+    const s = String(text || '').trim();
+    const m = /^([^:\n]{1,40}?)\s*(?::|\s[\u2014\u2013-]\s)\s*([\s\S]+)$/.exec(s);
+    if (m && m[2].trim() && m[1].trim().split(/\s+/).length <= 4) return { who: m[1].trim(), ask: m[2].trim() };
+    return { who: '', ask: s };
+  }
+
+  // Notes are written about the person ("can he start…"); the message is
+  // written to them ("can you start…"). Only the opening is rewritten.
+  function toSecondPerson(text) {
+    return text.replace(/^(can|could|would|will|should|might|did)\s+(he|she|they)\b/i, (m, aux) => `${aux} you`)
+      .replace(/^(is|are)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Are' : 'are'} you`)
+      .replace(/^(was|were)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Were' : 'were'} you`)
+      .replace(/^(does|do)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Do' : 'do'} you`)
+      .replace(/^(has|have)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Have' : 'have'} you`);
+  }
+
+  function askDraft(loop, nudge) {
+    const { who, ask } = parseAsk(loop.promptAnswer || '');
+    const body = who ? toSecondPerson((ask || '').trim()) : (ask || loop.rawText || '').trim();
+    // Lowercase the first word only when it's an ordinary question word, so
+    // "Can he start…" reads "Hi Bilal, can he start…" but names stay intact.
+    const soft = /^(can|could|would|will|is|are|do|does|did|when|what|where|who|how|please|any|have|has|just|quick)\b/i.test(body)
+      ? body.charAt(0).toLowerCase() + body.slice(1)
+      : body;
+    if (nudge) return who ? `Hi ${who}, just checking in on this: ${soft}` : `Just checking in on this: ${soft}`;
+    return who ? `Hi ${who}, ${soft}` : body;
+  }
+
+  // Native share sheet where there is one; otherwise copy the text.
+  async function shareText(text) {
+    if (navigator.share) {
+      try { await navigator.share({ text }); return 'shared'; }
+      catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+    }
+    try { await navigator.clipboard.writeText(text); return 'copied'; }
+    catch (_) { return 'failed'; }
+  }
+
+  // ── DECISIONS ──
+  // "Air 15 or X1, decide by Friday" → ['Air 15', 'X1']
+  function decisionOptions(text) {
+    const first = String(text || '').split(/[,.;\n]|\b(?:decide|by|before)\s+(?:mon|tue|wed|thu|fri|sat|sun|tomorrow|today|next)/i)[0] || '';
+    const parts = first
+      .replace(/^(?:should i|do i|whether to|whether i|between|either)\s+/i, '')
+      .split(/\s+(?:or|vs\.?|versus)\s+|\s*\/\s*/i)
+      .map(s => s.trim().replace(/[?!]+$/, ''))
+      .filter(Boolean);
+    if (parts.length < 2 || parts.length > 4 || parts.some(p => p.length > 40)) return [];
+    return parts;
+  }
+
+  // ── CALENDAR ──
+  // No sign-in: a prefilled Google Calendar link, or an .ics file that Apple
+  // Calendar, Outlook and most other calendars open.
+  function gcalStamp(d) {
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`;
+  }
+  function googleCalendarUrl({ title, start, end, details }) {
+    const params = new URLSearchParams({ action: 'TEMPLATE', text: title, dates: `${gcalStamp(start)}/${gcalStamp(end)}`, details });
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz) params.set('ctz', tz);
+    } catch (_) {}
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  }
+  function icsStamp(d) { return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); }
+  function icsEscape(s) { return String(s).replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;'); }
+  function icsFold(line) {
+    // RFC 5545: lines longer than 75 octets continue on the next line after a space.
+    const out = [];
+    let rest = line;
+    while (new TextEncoder().encode(rest).length > 74) {
+      let cut = 74;
+      while (new TextEncoder().encode(rest.slice(0, cut)).length > 74) cut--;
+      out.push(rest.slice(0, cut));
+      rest = ' ' + rest.slice(cut);
+    }
+    out.push(rest);
+    return out.join('\r\n');
+  }
+  function icsText({ uidValue, title, start, end, details }) {
+    return [
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Open Loops//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:${uidValue}@open-loops`,
+      `DTSTAMP:${icsStamp(new Date())}`,
+      `DTSTART:${icsStamp(start)}`,
+      `DTEND:${icsStamp(end)}`,
+      `SUMMARY:${icsEscape(title)}`,
+      details ? `DESCRIPTION:${icsEscape(details)}` : null,
+      'END:VEVENT', 'END:VCALENDAR'
+    ].filter(Boolean).map(icsFold).join('\r\n') + '\r\n';
+  }
+  function downloadIcs(text, name) {
+    const blob = new Blob([text], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+  function fileSlug(s) {
+    return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  }
+
+  // ── WAKE-UPS ──
+  // A parked loop with a wake time comes back on its own: into Up next,
+  // never straight into Now. Runs when the app opens, when it returns to the
+  // foreground, and once a minute while it's open.
+  function wakeDueLoops(opts = {}) {
+    if (!Sync.isLoggedIn()) return [];
+    const now = Date.now();
+    // Latest first, so the earliest-due loop ends up right under Now.
+    const due = data.loops
+      .filter(l => l.status === 'waiting' && l.wakeAt && new Date(l.wakeAt).getTime() <= now)
+      .sort((a, b) => new Date(b.wakeAt) - new Date(a.wakeAt));
+    if (!due.length) return [];
+    const patches = [];
+    let rebalance = false;
+    for (const l of due) {
+      const upNext = upNextPosition(l.id);
+      const patch = { status: 'active', position: upNext.position };
+      updateLoop(l.id, patch);
+      patches.push([l.id, patch]);
+      if (upNext.rebalance) rebalance = true;
+    }
+    const positionChanges = rebalance ? rebalanceActivePositions() : null;
+    save();
+    renderAll();
+    patches.forEach(([id, patch]) => Sync.updateLoop(id, patch));
+    if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
+    if (!opts.quiet) {
+      const first = due[due.length - 1].rawText || '';
+      const short = first.length > 42 ? first.slice(0, 40).trimEnd() + '…' : first;
+      toast(due.length === 1 ? `Back in Up next: ${short}` : `${due.length} loops woke up. They're in Up next.`);
+    }
+    return due;
+  }
+
   // ── TOAST ──
   function toast(msg, opts) {
     const el = document.getElementById('toast');
@@ -3500,8 +3907,50 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
     const closed = loop.status === 'released' ? formatLoopDate(loop.completedAt) : '';
     const parts = [];
     if (captured) parts.push(`<span>Captured ${esc(captured)}</span>`);
-    if (closed) parts.push(`<span>Closed ${esc(closed)}</span>`);
+    if (closed) parts.push(`<span>${isLetGo(loop) ? 'Let go' : 'Closed'} ${esc(closed)}</span>`);
     return parts.length ? `<div class="loop-meta">${parts.join('')}</div>` : '';
+  }
+
+  // ── REASONS ──
+  // A small label on a card that says why it is where it is.
+  const REASON_ICON = {
+    sun:    '<path d="M3 11.5h10M5 11.5a3 3 0 0 1 6 0M8 3.5v2M3.8 6.3l1.2 1.1M12.2 6.3 11 7.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+    person: '<circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M3 13.5a5 5 0 0 1 10 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+    fork:   '<path d="M8 2v4M8 6 4 10v4M8 6l4 4v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'
+  };
+  function reasonFor(loop) {
+    const d = loop.details || {};
+    const wake = loop.wakeAt ? new Date(loop.wakeAt).getTime() : null;
+    const isSentAsk = loop.kind === 'ask' && !!d.sentAt;
+    if (loop.status === 'waiting') {
+      if (isSentAsk) {
+        const who = parseAsk(loop.promptAnswer).who || 'them';
+        return { icon: 'person', text: wake ? `Waiting on ${who} · back ${formatWake(loop.wakeAt)}` : `Waiting on ${who}` };
+      }
+      return wake ? { icon: 'sun', text: `Wakes ${formatWake(loop.wakeAt)}` } : { text: 'No wake time', quiet: true };
+    }
+    if (loop.status === 'active') {
+      if (isSentAsk) return { icon: 'person', text: wake && wake <= Date.now() ? 'Checking back' : `Sent ${relativeDay(d.sentAt)}` };
+      if (wake && wake <= Date.now() && isSameDay(new Date(wake), new Date())) return { icon: 'sun', text: 'Woke today' };
+      if (d.origin === 'decision') return { icon: 'fork', text: 'From your decision' };
+    }
+    return null;
+  }
+  function reasonHtml(loop) {
+    const r = reasonFor(loop);
+    if (!r) return '';
+    const icon = REASON_ICON[r.icon] ? `<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">${REASON_ICON[r.icon]}</svg>` : '';
+    return `<span class="loop-reason${r.quiet ? ' quiet' : ''}">${icon}<span>${esc(r.text)}</span></span>`;
+  }
+
+  // What the card's main button says. An Ask that was sent asks the real
+  // question: did they reply?
+  function actionLabel(loop) {
+    if (loop.kind === 'ask' && loop.details && loop.details.sentAt) {
+      const who = parseAsk(loop.promptAnswer).who;
+      return who ? `Did ${who} reply?` : 'Did they reply?';
+    }
+    return (kindMeta[loop.kind] || kindMeta.inbox).action;
   }
 
   // ── CLAY ART ──
@@ -3603,7 +4052,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       <article class="loop-card kind-${loop.kind || 'inbox'}${hl}${focus}" style="${delay}" data-loop-id="${esc(loop.id)}"${draggable}>
         ${opts.focus ? `<div class="focus-eyebrow">Now</div>` : ''}
         <div class="loop-card-top">
-          <div class="loop-card-top-left">${handle}${chipHtml(loop.kind)}</div>
+          <div class="loop-card-top-left">${handle}${chipHtml(loop.kind)}${reasonHtml(loop)}</div>
           <div class="loop-card-tools">
             ${reorderControls}
             <button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options">
@@ -3618,7 +4067,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
         </div>
         ${loopMetaHtml(loop)}
         <div class="loop-card-bottom">
-          <button class="btn-action kind-${loop.kind || 'inbox'}" data-action="primary-action" data-loop-id="${esc(loop.id)}">${m.action}</button>
+          <button class="btn-action kind-${loop.kind || 'inbox'}" data-action="primary-action" data-loop-id="${esc(loop.id)}">${esc(actionLabel(loop))}</button>
         </div>
       </article>`;
   }
@@ -3654,7 +4103,10 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       const week = closedThisWeek();
       if (week.length) {
         const shown = week.slice(-21);
-        meter = `<div class="cap-meter closed-shelf"><div class="ring-shelf" role="img" aria-label="${week.length} loops closed this week">${shown.map(l => clayRingHtml(l.kind)).join('')}</div><div class="cap-meter-label">${week.length} closed this week</div></div>`;
+        const letGoCount = week.filter(isLetGo).length;
+        const doneCount = week.length - letGoCount;
+        const label = letGoCount ? `${doneCount} closed · ${letGoCount} let go this week` : `${doneCount} closed this week`;
+        meter = `<div class="cap-meter closed-shelf"><div class="ring-shelf" role="img" aria-label="${esc(label)}">${shown.map(shelfItemHtml).join('')}</div><div class="cap-meter-label">${esc(label)}</div></div>`;
       }
     }
     html += `
@@ -3696,15 +4148,22 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       html += `<div class="tab-panel active" id="tab-later">`;
       if (waiting.length) {
         html += `<div class="loop-stack">`;
-        waiting.forEach((loop, i) => {
+        // Soonest wake time first; loops with no wake time keep their order at the end.
+        const byWake = waiting.slice().sort((a, b) => {
+          const wa = a.wakeAt ? new Date(a.wakeAt).getTime() : Infinity;
+          const wb = b.wakeAt ? new Date(b.wakeAt).getTime() : Infinity;
+          return wa !== wb ? wa - wb : (b.position || 0) - (a.position || 0);
+        });
+        byWake.forEach((loop, i) => {
           html += `
             <article class="loop-card kind-${loop.kind || 'inbox'}" data-loop-id="${esc(loop.id)}" style="animation-delay:${i*0.04}s">
-              <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
+              <div class="loop-card-top"><div class="loop-card-top-left">${chipHtml(loop.kind)}${reasonHtml(loop)}</div><button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
               <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '-')}</span></div>
               ${loopMetaHtml(loop)}
               <div class="loop-card-bottom">
                 <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Make active</button>
+                <button class="btn-action" data-action="open-when" data-loop-id="${esc(loop.id)}">${loop.wakeAt ? 'Change time' : 'Set a time'}</button>
               </div>
             </article>`;
         });
@@ -3724,7 +4183,9 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
             <article class="loop-card kind-${loop.kind || 'inbox'}" data-loop-id="${esc(loop.id)}" style="animation-delay:${i*0.04}s;opacity:0.72">
               <div class="loop-card-top">${chipHtml(loop.kind)}<button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title" style="text-decoration:line-through;color:var(--text-2)">${esc(loop.rawText)}</p>
-              <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '-')}</span></div>
+              ${loop.details && loop.details.decision
+                ? `<div class="loop-next"><span class="loop-next-label">Decided</span><span>${esc(loop.details.decision)}</span></div>`
+                : `<div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '-')}</span></div>`}
               ${loopMetaHtml(loop)}
               <div class="loop-card-bottom">
                 <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Reopen</button>
@@ -3971,15 +4432,19 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
           </button>` : ''}
           ${active ? `<button class="menu-item" data-action="move-waiting" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-            Move to Waiting
+            Park until…
+          </button>` : ''}
+          ${waiting ? `<button class="menu-item" data-action="open-when" data-loop-id="${esc(loop.id)}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            ${loop.wakeAt ? 'Change wake time' : 'Set a wake time'}
           </button>` : ''}
           ${waiting || released ? `<button class="menu-item" data-action="restore-active" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             ${released ? 'Reopen' : 'Make active'}
           </button>` : ''}
           ${active ? `<button class="menu-item" data-action="move-released" data-loop-id="${esc(loop.id)}">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 3l-4 4 4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Release
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 11.5V4.5M7 4.5 4.5 7M7 4.5 9.5 7M3.5 2.5h7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Let go
           </button>` : ''}
           <button class="menu-item danger" data-action="delete-loop" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 4h8M5 4V3h4v1M5.5 6.5v4M8.5 6.5v4M4 4l.5 7h5L10 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -4559,10 +5024,10 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
     {
       eyebrow: '3 of 4',
       title: 'Park what isn\'t yours.',
-      body: 'If the next move belongs to someone else, or to a later day, park it. It\'s waiting, not forgotten.',
+      body: 'If the next move belongs to someone else, or to a later day, park it and pick when it should come back. It\'s waiting, not forgotten.',
       visual: `
         <div class="onboarding-visual" style="text-align:center;padding:18px 20px;">
-          <div style="font-size:13px;color:var(--text-2);line-height:1.7;">Parked loops sit quietly until they're yours again.</div>
+          <div style="font-size:13px;color:var(--text-2);line-height:1.7;">Parked loops sit quietly, then come back<br>to Up next on the day you picked.</div>
         </div>`,
       next: 'Next',
     },
@@ -4664,52 +5129,279 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
     renderOnboarding();
   }
 
+  // ── PRIMARY ACTIONS ──
+  // Each kind's button does what it says, and every "not yet" asks "when?".
+  //   Do       → step done (set the next one) or all done
+  //   Decide   → name the decision, optionally start the next Do
+  //   Ask      → send it, then park it until it's time to check back;
+  //              when it wakes: did they reply?
+  //   Schedule → a real calendar event (Google link or .ics file), then close
+  //   Let go   → let it go
+  const ACT_ICON = {
+    ring:  '<svg class="act-btn-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="2.2"/></svg>',
+    next:  '<svg class="act-btn-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M7 4.5 11.5 9 7 13.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    clock: '<svg class="act-btn-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 6.8v2.6l1.7 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    send:  '<svg class="act-btn-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M15.5 2.5 8 10M15.5 2.5l-5 13L8 10 2.5 7.5l13-5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    cal:   '<svg class="act-btn-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="3" y="4" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 7.5h12M6.5 2.5v3M11.5 2.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    file:  '<svg class="act-btn-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M9 3v8m0 0-3-3m3 3 3-3M4 14.5h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    drift: '<svg class="act-btn-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M9 14V5.5M9 5.5 6 8.5M9 5.5l3 3M4.5 3h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+  const SHEET_CLOSE = `<button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
+
+  function actBtn({ action, label, sub, primary, loopId, attrs = '', icon = '' }) {
+    return `<button type="button" class="act-btn${primary ? ' primary' : ''}" data-action="${action}" data-loop-id="${esc(loopId)}" ${attrs}>
+      <span class="act-btn-text"><span class="act-btn-label">${esc(label)}</span>${sub ? `<span class="act-btn-sub">${esc(sub)}</span>` : ''}</span>${icon}
+    </button>`;
+  }
+  function notYetBtn(loop, label = 'Not yet') {
+    return actBtn({ action: 'open-when', label, sub: 'Pick when it comes back', loopId: loop.id, icon: ACT_ICON.clock });
+  }
+  function actLoopBox(rawText, line) {
+    return `<div class="act-loop"><div class="act-loop-title">${esc(rawText)}</div>${line ? `<div class="act-loop-line">${esc(line)}</div>` : ''}</div>`;
+  }
+  function actField(id, label, control) {
+    return `<div class="act-field"><label class="act-label" for="${id}">${esc(label)}</label>${control}</div>`;
+  }
+  function actSheet({ kind, eyebrow, titleId, title, sub, step, body }) {
+    return `
+      <div class="overlay-card act-card" role="dialog" aria-modal="true" aria-labelledby="${titleId}">
+        <div class="overlay-header">
+          <div class="overlay-meta">${kind !== undefined ? chipHtml(kind) : `<div class="overlay-eyebrow">${esc(eyebrow || '')}</div>`}</div>
+          ${SHEET_CLOSE}
+        </div>
+        <div class="act-body" data-step="${esc(step || '')}">
+          <h2 class="overlay-title act-title" id="${titleId}">${esc(title)}</h2>
+          ${sub ? `<p class="overlay-subtitle act-sub">${esc(sub)}</p>` : ''}
+          ${body}
+        </div>
+      </div>`;
+  }
+
+  // Default start for a Schedule event: what the note says, else tomorrow 9:00.
+  function scheduleStart(loop, ov) {
+    const typed = fromLocalInputs(ov.calDate, ov.calTime);
+    if (typed) return { start: typed, parsed: null };
+    const parsed = parseWhen(loop.promptAnswer) || parseWhen(loop.rawText);
+    return { start: parsed ? parsed.date : atTime(addDays(new Date(), 1), 9), parsed };
+  }
+
   function renderPrimaryAction(loop) {
     if (!loop) return '';
-    const m = kindMeta[loop.kind] || kindMeta.inbox;
-    const actions = {
-      do: { q: 'Did you complete this?', hint: 'Mark it done and move on, or update the next step.', options: [
-        { label: 'Done — release it', action: 'complete-done', primary: true },
-        { label: 'Still in progress', action: 'complete-progress' },
-        { label: 'Update next step', action: 'complete-update' },
-      ]},
-      decide: { q: 'Have you decided?', hint: 'Name the decision you made, or keep it active.', options: [
-        { label: 'Decision made — release it', action: 'complete-done', primary: true },
-        { label: 'Still deciding', action: 'complete-progress' },
-        { label: 'Update the question', action: 'complete-update' },
-      ]},
-      ask: { q: 'Did you reach out?', hint: 'Mark sent, or update who you need to ask.', options: [
-        { label: 'Sent — release it', action: 'complete-done', primary: true },
-        { label: 'Not yet', action: 'complete-progress' },
-        { label: 'Update the ask', action: 'complete-update' },
-      ]},
-      schedule: { q: 'Is it on the calendar?', hint: 'Mark it scheduled, or update the timing.', options: [
-        { label: 'Scheduled — release it', action: 'complete-done', primary: true },
-        { label: 'Not yet', action: 'complete-progress' },
-        { label: 'Update timing', action: 'complete-update' },
-      ]},
-      let_go: { q: 'Ready to release this?', hint: 'Let it go. You can restore it if needed.', options: [
-        { label: 'Yes, release it', action: 'complete-done', primary: true },
-        { label: 'Not yet', action: 'complete-progress' },
-      ]},
-    };
-    const cfg = actions[loop.kind] || actions.do;
-    const opts = cfg.options.map(o => `
-      <button class="menu-item${o.primary ? ' menu-item-primary' : ''}" data-action="${o.action}" data-loop-id="${esc(loop.id)}" style="${o.primary ? 'color:var(--accent);border-color:var(--accent-dim);background:var(--accent-dim)' : ''}">
-        ${o.label}
-      </button>`).join('');
-    return `
-      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="primary-action-title">
-        <div class="overlay-header">
-          <div class="overlay-meta"><div class="overlay-eyebrow">${m.label}</div></div>
-          <button class="overlay-close" data-action="close-overlay" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-        </div>
-        <h2 class="overlay-title" id="primary-action-title" style="font-size:1.4rem">${esc(cfg.q)}</h2>
-        <p class="overlay-subtitle">${esc(cfg.hint)}</p>
-        <p style="font-size:13px;color:var(--text-2);margin:0 0 16px;padding:10px 12px;background:var(--surface-2);border-radius:8px;line-height:1.5">${esc(loop.rawText)}</p>
-        <div class="menu-list">${opts}</div>
-        <div class="overlay-actions"><button class="btn btn-ghost" data-action="close-overlay">Cancel</button></div>
+    const ov = view.overlay || {};
+    const kind = loop.kind || 'do';
+    const d = loop.details || {};
+    const id = loop.id;
+    const sentAsk = kind === 'ask' && !!d.sentAt && loop.status === 'active';
+    const step = ov.step || (sentAsk ? 'reply' : 'main');
+    const editLink = `<button type="button" class="act-link" data-action="complete-update" data-loop-id="${esc(id)}">Edit the note</button>`;
+    let title = '', sub = '', body = '';
+
+    if (kind === 'decide') {
+      if (step === 'next') {
+        const spawn = (ov.spawnText || '').trim();
+        title = `${ov.decision}. Good.`;
+        sub = 'Does it need a next step?';
+        body = actField('act-spawn', 'New Do (optional)',
+            `<textarea class="big-input act-input" id="act-spawn" rows="1" maxlength="${MAX_LOOP_TEXT_LEN}" placeholder="The first thing to do about it" enterkeyhint="done">${esc(ov.spawnText || '')}</textarea>`) + `
+          <div class="act-list">
+            ${actBtn({ action: 'decide-close', label: 'Close it and add the Do', sub: 'The Do lands in Up next', primary: true, loopId: id, attrs: `data-spawn="1" ${spawn ? '' : 'disabled'}`, icon: ACT_ICON.ring })}
+            ${actBtn({ action: 'decide-close', label: 'No next step, just close it', loopId: id, icon: ACT_ICON.ring })}
+          </div>
+          <button type="button" class="act-link" data-action="act-step" data-step="main">Back</button>`;
+      } else {
+        const options = decisionOptions(loop.promptAnswer);
+        const chips = options.length
+          ? `<div class="choice-chips" role="group" aria-label="Your options">${options.map(o =>
+              `<button type="button" class="choice-chip${ov.decision === o ? ' on' : ''}" data-action="decide-pick" data-choice="${esc(o)}" aria-pressed="${ov.decision === o}">${esc(o)}</button>`).join('')}</div>`
+          : '';
+        title = 'What did you decide?';
+        sub = 'Name it in a line, so future you knows what you chose.';
+        body = actLoopBox(loop.rawText, loop.promptAnswer) + chips +
+          actField('act-decision', 'Your decision',
+            `<textarea class="big-input act-input${options.length ? ' no-autofocus' : ''}" id="act-decision" rows="1" maxlength="${MAX_LOOP_TEXT_LEN}" placeholder="e.g. Go with the first one" enterkeyhint="next">${esc(ov.decision || '')}</textarea>`) + `
+          <div class="act-list">
+            ${actBtn({ action: 'decide-confirm', label: "That's my decision", primary: true, loopId: id, icon: ACT_ICON.next })}
+            ${notYetBtn(loop, 'Still deciding')}
+          </div>${editLink}`;
+      }
+    } else if (kind === 'ask') {
+      const { who, ask } = parseAsk(loop.promptAnswer);
+      const them = who || 'them';
+      if (step === 'reply') {
+        title = who ? `Did ${who} reply?` : 'Did they reply?';
+        sub = `You asked ${relativeDay(d.sentAt)}${d.nudges ? ` and nudged ${d.nudges === 1 ? 'once' : d.nudges + ' times'}` : ''}.`;
+        body = actLoopBox(loop.rawText, ask) + `
+          <div class="act-list">
+            ${actBtn({ action: 'complete-done', label: 'Got it, close it', primary: true, loopId: id, icon: ACT_ICON.ring })}
+            ${actBtn({ action: 'ask-nudge', label: `Nudge ${them}`, sub: 'A short follow-up, ready to send', loopId: id, icon: ACT_ICON.send })}
+            ${actBtn({ action: 'act-step', label: 'Wait longer', sub: 'Pick when to check back', loopId: id, attrs: 'data-step="sent" data-wait="1"', icon: ACT_ICON.clock })}
+          </div>`;
+      } else if (step === 'sent') {
+        title = ov.waitOnly ? 'When should I check back?' : `Sent. Now it's on ${them}.`;
+        sub = 'An Ask closes when they answer, not when you hit send.';
+        const presets = wakePresets('ask').map(p => actBtn({
+          action: 'ask-park', label: p.label, sub: formatWake(p.when), loopId: id,
+          attrs: `data-when="${p.when.toISOString()}"`, icon: ACT_ICON.clock
+        })).join('');
+        body = `<div class="act-list">${presets}
+          ${ov.waitOnly ? '' : actBtn({ action: 'complete-done', label: 'They already answered', sub: 'Close it now', loopId: id, icon: ACT_ICON.ring })}
+        </div>`;
+      } else {
+        const msg = ov.message != null ? ov.message : askDraft(loop, !!ov.nudge);
+        title = ov.nudge ? 'A gentle nudge' : (who ? `Reach out to ${who}` : 'Reach out');
+        sub = 'Your ask, ready to send. Change anything.';
+        body = actField('act-msg', who ? `Message to ${who}` : 'Message',
+            `<textarea class="big-input act-input act-msg no-autofocus" id="act-msg" rows="3" maxlength="1000">${esc(msg)}</textarea>`) + `
+          <div class="act-list">
+            ${actBtn({ action: 'ask-share', label: 'Send…', sub: 'Opens your share sheet, or copies the text', primary: true, loopId: id, icon: ACT_ICON.send })}
+            ${actBtn({ action: 'act-step', label: 'I already asked', sub: 'In person, or somewhere else', loopId: id, attrs: 'data-step="sent"', icon: ACT_ICON.next })}
+            ${ov.nudge ? '' : notYetBtn(loop)}
+          </div>${ov.nudge ? '' : editLink}`;
+      }
+    } else if (kind === 'schedule') {
+      const { start, parsed } = scheduleStart(loop, ov);
+      if (step === 'confirm') {
+        title = 'On your calendar?';
+        sub = 'Once it is saved there, your calendar holds it and this loop can close.';
+        const when = `${start.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}, ${clockText(start)}`;
+        body = actLoopBox(ov.calTitle || loop.rawText, when) + `
+          <div class="act-list">
+            ${actBtn({ action: 'complete-done', label: 'Yes, close the loop', primary: true, loopId: id, icon: ACT_ICON.ring })}
+            ${actBtn({ action: 'act-step', label: "It didn't save. Try again", loopId: id, attrs: 'data-step="main"', icon: ACT_ICON.cal })}
+            ${notYetBtn(loop)}
+          </div>`;
+      } else {
+        title = 'Add to calendar';
+        sub = parsed ? `I read "${parsed.text}" from your note. Check it, then pick a calendar.` : 'Pick a day and time, then a calendar.';
+        body = actField('cal-title', 'Event',
+            `<input class="big-input act-input no-autofocus" id="cal-title" type="text" maxlength="200" value="${esc(ov.calTitle != null ? ov.calTitle : loop.rawText)}">`) + `
+          <div class="act-row">
+            ${actField('cal-date', 'Day', `<input class="big-input act-input no-autofocus" id="cal-date" type="date" value="${localDateValue(start)}">`)}
+            ${actField('cal-time', 'Time', `<input class="big-input act-input no-autofocus" id="cal-time" type="time" value="${localTimeValue(start)}">`)}
+          </div>
+          <div class="act-list">
+            ${actBtn({ action: 'cal-google', label: 'Google Calendar', sub: 'Opens a ready-made event, 30 minutes', primary: true, loopId: id, icon: ACT_ICON.cal })}
+            ${actBtn({ action: 'cal-ics', label: 'Apple, Outlook or other', sub: 'Downloads an event file', loopId: id, icon: ACT_ICON.file })}
+            ${notYetBtn(loop)}
+          </div>${editLink}`;
+      }
+    } else if (kind === 'let_go') {
+      title = 'Ready to let it go?';
+      sub = 'Letting go is a choice, not a failure. It leaves your head, not your history.';
+      body = actLoopBox(loop.rawText, loop.promptAnswer ? `Letting go of: ${loop.promptAnswer}` : '') + `
+        <div class="act-list">
+          ${actBtn({ action: 'complete-done', label: 'Let it go', primary: true, loopId: id, icon: ACT_ICON.drift })}
+          ${notYetBtn(loop)}
+        </div>`;
+    } else {
+      // Do (and any loop without a kind yet).
+      if (step === 'next') {
+        const typed = (ov.nextText || '').trim();
+        title = "Nice. What's next?";
+        sub = 'Concrete enough that you could start right now without planning.';
+        body = actField('act-next', 'Next visible step',
+            `<textarea class="big-input act-input" id="act-next" rows="2" maxlength="${MAX_LOOP_TEXT_LEN}" placeholder="e.g. Draft the three key messages" enterkeyhint="done">${esc(ov.nextText || '')}</textarea>`) + `
+          <div class="overlay-actions">
+            <button class="btn btn-ghost" type="button" data-action="act-step" data-step="main">Back</button>
+            <button class="btn btn-primary" type="button" data-action="do-save-step" data-loop-id="${esc(id)}" ${typed ? '' : 'disabled'}>Save next step</button>
+          </div>`;
+      } else {
+        title = 'How did it go?';
+        sub = "A Do holds your next step. Finishing the step isn't always finishing the loop.";
+        body = actLoopBox(loop.rawText, loop.promptAnswer ? `Next: ${loop.promptAnswer}` : '') + `
+          <div class="act-list">
+            ${actBtn({ action: 'complete-done', label: 'All done, close it', primary: true, loopId: id, icon: ACT_ICON.ring })}
+            ${actBtn({ action: 'act-step', label: loop.promptAnswer ? 'Did the step, set the next one' : 'Set the next step', loopId: id, attrs: 'data-step="next"', icon: ACT_ICON.next })}
+            ${notYetBtn(loop)}
+          </div>${editLink}`;
+      }
+    }
+
+    return actSheet({ kind: loop.kind, titleId: 'act-title', title, sub, step, body });
+  }
+
+  // ── NOT YET → WHEN? ──
+  // Every way of parking a loop asks when it should come back. "No date" is
+  // still allowed; it just means checking Parked yourself.
+  function renderWhen(loop) {
+    if (!loop) return '';
+    const ov = view.overlay || {};
+    const rawText = ov.define ? ov.define.rawText : loop.rawText;
+    const current = loop.status === 'waiting' && loop.wakeAt ? ` Right now it's set for ${formatWake(loop.wakeAt)}.` : '';
+    const presets = wakePresets('park').map(p => actBtn({
+      action: 'park-until', label: p.label, sub: formatWake(p.when), loopId: loop.id,
+      attrs: `data-when="${p.when.toISOString()}"`, icon: ACT_ICON.clock
+    })).join('');
+    const def = ov.pickDate ? new Date(ov.pickDate) : atTime(addDays(new Date(), 2), 9);
+    const pick = ov.pickOpen
+      ? `<div class="act-pick">
+          <div class="act-row">
+            ${actField('when-date', 'Day', `<input class="big-input act-input no-autofocus" id="when-date" type="date" value="${localDateValue(def)}" min="${localDateValue(new Date())}">`)}
+            ${actField('when-time', 'Time', `<input class="big-input act-input no-autofocus" id="when-time" type="time" value="${localTimeValue(def)}">`)}
+          </div>
+          <button type="button" class="btn btn-primary act-pick-go" data-action="park-until" data-when="pick" data-loop-id="${esc(loop.id)}">Park until then</button>
+        </div>`
+      : actBtn({ action: 'when-pick-open', label: 'Pick a day and time', loopId: loop.id, icon: ACT_ICON.cal });
+    const body = actLoopBox(rawText, '') + `
+      <div class="act-list">
+        ${presets}
+        ${pick}
+        ${actBtn({ action: 'park-until', label: 'No date', sub: 'It waits in Parked until you bring it back', loopId: loop.id, attrs: 'data-when=""', icon: ACT_ICON.next })}
       </div>`;
+    return actSheet({
+      eyebrow: 'Not yet', titleId: 'when-title', step: 'when',
+      title: 'When should it come back?',
+      sub: `It returns to Up next at that time, never straight to Now.${current}`,
+      body
+    });
+  }
+
+  // Keep what the person typed when the sheet changes step.
+  function readActInputs(ov) {
+    const val = id => { const el = document.getElementById(id); return el ? el.value : null; };
+    const map = { 'act-next': 'nextText', 'act-decision': 'decision', 'act-spawn': 'spawnText', 'act-msg': 'message', 'cal-title': 'calTitle', 'cal-date': 'calDate', 'cal-time': 'calTime' };
+    Object.keys(map).forEach(id => { const v = val(id); if (v !== null) ov[map[id]] = v; });
+  }
+
+  function syncChoiceChips(ov) {
+    document.querySelectorAll('#overlay-root .choice-chip').forEach(b => {
+      const on = b.dataset.choice === (ov.decision || '').trim();
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+  }
+
+  function updateActButtons(ov) {
+    const save = document.querySelector('#overlay-root [data-action="do-save-step"]');
+    if (save) save.disabled = !(ov.nextText || '').trim();
+    const spawn = document.querySelector('#overlay-root [data-action="decide-close"][data-spawn]');
+    if (spawn) spawn.disabled = !(ov.spawnText || '').trim();
+  }
+
+  // Move the action sheet to another step: the body slides in and the sheet
+  // eases to its new height, like the define sheet.
+  function renderActStep() {
+    const root = document.getElementById('overlay-root');
+    const card = root && root.querySelector('.act-card');
+    const h0 = card ? card.getBoundingClientRect().height : 0;
+    renderOverlay();
+    const card2 = root && root.querySelector('.act-card');
+    if (!card2) return;
+    card2.querySelectorAll('textarea.act-input').forEach(autoGrow);
+    const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (h0 && !calm) {
+      const h1 = card2.getBoundingClientRect().height;
+      if (Math.abs(h1 - h0) > 2) card2.animate([{ height: h0 + 'px' }, { height: h1 + 'px' }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    }
+    const body = card2.querySelector('.act-body');
+    if (body && !calm) {
+      body.animate([{ transform: 'translateX(24px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    }
+    const first = card2.querySelector('.act-input:not(.no-autofocus)') || card2.querySelector('.act-btn:not([disabled]), .btn-primary:not([disabled])');
+    if (first) setTimeout(() => {
+      first.focus({ preventScroll: true });
+      if (first.tagName === 'TEXTAREA') first.selectionStart = first.selectionEnd = first.value.length;
+    }, 60);
   }
 
   function renderConfirmDelete(loop) {
@@ -4922,8 +5614,9 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
   const Motion = (() => {
     const EASE = 'cubic-bezier(.2,.8,.2,1)';
     const MUTATING = new Set([
-      'save-raw-loop', 'finish-define-raw', 'complete-done', 'move-waiting',
-      'move-released', 'restore-active', 'confirm-delete', 'set-kind-direct'
+      'save-raw-loop', 'finish-define-raw', 'complete-done',
+      'move-released', 'restore-active', 'confirm-delete', 'set-kind-direct',
+      'park-until', 'ask-park', 'do-save-step', 'decide-close'
     ]);
     let layer = null;
     let gesture = null;
@@ -5059,7 +5752,9 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
         loopId: el.dataset.loopId || (view.overlay && view.overlay.loopId) || null,
         overlayRect: ov ? ov.getBoundingClientRect() : null
       };
-      if (ov && MUTATING.has(action)) exitSheet(ov, action === 'save-raw-loop');
+      // Parking from the define sheet opens "when?" instead of closing it.
+      const swapsSheet = action === 'finish-define-raw' && el.dataset.status === 'waiting';
+      if (ov && MUTATING.has(action) && !swapsSheet) exitSheet(ov, action === 'save-raw-loop');
     }
 
     // Which single loop changed because of this tap, and how.
@@ -5070,9 +5765,9 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       prev.forEach((v, id) => { if (!now.has(id) || now.get(id).status !== v.status) ids.push(id); });
       for (const id of ids) {
         const p = prev.get(id), n = now.get(id);
-        if (p && !n) return { id, from: p.status, to: null, kind: p.kind };
-        if (n && !p) return { id, from: null, to: n.status, kind: n.kind };
-        if (n && p && n.status !== p.status) return { id, from: p.status, to: n.status, kind: n.kind };
+        if (p && !n) return { id, from: p.status, to: null, kind: p.kind, letGo: p.letGo };
+        if (n && !p) return { id, from: null, to: n.status, kind: n.kind, letGo: n.letGo };
+        if (n && p && n.status !== p.status) return { id, from: p.status, to: n.status, kind: n.kind, letGo: n.letGo };
       }
       return null;
     }
@@ -5217,11 +5912,11 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
     // into the Closed archive in the header and resolves the chord.
     // quick = another loop was closed moments ago: same ring, half the time.
     let lastCloseAt = 0;
-    function closeCeremony(g, rect, kind) {
+    function closeCeremony(g, rect, kind, letGoFlag) {
       const nowT = performance.now();
       const quick = nowT - lastCloseAt < 3000;
       lastCloseAt = nowT;
-      const letGo = kind === 'let_go';
+      const letGo = letGoFlag !== undefined ? !!letGoFlag : kind === 'let_go';
       const color = kindColor(kind);
       const L = ensureLayer();
       const S = 72, R = 24;
@@ -5349,7 +6044,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
     }
 
     function play(main, snap) {
-      const now = new Map(data.loops.map(l => [l.id, { status: l.status, kind: l.kind }]));
+      const now = new Map(data.loops.map(l => [l.id, { status: l.status, kind: l.kind, letGo: isLetGo(l) }]));
       const prevTab = snap.tab;
       lastTab = view.activeTab;
       lastStatuses = now;
@@ -5435,12 +6130,12 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
         const g = ghostOf(b);
         if (!local || calm) {
           fadeOut(g, 180);
-          if (isCue && cue.to === 'released') Sound.play(cue.kind === 'let_go' ? 'softLand' : 'land');
+          if (isCue && cue.to === 'released') Sound.play(cue.letGo ? 'softLand' : 'land');
           return;
         }
         const n = now.get(id), p = snap.statuses.get(id);
         if (!n) { poof(g); return; }
-        if (n.status === 'released' && p && p.status !== 'released') { ceremony = true; closeCeremony(g, b.rect, n.kind); return; }
+        if (n.status === 'released' && p && p.status !== 'released') { ceremony = true; closeCeremony(g, b.rect, n.kind, n.letGo); return; }
         if (p && n.status !== p.status) {
           if (n.status === 'waiting') tuckAway(g, b.rect, 'later', isCue ? sound : null);
           else flyToTab(g, b.rect, tabFor(n.status), n.kind, isCue ? sound : null);
@@ -5453,9 +6148,9 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       // Closed without a visible card (e.g. from a hidden row): still land it.
       if (cue && cue.to === 'released' && !ceremony && !calm) {
         const vw = window.innerWidth, vh = window.innerHeight;
-        closeCeremony(null, { left: vw / 2 - 1, top: vh / 2 - 1, width: 2, height: 2 }, cue.kind);
+        closeCeremony(null, { left: vw / 2 - 1, top: vh / 2 - 1, width: 2, height: 2 }, cue.kind, cue.letGo);
       } else if (cue && cue.to === 'released' && calm && !ceremony) {
-        Sound.play(cue.kind === 'let_go' ? 'softLand' : 'land');
+        Sound.play(cue.letGo ? 'softLand' : 'land');
       }
       if (sound) Sound.play(sound);
     }
@@ -5484,6 +6179,15 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
   // Clay ring for the Closed shelf (one per loop closed this week).
   function clayRingHtml(kind) {
     return `<svg class="clay-ring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7" fill="none" stroke-width="5" filter="url(#ol-clay-xs)" style="stroke:var(--${kind || 'inbox'})"/></svg>`;
+  }
+
+  // Finished loops sit on the shelf as rings; loops you let go of sit there
+  // as pebbles. Letting go isn't finishing, so it shouldn't look the same.
+  function shelfItemHtml(loop) {
+    if (isLetGo(loop)) {
+      return `<svg class="clay-ring clay-pebble" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="14" rx="7.5" ry="5.5" filter="url(#ol-clay-xs)" style="fill:var(--let_go)"/></svg>`;
+    }
+    return clayRingHtml(loop.kind);
   }
 
   function closedThisWeek() {
@@ -5525,6 +6229,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
     else if (ov.type === 'settings')       inner = renderSettings();
     else if (ov.type === 'why')            inner = renderWhy();
     else if (ov.type === 'primary-action') inner = renderPrimaryAction(getLoop(ov.loopId));
+    else if (ov.type === 'when')           inner = renderWhen(getLoop(ov.loopId));
     else if (ov.type === 'confirm-delete') inner = renderConfirmDelete(getLoop(ov.loopId));
 
     const key = `${ov.type}:${ov.loopId || ''}`;
@@ -5557,12 +6262,12 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
 
     // Focus first input/button so keyboard users don't have to hunt.
     // Define's title is editable but not the first job, so skip it.
-    const firstInput = root.querySelector('textarea:not(#define-raw-input), input[type="email"], input[type="text"]');
+    const firstInput = root.querySelector('textarea:not(#define-raw-input):not(.no-autofocus), input[type="email"], input[type="text"]:not(.no-autofocus)');
     if (firstInput) {
       setTimeout(() => firstInput.focus(), 50);
     } else {
       // No text input — focus the first actionable button instead.
-      const firstBtn = root.querySelector('.overlay-card button:not([data-action="close-overlay"])');
+      const firstBtn = root.querySelector('.overlay-card button:not([data-action="close-overlay"]):not([disabled])');
       if (firstBtn) setTimeout(() => firstBtn.focus(), 50);
     }
   }
@@ -5821,8 +6526,20 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       const raw = (document.getElementById('define-raw-input')?.value || ov.rawText || '').trim() || getLoop(ov.loopId)?.rawText || '';
       const ans = (ov.promptAnswer || '').trim();
       const status = el.dataset.status || ov.status || (ov.kind === 'let_go' ? 'released' : 'active');
-      const patch = { rawText: raw, kind: ov.kind, promptAnswer: ans, status, completedAt: status === 'released' ? nowIso() : null };
-      const prevStatus = getLoop(ov.loopId)?.status;
+      const prevLoop = getLoop(ov.loopId);
+      // A new note means a new ask: forget that the old one was sent.
+      const details = { ...((prevLoop && prevLoop.details) || {}) };
+      if (prevLoop && ans !== (prevLoop.promptAnswer || '')) { delete details.sentAt; delete details.nudges; }
+      if (status === 'waiting') {
+        // Parking asks "when?" first; the define choices are applied then.
+        view.overlay = { type: 'when', loopId: ov.loopId, define: { rawText: raw, kind: ov.kind, promptAnswer: ans, details: cleanDetails(details) } };
+        renderOverlay();
+        return;
+      }
+      if (status === 'released') details.outcome = ov.kind === 'let_go' ? 'let_go' : 'done';
+      else delete details.outcome;
+      const patch = { rawText: raw, kind: ov.kind, promptAnswer: ans, status, completedAt: status === 'released' ? nowIso() : null, details: cleanDetails(details) };
+      const prevStatus = prevLoop?.status;
       const upNext = status === 'active' && prevStatus !== 'active' ? upNextPosition(ov.loopId) : null;
       if (upNext) patch.position = upNext.position;
       updateLoop(ov.loopId, patch);
@@ -5853,8 +6570,13 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
 
     // Primary action
     if (action === 'primary-action') {
+      const target = getLoop(loopId);
+      if (!target) return;
       rememberOverlayOpener(el);
-      view.overlay = { type: 'primary-action', loopId };
+      // A loop with no kind yet has nothing to act on: define it first.
+      view.overlay = target.kind
+        ? { type: 'primary-action', loopId }
+        : { type: 'define-raw', loopId, rawText: target.rawText, kind: null, promptAnswer: target.promptAnswer || '', status: target.status, step: 1 };
       renderOverlay();
       return;
     }
@@ -5862,13 +6584,209 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
     // Primary action outcomes
     if (action === 'complete-done') {
       if (requireLogin()) return;
-      const patch = { status: 'released', completedAt: nowIso() };
+      const target = getLoop(loopId);
+      if (!target) { closeOverlay(); return; }
+      const letGo = target.kind === 'let_go';
+      const patch = { status: 'released', completedAt: nowIso(), details: cleanDetails({ ...target.details, outcome: letGo ? 'let_go' : 'done' }) };
       updateLoop(loopId, patch);
       closeOverlay();
       view.activeTab = 'now';
       await persistAndRender();
       Sync.updateLoop(loopId, patch);
-      announce('Closed.');
+      announce(letGo ? 'Let go.' : 'Closed.');
+      return;
+    }
+
+    // ── Action sheet steps ──
+    if (action === 'act-step') {
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'primary-action') return;
+      readActInputs(ov);
+      ov.step = el.dataset.step || 'main';
+      ov.waitOnly = el.dataset.wait === '1';
+      renderActStep();
+      return;
+    }
+    if (action === 'do-save-step') {
+      if (requireLogin()) return;
+      const ov = view.overlay;
+      const target = getLoop(loopId);
+      if (!ov || !target) { closeOverlay(); return; }
+      readActInputs(ov);
+      const val = (ov.nextText || '').trim().slice(0, MAX_LOOP_TEXT_LEN);
+      if (!val) return;
+      const patch = { promptAnswer: val, details: cleanDetails({ ...target.details, steps: ((target.details && target.details.steps) || 0) + 1 }) };
+      updateLoop(target.id, patch);
+      // Quiet feedback: the card lights up with its new next step.
+      view.highlightedId = target.id;
+      closeOverlay();
+      await persistAndRender();
+      Sync.updateLoop(target.id, patch);
+      Sound.play('up');
+      announce('Next step saved. The loop stays open.');
+      setTimeout(() => {
+        if (view.highlightedId === target.id) { view.highlightedId = null; renderMain(); }
+      }, 1800);
+      return;
+    }
+    if (action === 'decide-pick') {
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'primary-action') return;
+      ov.decision = el.dataset.choice || '';
+      const input = document.getElementById('act-decision');
+      if (input) { input.value = ov.decision; autoGrow(input); }
+      syncChoiceChips(ov);
+      return;
+    }
+    if (action === 'decide-confirm') {
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'primary-action') return;
+      readActInputs(ov);
+      ov.decision = (ov.decision || '').trim();
+      if (!ov.decision) {
+        toast('Write the decision in a line first.');
+        document.getElementById('act-decision')?.focus();
+        return;
+      }
+      ov.step = 'next';
+      renderActStep();
+      return;
+    }
+    if (action === 'decide-close') {
+      if (requireLogin()) return;
+      const ov = view.overlay;
+      const target = getLoop(loopId);
+      if (!ov || !target) { closeOverlay(); return; }
+      readActInputs(ov);
+      const decision = (ov.decision || '').trim();
+      const spawnText = el.dataset.spawn ? (ov.spawnText || '').trim().slice(0, MAX_LOOP_TEXT_LEN) : '';
+      const patch = { status: 'released', completedAt: nowIso(), details: cleanDetails({ ...target.details, decision, outcome: 'done' }) };
+      updateLoop(target.id, patch);
+      let spawned = null;
+      let positionChanges = null;
+      if (spawnText) {
+        spawned = createLoop({ rawText: spawnText, kind: 'do', promptAnswer: '', status: 'active', details: { origin: 'decision' } });
+        const upNext = upNextPosition(spawned.id);
+        spawned.position = upNext.position;
+        if (upNext.rebalance) positionChanges = rebalanceActivePositions().filter(c => c.id !== spawned.id);
+      }
+      closeOverlay();
+      view.activeTab = 'now';
+      await persistAndRender();
+      Sync.updateLoop(target.id, patch);
+      if (spawned) Sync.createLoop(spawned);
+      if (positionChanges && positionChanges.length) syncPositionChanges({ ok: true, changes: positionChanges });
+      announce(spawned ? 'Decided and closed. The new Do is in Up next.' : 'Decided and closed.');
+      return;
+    }
+    if (action === 'ask-share') {
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'primary-action') return;
+      readActInputs(ov);
+      const msg = (ov.message || '').trim();
+      if (!msg) { toast('Write the message first.'); return; }
+      const result = await shareText(msg);
+      if (result === 'cancelled') return;
+      if (result === 'failed') { toast("Couldn't open sharing here. Copy the text and send it yourself."); return; }
+      if (result === 'copied') toast('Copied. Paste it wherever you talk to them.');
+      if (view.overlay !== ov) return;
+      ov.step = 'sent';
+      ov.waitOnly = false;
+      renderActStep();
+      return;
+    }
+    if (action === 'ask-nudge') {
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'primary-action') return;
+      ov.nudge = true;
+      ov.message = null;
+      ov.step = 'draft';
+      renderActStep();
+      return;
+    }
+    if (action === 'ask-park') {
+      if (requireLogin()) return;
+      const ov = view.overlay;
+      const target = getLoop(loopId);
+      if (!ov || !target) { closeOverlay(); return; }
+      const wakeAt = validIso(el.dataset.when);
+      const details = { ...target.details };
+      // sentAt is the first time it was sent; nudges count the follow-ups.
+      if (!details.sentAt) details.sentAt = nowIso();
+      if (ov.nudge) details.nudges = (details.nudges || 0) + 1;
+      const patch = { status: 'waiting', wakeAt, details: cleanDetails(details) };
+      updateLoop(target.id, patch);
+      closeOverlay();
+      await persistAndRender();
+      Sync.updateLoop(target.id, patch);
+      const who = parseAsk(target.promptAnswer).who || 'them';
+      announce(`Parked. Checking back with ${who} ${formatWake(wakeAt)}.`);
+      return;
+    }
+    if (action === 'cal-google' || action === 'cal-ics') {
+      const ov = view.overlay;
+      const target = getLoop(loopId);
+      if (!ov || !target) return;
+      readActInputs(ov);
+      const { start } = scheduleStart(target, ov);
+      const end = new Date(start.getTime() + 30 * 60000);
+      const title = ((ov.calTitle != null ? ov.calTitle : target.rawText) || 'Open Loops').trim();
+      const details = target.promptAnswer ? `${target.promptAnswer}\n\nAdded from Open Loops` : 'Added from Open Loops';
+      if (action === 'cal-google') {
+        window.open(googleCalendarUrl({ title, start, end, details }), '_blank', 'noopener');
+      } else {
+        downloadIcs(icsText({ uidValue: target.id, title, start, end, details }), `${fileSlug(title) || 'open-loops-event'}.ics`);
+      }
+      ov.calDate = localDateValue(start);
+      ov.calTime = localTimeValue(start);
+      ov.calTitle = title;
+      ov.step = 'confirm';
+      renderActStep();
+      return;
+    }
+
+    // ── Not yet → when? ──
+    if (action === 'open-when' || action === 'move-waiting') {
+      const target = getLoop(loopId || (view.overlay && view.overlay.loopId));
+      if (!target) { closeOverlay(); return; }
+      if (requireLogin()) return;
+      if (!view.overlay) rememberOverlayOpener(el);
+      view.overlay = { type: 'when', loopId: target.id };
+      renderOverlay();
+      return;
+    }
+    if (action === 'when-pick-open') {
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'when') return;
+      ov.pickOpen = true;
+      renderOverlay();
+      setTimeout(() => document.getElementById('when-date')?.focus(), 40);
+      return;
+    }
+    if (action === 'park-until') {
+      if (requireLogin()) return;
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'when') return;
+      const target = getLoop(ov.loopId);
+      if (!target) { closeOverlay(); return; }
+      let wakeAt = null;
+      if (el.dataset.when === 'pick') {
+        const picked = fromLocalInputs(document.getElementById('when-date')?.value, document.getElementById('when-time')?.value);
+        if (!picked || picked.getTime() <= Date.now()) { toast('Pick a time that is still ahead.'); return; }
+        wakeAt = picked.toISOString();
+      } else if (el.dataset.when) {
+        wakeAt = validIso(el.dataset.when);
+      }
+      const patch = { status: 'waiting', wakeAt };
+      if (ov.define) {
+        Object.assign(patch, { rawText: ov.define.rawText, kind: ov.define.kind, promptAnswer: ov.define.promptAnswer, completedAt: null, details: ov.define.details });
+      }
+      updateLoop(target.id, patch);
+      if (ov.define) { view.activeTab = 'later'; saveReentryDismissed(null); }
+      closeOverlay();
+      await persistAndRender();
+      Sync.updateLoop(target.id, patch);
+      announce(wakeAt ? `Parked until ${formatWake(wakeAt)}.` : 'Parked.');
       return;
     }
     if (action === 'complete-progress') {
@@ -5886,38 +6804,36 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       return;
     }
 
-    // Status changes
-    if (action === 'move-waiting') {
-      if (requireLogin()) return;
-      const patch = { status: 'waiting' };
-      updateLoop(loopId, patch);
-      closeOverlay();
-      await persistAndRender();
-      Sync.updateLoop(loopId, patch);
-      announce('Parked.');
-      return;
-    }
+    // Status changes (parking goes through "when?" above)
     if (action === 'move-released') {
       if (requireLogin()) return;
-      const patch = { status: 'released', completedAt: nowIso() };
+      const target = getLoop(loopId);
+      if (!target) { closeOverlay(); return; }
+      // The menu's "Let go": a release, not a finish, whatever the kind.
+      const patch = { status: 'released', completedAt: nowIso(), details: cleanDetails({ ...target.details, outcome: 'let_go' }) };
       updateLoop(loopId, patch);
       closeOverlay();
       view.activeTab = 'now';
       await persistAndRender();
       Sync.updateLoop(loopId, patch);
-      announce('Released.');
+      announce('Let go.');
       return;
     }
     if (action === 'restore-active') {
       if (requireLogin()) return;
-      // Snapshot the previous status BEFORE updateLoop mutates the same
+      // Snapshot the previous state BEFORE updateLoop mutates the same
       // object reference (getLoop returns the live row, not a copy).
-      const prevStatus = getLoop(loopId)?.status;
+      const prevLoop = getLoop(loopId);
+      const prevStatus = prevLoop?.status;
       // Restoring from waiting/released lands the loop in "Up next", right
       // under the Now card: not at its stale old position, and not over the
       // loop the person is currently focused on.
       const upNext = upNextPosition(loopId);
-      const patch = { status: 'active', position: upNext.position, completedAt: null };
+      const details = { ...((prevLoop && prevLoop.details) || {}) };
+      delete details.outcome;
+      const patch = { status: 'active', position: upNext.position, completedAt: null, details: cleanDetails(details) };
+      // Brought back early: drop the wake time it no longer needs.
+      if (prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now()) patch.wakeAt = null;
       updateLoop(loopId, patch);
       const positionChanges = upNext.rebalance ? rebalanceActivePositions() : null;
       closeOverlay();
@@ -5978,8 +6894,11 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       const newKind = el.dataset.kind;
       const patch = { kind: newKind };
       // Match capture-flow behavior: choosing "Let go" releases the loop.
-      if (newKind === 'let_go') patch.status = 'released';
-      if (newKind === 'let_go') patch.completedAt = nowIso();
+      if (newKind === 'let_go') {
+        patch.status = 'released';
+        patch.completedAt = nowIso();
+        patch.details = cleanDetails({ ...(getLoop(loopId)?.details || {}), outcome: 'let_go' });
+      }
       updateLoop(loopId, patch);
       closeOverlay();
       if (newKind === 'let_go') view.activeTab = 'now';
@@ -6260,6 +7179,13 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
         return;
       }
     }
+    if (ov && ov.type === 'primary-action' && e.target.classList.contains('act-input')) {
+      readActInputs(ov);
+      if (e.target.tagName === 'TEXTAREA') autoGrow(e.target);
+      if (e.target.id === 'act-decision') syncChoiceChips(ov);
+      updateActButtons(ov);
+      return;
+    }
     if (!ov || ov.type !== 'capture') return;
     if (e.target.id === 'capture-input') {
       ov.rawText = e.target.value;
@@ -6291,6 +7217,15 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
     } else if (id === 'define-raw-input') {
       e.preventDefault();
       e.target.blur();
+    } else if (id === 'act-next') {
+      e.preventDefault();
+      document.querySelector('#overlay-root [data-action="do-save-step"]:not([disabled])')?.click();
+    } else if (id === 'act-decision') {
+      e.preventDefault();
+      document.querySelector('#overlay-root [data-action="decide-confirm"]')?.click();
+    } else if (id === 'act-spawn') {
+      e.preventDefault();
+      document.querySelector('#overlay-root [data-action="decide-close"][data-spawn]:not([disabled])')?.click();
     }
   }, true);
 
@@ -6352,7 +7287,13 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
     if (!Sync.isLoggedIn()) return;
     await Sync.processQueue();
     Sync.ensureRealtime();
+    wakeDueLoops();
   });
+
+  // While the app stays open, parked loops still come back on time.
+  setInterval(() => {
+    if (!document.hidden && Sync.isLoggedIn()) wakeDueLoops();
+  }, 60000);
 
   window.addEventListener('focus', async () => {
     if (Sync.isLoggedIn()) {
@@ -6559,7 +7500,9 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
         status:        loop.status || 'active',
         prompt_answer: loop.promptAnswer || '',
         position:      typeof loop.position === 'number' ? loop.position : nowPosition(),
-        created_at:    loop.createdAt || nowIso()
+        created_at:    loop.createdAt || nowIso(),
+        wake_at:       loop.wakeAt || null,
+        details:       cleanDetails(loop.details)
         // updated_at is set by the DB trigger.
       };
     }
@@ -6573,7 +7516,9 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
         position:     row.position,
         createdAt:    row.created_at,
         updatedAt:    row.updated_at,
-        completedAt:  row.completed_at
+        completedAt:  row.completed_at,
+        wakeAt:       row.wake_at || null,
+        details:      row.details || {}
       });
     }
     function patchToRow(patch) {
@@ -6586,22 +7531,75 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
       if ('deleted_at'   in patch) out.deleted_at    = patch.deleted_at;
       if ('completedAt'  in patch) out.completed_at  = patch.completedAt;
       if ('completed_at' in patch) out.completed_at  = patch.completed_at;
+      if ('wakeAt'       in patch) out.wake_at       = patch.wakeAt || null;
+      if ('details'      in patch) out.details       = cleanDetails(patch.details);
+      return out;
+    }
+
+    // ── Columns added after launch ──
+    // wake_at and details arrived with wake-ups. If a database hasn't run the
+    // newer SQL yet, writes would fail on the unknown columns and pile up in
+    // the dead queue. Instead: notice once, keep syncing everything else, and
+    // keep those two fields on this device until the columns exist.
+    const NEW_COLUMNS = ['wake_at', 'details'];
+    let missingNewColumns = false;
+    function isMissingNewColumn(error) {
+      if (!error) return false;
+      const text = [error.message, error.details, error.hint].filter(Boolean).join(' ');
+      return NEW_COLUMNS.some(c => text.includes(`'${c}'`) || text.includes(`"${c}"`)) &&
+        (error.code === 'PGRST204' || error.code === '42703' || /column/i.test(text));
+    }
+    function noteMissingColumns() {
+      if (missingNewColumns) return;
+      missingNewColumns = true;
+      console.warn('[open-loops] The loops table has no wake_at/details columns yet. Run the latest open-loops-supabase.sql. Until then, wake times and details stay on this device.');
+    }
+    function withoutNewColumns(row) {
+      const out = { ...row };
+      NEW_COLUMNS.forEach(c => { delete out[c]; });
       return out;
     }
 
     // ── Single-row network ops ──
     async function netCreate(loop) {
       markEcho(loop.id);
-      const { error } = await db.from('loops').upsert(loopToRow(loop), { onConflict: 'id' });
+      let row = loopToRow(loop);
+      if (missingNewColumns) row = withoutNewColumns(row);
+      let { error } = await db.from('loops').upsert(row, { onConflict: 'id' });
+      if (error && !missingNewColumns && isMissingNewColumn(error)) {
+        noteMissingColumns();
+        ({ error } = await db.from('loops').upsert(withoutNewColumns(row), { onConflict: 'id' }));
+      }
       if (error) throw error;
     }
     async function netUpdate(id, patch) {
-      const row = patchToRow(patch);
+      let row = patchToRow(patch);
+      if (missingNewColumns) row = withoutNewColumns(row);
       if (!Object.keys(row).length) return;
       markEcho(id);
-      const { data: updated, error } = await db.from('loops').update(row).eq('id', id).select('id').maybeSingle();
+      let { data: updated, error } = await db.from('loops').update(row).eq('id', id).select('id').maybeSingle();
+      if (error && !missingNewColumns && isMissingNewColumn(error)) {
+        noteMissingColumns();
+        row = withoutNewColumns(row);
+        if (!Object.keys(row).length) return;
+        ({ data: updated, error } = await db.from('loops').update(row).eq('id', id).select('id').maybeSingle());
+      }
       if (error) throw error;
       if (!updated) throw new Error('No matching loop was updated for this signed-in user.');
+    }
+
+    // Server rows from a database without the new columns carry no wake time
+    // or details. Keep this device's copy of those two fields instead of
+    // wiping them on every pull.
+    function keepLocalNewFields(remoteLoops, rows) {
+      const serverHasThem = rows.some(r => 'wake_at' in r || 'details' in r);
+      if (serverHasThem) return remoteLoops;
+      noteMissingColumns();
+      const localById = new Map(data.loops.map(l => [l.id, l]));
+      return remoteLoops.map(l => {
+        const local = localById.get(l.id);
+        return local ? { ...l, wakeAt: local.wakeAt, details: local.details } : l;
+      });
     }
     async function netDelete(id) {
       markEcho(id);
@@ -6807,7 +7805,9 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
               status:       l.status,
               promptAnswer: l.promptAnswer,
               position:     l.position,
-              createdAt:    l.createdAt
+              createdAt:    l.createdAt,
+              wakeAt:       l.wakeAt || null,
+              details:      l.details || {}
             }));
             const { error: upErr } = await db.rpc('batch_upsert_loops', { p_loops: payload });
             if (currentUser !== pullForUser) return; // user switched mid-seed
@@ -6842,7 +7842,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
         }
 
         // Server has data — server is truth on pull. Replace local state.
-        const remoteLoops = applyPendingQueueOverlay(rows.map(rowToLoop));
+        const remoteLoops = applyPendingQueueOverlay(keepLocalNewFields(rows.map(rowToLoop), rows));
         const keepLast = data.lastLoopId && remoteLoops.some(l => l.id === data.lastLoopId);
         data = {
           version:    2,
@@ -6945,6 +7945,10 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
               const localTs  = existing && existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
               const remoteTs = mapped.updatedAt ? new Date(mapped.updatedAt).getTime() : 0;
               if (localTs && remoteTs && localTs > remoteTs) return;
+              if (existing && !('wake_at' in incoming) && !('details' in incoming)) {
+                mapped.wakeAt = existing.wakeAt;
+                mapped.details = existing.details;
+              }
               data.loops[idx] = mapped;
             }
             save();
@@ -6999,6 +8003,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
         }
         renderAll();
         if (foundLegacy) toast('Older local data was kept aside for safety.');
+        else wakeDueLoops();
       } else if (event === 'TOKEN_REFRESHED' && session) {
         // Fix 4: the JWT was refreshed. Realtime uses this token — if we
         // don't tell it about the new one, the channel will die the next
@@ -7056,6 +8061,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
             await pullAll();
             setupRealtime({ skipInitialPull: true });
             if (foundLegacy) toast('Older local data was kept aside for safety.');
+            else wakeDueLoops();
           }
         } catch(e) {
           console.error('Sync init error:', e);
