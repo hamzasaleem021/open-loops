@@ -158,31 +158,43 @@ $$;
 grant execute on function public.batch_upsert_loops(jsonb) to authenticated;
 revoke all   on function public.batch_upsert_loops(jsonb) from anon;
 
--- ── DAILY NUDGES (web push) ──────────────────────────────────────────────
+-- ── NUDGES (web push) ────────────────────────────────────────────────────
 -- One row per phone or browser that said yes to nudges. The "push" Edge
 -- Function (supabase/functions/push) reads these, decides what to say, and
--- sends at most one nudge a day. All of it fits the free plan.
+-- sends two kinds of nudge: one the moment a parked loop wakes up, and a
+-- check-in at the time each phone picked (only when there's something to say,
+-- at most one a day). All of it fits the free plan.
 create table if not exists public.push_subscriptions (
-  endpoint      text primary key,
-  user_id       uuid not null default auth.uid() references auth.users(id) on delete cascade,
-  p256dh        text not null,
-  auth          text not null,
-  tz            text not null default 'UTC',
-  nudge_time    time not null default '09:00',
-  voice         text not null default 'cheeky',
-  wakeups       boolean not null default true,
-  stale         boolean not null default true,
-  recap         boolean not null default true,
-  last_run_on   date,
-  last_stale_at timestamptz,
-  recent_lines  text[] not null default '{}',
-  created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now(),
-  constraint push_nudge_time_range check (nudge_time between time '05:00' and time '21:00'),
+  endpoint        text primary key,
+  user_id         uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  p256dh          text not null,
+  auth            text not null,
+  tz              text not null default 'UTC',
+  nudge_time      time not null default '09:00',
+  voice           text not null default 'cheeky',   -- unused since version 20 (one voice); kept for older apps
+  wakeups         boolean not null default true,
+  stale           boolean not null default true,
+  recap           boolean not null default true,
+  last_run_on     date,          -- the day the last check-in ran (the sender's own record)
+  last_run_at     timestamptz,
+  quiet_on        date,          -- set by the app: no check-in on this day (a time picked after it passed)
+  wake_checked_at timestamptz not null default now(),  -- wake-ups are sent for loops that woke after this
+  last_stale_at   timestamptz,
+  recent_lines    text[] not null default '{}',
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
   constraint push_voice_valid      check (voice in ('cheeky', 'plain')),
   constraint push_endpoint_https   check (endpoint like 'https://%')
 );
+-- Upgrading from version 19: any time of day, and the newer bookkeeping.
+alter table public.push_subscriptions drop constraint if exists push_nudge_time_range;
+alter table public.push_subscriptions add column if not exists last_run_at timestamptz;
+alter table public.push_subscriptions add column if not exists quiet_on date;
+alter table public.push_subscriptions add column if not exists wake_checked_at timestamptz not null default now();
 create index if not exists push_subscriptions_user_idx on public.push_subscriptions (user_id);
+-- Woken loops by user and time (parked ones, and ones the app already woke).
+create index if not exists loops_user_woke_idx on public.loops (user_id, wake_at)
+  where deleted_at is null and wake_at is not null and status in ('waiting', 'active');
 
 -- Unknown time zones fall back to UTC instead of breaking the schedule.
 create or replace function public.push_subscriptions_clean_tz()
@@ -223,8 +235,11 @@ create policy "users remove own push subscriptions" on public.push_subscriptions
 grant select, update on table public.loops to service_role;
 grant select, update, delete on table public.push_subscriptions to service_role;
 
--- Phones whose nudge time has come today (within a 3-hour window, in their
--- own time zone) and that haven't had today's check yet.
+-- Check-ins: phones whose time came in the last 3 hours (a missed run still
+-- goes out), in their own time zone, that haven't had that day's check-in.
+-- A 23:00 check-in sent after midnight still counts for the day it belonged
+-- to, so there's never a second one. Only the recap and stale checks ride on
+-- it; wake-ups have their own nudge.
 create or replace function public.push_due_subscriptions()
 returns table (
   endpoint text, user_id uuid, p256dh text, auth text, tz text, voice text,
@@ -232,14 +247,50 @@ returns table (
   recent_lines text[], local_date date, local_dow int
 )
 language sql stable set search_path = '' as $$
-  select s.endpoint, s.user_id, s.p256dh, s.auth, s.tz, s.voice,
-         s.wakeups, s.stale, s.recap, s.last_stale_at, s.recent_lines,
-         (now() at time zone s.tz)::date,
-         extract(dow from (now() at time zone s.tz))::int
+  with s as (
+    select p.endpoint as s_endpoint, p.user_id as s_user, p.p256dh as s_p256dh, p.auth as s_auth,
+           p.tz as s_tz, p.voice as s_voice, p.wakeups as s_wakeups, p.stale as s_stale,
+           p.recap as s_recap, p.last_stale_at as s_last_stale, p.recent_lines as s_recent,
+           p.last_run_on as s_last_run_on, p.quiet_on as s_quiet_on,
+           (now() at time zone p.tz) as s_local_now,
+           mod((floor(extract(epoch from ((now() at time zone p.tz)::time - p.nudge_time)) / 60))::int + 1440, 1440) as s_since
+      from public.push_subscriptions p
+     where p.stale or p.recap
+  ), slot as (
+    select s.*, (s.s_local_now - make_interval(mins => s.s_since))::date as s_slot_date
+      from s
+     where s.s_since < 180
+  )
+  select slot.s_endpoint, slot.s_user, slot.s_p256dh, slot.s_auth, slot.s_tz, slot.s_voice,
+         slot.s_wakeups, slot.s_stale, slot.s_recap, slot.s_last_stale, slot.s_recent,
+         slot.s_slot_date, extract(dow from slot.s_slot_date)::int
+    from slot
+   where (slot.s_last_run_on is null or slot.s_last_run_on < slot.s_slot_date)
+     and (slot.s_quiet_on is null or slot.s_quiet_on < slot.s_slot_date)
+$$;
+
+-- Wake-ups: phones with at least one loop that woke since their last check
+-- (looking back two hours at most, so switching wake-ups back on never
+-- replays a backlog). checked_to is the cut-off the sender saves afterwards.
+create or replace function public.push_due_wakeups()
+returns table (
+  endpoint text, user_id uuid, p256dh text, auth text, tz text,
+  recent_lines text[], checked_from timestamptz, checked_to timestamptz
+)
+language sql stable set search_path = '' as $$
+  select s.endpoint, s.user_id, s.p256dh, s.auth, s.tz, s.recent_lines,
+         greatest(s.wake_checked_at, now() - interval '2 hours'), now()
     from public.push_subscriptions s
-   where extract(epoch from ((now() at time zone s.tz)::time - s.nudge_time)) between 0 and 3 * 3600
-     and (s.last_run_on is null or s.last_run_on < (now() at time zone s.tz)::date)
-     and (s.wakeups or s.stale or s.recap)
+   where s.wakeups
+     and exists (
+       select 1 from public.loops l
+        where l.user_id = s.user_id
+          and l.deleted_at is null
+          and l.status in ('waiting', 'active')
+          and l.wake_at is not null
+          and l.wake_at > greatest(s.wake_checked_at, now() - interval '2 hours')
+          and l.wake_at <= now()
+     )
 $$;
 
 -- Done / Tomorrow from a notification button.
@@ -270,7 +321,7 @@ begin
 end;
 $$;
 
--- The sender's keys, read from Vault (see README → Daily nudges).
+-- The sender's keys, read from Vault (see README → Nudges).
 create or replace function public.push_config()
 returns jsonb
 language sql stable security definer set search_path = '' as $$
@@ -282,19 +333,22 @@ $$;
 
 -- Only the sender (service role) may call these.
 revoke all on function public.push_due_subscriptions() from public, anon, authenticated;
+revoke all on function public.push_due_wakeups() from public, anon, authenticated;
 revoke all on function public.push_apply_action(uuid, text, text, text) from public, anon, authenticated;
 revoke all on function public.push_config() from public, anon, authenticated;
 grant execute on function public.push_due_subscriptions() to service_role;
+grant execute on function public.push_due_wakeups() to service_role;
 grant execute on function public.push_apply_action(uuid, text, text, text) to service_role;
 grant execute on function public.push_config() to service_role;
 
--- The schedule: every 15 minutes, inside Postgres. It only calls the sender
--- when a phone is due, so it's about one call per phone per day.
+-- The schedule: every minute, inside Postgres. It only calls the sender when
+-- a loop just woke or a phone's check-in time came, so calls stay rare (a
+-- handful per phone per day, against the free plan's 500,000 a month).
 create extension if not exists pg_net with schema extensions;
 create extension if not exists pg_cron with schema pg_catalog;
 select cron.schedule(
   'open-loops-push',
-  '*/15 * * * *',
+  '* * * * *',
   $job$
   select net.http_post(
     url := (select decrypted_secret from vault.decrypted_secrets where name = 'open_loops_push_url'),
@@ -305,8 +359,15 @@ select cron.schedule(
     body := '{"job":"run"}'::jsonb,
     timeout_milliseconds := 30000
   )
-  where exists (select 1 from public.push_due_subscriptions());
+  where exists (select 1 from public.push_due_wakeups())
+     or exists (select 1 from public.push_due_subscriptions());
   $job$
+);
+-- Keep the scheduler's own log small (it writes a row per run).
+select cron.schedule(
+  'open-loops-cron-cleanup',
+  '23 3 * * *',
+  $job$ delete from cron.job_run_details where end_time < now() - interval '2 days' $job$
 );
 
 -- ── REALTIME ─────────────────────────────────────────────────────────────

@@ -11,8 +11,8 @@
 <meta name="description" content="A calm place for unfinished things.">
 <title>Open Loops</title>
 <link rel="manifest" href="./open-loops-manifest.json">
-<link rel="icon" href="./open-loops-icon-192-v3.png">
-<link rel="apple-touch-icon" href="./open-loops-icon-192-v3.png">
+<link rel="icon" href="./open-loops-icon-192-v4.png">
+<link rel="apple-touch-icon" href="./open-loops-icon-192-v4.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -3175,7 +3175,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 .share-preview.is-loading { animation: ol-pulse 1.2s ease-in-out infinite; }
 @keyframes ol-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
 
-/* ── Daily nudge settings ── */
+/* ── Nudge settings ── */
 .nudge-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; font-size: 15px; font-weight: 500; color: var(--text); }
 .nudge-row .seg-row { margin: 0; }
 .nudge-time { height: 40px; padding: 0 10px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--surface); color: var(--text); font: 500 15px var(--sans); }
@@ -3193,7 +3193,37 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 .nudge-switch.on .switch::after { transform: translateX(18px); }
 .nudge-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
+/* ── v20: nudges ── */
+.nudge-switch { padding-top: 10px; padding-bottom: 10px; }
+.nudge-switch-text { display: grid; gap: 2px; }
+.nudge-switch-sub { font-size: 13px; font-weight: 400; color: var(--text-3); }
+.nudge-next { margin: 0 0 10px; padding: 10px 12px; border-radius: var(--r-md); background: var(--surface-3); font-size: 14px; line-height: 1.55; color: var(--text-2); }
+.nudge-next b { color: var(--text); font-weight: 600; }
+
+/* ── v20: the mascot as the logo, and on empty screens ── */
+.brand-mark .mascot, .auth-gate-logo-mark .mascot { width: 30px; height: 30px; }
+.mascot.mascot-hop { transform-origin: 50% 100%; animation: mascot-hop 520ms cubic-bezier(.3,.7,.3,1); }
+@keyframes mascot-hop { 0% { transform: none; } 30% { transform: translateY(-12%) scale(1.06, .94); } 62% { transform: translateY(0) scale(.96, 1.04); } 100% { transform: none; } }
+.empty-state .mascot { margin: 0 auto 6px; }
+.act-mascot { display: flex; justify-content: center; margin: -4px 0 4px; }
+
+/* ── v20: Schedule time in Define ── */
+.define-when { margin-top: 2px; }
+.define-when-note { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-2); }
+.define-when-note svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* ── v20: account in Your head ── */
+.head-account-label { margin-top: 26px; }
+.head-account { display: grid; gap: 12px; }
+.head-account-email { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); overflow-wrap: anywhere; }
+.head-sync { display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 1.45; color: var(--text-2); }
+.head-sync::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--do); flex-shrink: 0; }
+.head-sync.error::before { background: var(--error); }
+.head-sync.syncing::before, .head-sync.offline::before { background: var(--decide); }
+.head-account-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
 @media (prefers-reduced-motion: reduce) {
+  .mascot.mascot-hop { animation: none; }
   .mascot-bob .mascot-body, .mascot-eyes, .sweep-loop, .rise, .sweep-banner, .when-chip, .combo-bead.pop { animation: none !important; }
   .mascot-sealing .mascot-seal { animation: none; stroke-dashoffset: 0; }
 }
@@ -3227,7 +3257,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 <div class="app" id="app">
   <header class="topbar">
     <button class="brand" type="button" data-action="open-why" title="Why Open Loops" aria-label="Open Loops: why it exists and how to use it">
-      <div class="brand-mark"><svg class="ol-mark" viewBox="0 0 30 30" fill="none" aria-hidden="true"><path d="M22 7.6A10 10 0 1 0 22.6 21.6" stroke="#ffb084" stroke-width="6" stroke-linecap="round"/><circle cx="24.4" cy="14.6" r="2.6" fill="#ff4d8b"/></svg></div>
+      <div class="brand-mark"><svg class="mascot mascot-awake" width="30" height="30" viewBox="71 22 180 180" aria-hidden="true" focusable="false"><defs><filter id="ol-mascot-head" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="5" result="b"/><feDiffuseLighting in="b" surfaceScale="5" diffuseConstant="1.05" lighting-color="#fff" result="d"><feDistantLight azimuth="235" elevation="48"/></feDiffuseLighting><feComposite in="SourceGraphic" in2="d" operator="arithmetic" k1="1.05" result="lit"/><feSpecularLighting in="b" surfaceScale="5" specularConstant="0.55" specularExponent="16" lighting-color="#fff" result="s"><feDistantLight azimuth="235" elevation="55"/></feSpecularLighting><feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/><feComposite in="lit" in2="s2" operator="arithmetic" k2="1" k3="0.6" result="o"/><feComposite in="o" in2="SourceAlpha" operator="in"/></filter><filter id="ol-mascot-head-sh" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"/></filter></defs><g class="mascot-body" ><g filter="url(#ol-mascot-head)"><path d="M 196 72 A 58 58 0 1 0 200 150" fill="none" stroke="#ffb084" stroke-width="32" stroke-linecap="round"/><circle cx="236" cy="104" r="10" fill="#ff4d8b"/></g><g transform="translate(150 58) scale(1.4) translate(-150 -58)"><g class="mascot-eyes"><ellipse cx="136" cy="52" rx="6" ry="8" fill="#0a0a0a"/><ellipse cx="164" cy="52" rx="6" ry="8" fill="#0a0a0a"/></g><path d="M141 63 Q150 69 159 63" fill="none" stroke="#0a0a0a" stroke-width="3" stroke-linecap="round"/></g></g></svg></div>
       <span class="brand-name">Open Loops</span>
     <span class="brand-why">Why?</span>
     </button>
@@ -3291,7 +3321,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 19, date: '19 Oct 2026' };
+  const APP_VERSION = { number: 20, date: '19 Oct 2026' };
   let swRegistration = null;
 
   // UX constraints
@@ -3416,6 +3446,8 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
   //   decision — what a Decide loop settled on
   //   outcome  — 'done' or 'let_go' once closed (rings vs pebbles)
   //   origin   — 'decision' when a Do was born from a decision
+  //   at       — when a Schedule loop happens
+  //   calAt    — when it was sent to a calendar (it then asks "On your calendar?")
   function cleanDetails(d) {
     const src = d && typeof d === 'object' && !Array.isArray(d) ? d : {};
     const out = {};
@@ -3428,6 +3460,10 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     if (typeof src.decision === 'string' && src.decision.trim()) out.decision = src.decision.trim().slice(0, MAX_LOOP_TEXT_LEN);
     if (src.outcome === 'done' || src.outcome === 'let_go') out.outcome = src.outcome;
     if (src.origin === 'decision') out.origin = 'decision';
+    const at = validIso(src.at);
+    if (at) out.at = at;
+    const calAt = validIso(src.calAt);
+    if (calAt) out.calAt = calAt;
     return out;
   }
 
@@ -3781,6 +3817,21 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     const days = Math.round((atTime(d, 0) - atTime(now, 0)) / 86400000);
     if (days > 1 && days < 7) return `${d.toLocaleDateString(undefined, { weekday: 'short' })} ${clockText(d)}`;
     return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  // When something happens: "today 3:00 PM" · "tomorrow 9:00 AM" ·
+  // "Sat 10:00 AM" · "Mon, Oct 26, 3:00 PM". Unlike formatWake, always
+  // keeps the time.
+  function formatEvent(value) {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    const days = Math.round((atTime(d, 0) - atTime(new Date(), 0)) / 86400000);
+    const clock = clockText(d);
+    if (days === 0) return `today ${clock}`;
+    if (days === 1) return `tomorrow ${clock}`;
+    if (days === -1) return `yesterday ${clock}`;
+    if (days > 1 && days < 7) return `${d.toLocaleDateString(undefined, { weekday: 'short' })} ${clock}`;
+    return `${d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}, ${clock}`;
   }
 
   // "today" · "yesterday" · "on Monday" · "on Oct 3"
@@ -4142,7 +4193,8 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     sun:    '<path d="M3 11.5h10M5 11.5a3 3 0 0 1 6 0M8 3.5v2M3.8 6.3l1.2 1.1M12.2 6.3 11 7.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
     person: '<circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M3 13.5a5 5 0 0 1 10 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
     fork:   '<path d="M8 2v4M8 6 4 10v4M8 6l4 4v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
-    dry:    '<path d="M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM8 5.2V8l2 1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'
+    dry:    '<path d="M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM8 5.2V8l2 1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+    cal:    '<rect x="2.5" y="3.5" width="11" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 6.8h11M5.5 2v3M10.5 2v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>'
   };
   function reasonFor(loop) {
     const d = loop.details || {};
@@ -4159,6 +4211,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     if (loop.status === 'active') {
       if (isSentAsk) return { icon: 'person', text: wake && wake <= Date.now() ? 'Checking back' : `Sent ${relativeDay(d.sentAt)}` };
       if (wake && wake <= Date.now() && isSameDay(new Date(wake), new Date())) return { icon: 'sun', text: 'Woke today' };
+      if (loop.kind === 'schedule' && d.calAt) return { icon: 'cal', text: 'Sent to your calendar' };
       if (d.origin === 'decision') return { icon: 'fork', text: 'From your decision' };
       return dryReason(loop);
     }
@@ -4229,7 +4282,10 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
   function mascotSvg(mood = 'awake', opts = {}) {
     const id = `ol-mascot-${++mascotSeq}`;
     const w = opts.width || 200;
-    const h = Math.round(w * 220 / 300);
+    // mark: a square crop for small places (the header, the sign-in screen),
+    // with a bigger face so it still reads at 30px.
+    const mark = !!opts.mark;
+    const h = mark ? w : Math.round(w * 220 / 300);
     const ink = '#0a0a0a';
     const C = '<path d="M 196 72 A 58 58 0 1 0 200 150" fill="none" stroke="#ffb084" stroke-width="32" stroke-linecap="round"/>';
     const dot = '<circle cx="236" cy="104" r="10" fill="#ff4d8b"/>';
@@ -4259,12 +4315,33 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       face = `<g class="mascot-eyes">${eye(136, 52)}${eye(164, 52)}</g>` + line('M141 63 Q150 69 159 63', 3);
     }
     const a11y = opts.label ? `role="img" aria-label="${esc(opts.label)}"` : 'aria-hidden="true" focusable="false"';
-    return `<svg class="mascot mascot-${mood}${opts.className ? ' ' + opts.className : ''}" width="${w}" height="${h}" viewBox="0 0 300 220" ${a11y}>
+    const scale = opts.faceScale || (mark ? 1.4 : 1);
+    const faceHtml = scale === 1 ? face : `<g transform="translate(150 58) scale(${scale}) translate(-150 -58)">${face}</g>`;
+    return `<svg class="mascot mascot-${mood}${opts.className ? ' ' + opts.className : ''}" width="${w}" height="${h}" viewBox="${mark ? '71 22 180 180' : '0 0 300 220'}" ${a11y}>
       <defs>${clayFilterDefs(id)}</defs>
-      <ellipse cx="150" cy="196" rx="90" ry="10" fill="#3a2a10" opacity=".13" filter="url(#${id}-sh)"/>
-      <g class="mascot-body" ${tilt}><g filter="url(#${id})">${clay}</g>${face}${extra}</g>
+      ${mark ? '' : `<ellipse cx="150" cy="196" rx="90" ry="10" fill="#3a2a10" opacity=".13" filter="url(#${id}-sh)"/>`}
+      <g class="mascot-body" ${tilt}><g filter="url(#${id})">${clay}</g>${faceHtml}${mark ? '' : extra}</g>
     </svg>`;
   }
+
+  // The header logo is the mascot. It blinks, closes into a ring when you
+  // close a loop, goes calm when you let one go, and looks up when you
+  // capture something.
+  const BrandMascot = (() => {
+    let timer = null;
+    function draw(mood, cls) {
+      const box = document.querySelector('.topbar .brand-mark');
+      if (box) box.innerHTML = mascotSvg(mood, { mark: true, width: 30, className: cls || '' });
+    }
+    return {
+      init() { draw('awake'); },
+      react(mood, ms = 2400) {
+        clearTimeout(timer);
+        draw(mood, `mascot-hop${mood === 'proud' ? ' mascot-sealing' : ''}`);
+        timer = setTimeout(() => draw('awake'), ms);
+      }
+    };
+  })();
 
   // ── SWEEP ──
   // The daily ritual. Loops that woke up since your last sweep, plus any that
@@ -4357,7 +4434,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     if (ov.step === 'intro') {
       return sheet(`
         <div class="sweep-hero">
-          ${mascotSvg('awake', { width: 210, className: 'mascot-bob', label: 'The Open Loops mascot, just awake' })}
+          ${mascotSvg(ov.awake ? 'awake' : 'sleepy', { width: 210, className: 'mascot-bob sweep-mascot', label: ov.awake ? 'The Open Loops mascot, just awake' : 'The Open Loops mascot, waking up' })}
           <h2 class="sweep-h" id="sweep-title">${greeting()}<br>${esc(sweepHeadline(items))}</h2>
           <p class="sweep-p">Decide where each one goes. About 30 seconds.</p>
           <button type="button" class="btn btn-primary sweep-go" data-action="sweep-start">Start the sweep</button>
@@ -4433,6 +4510,17 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         </div>
         <p class="sweep-note">${hasOtherNow ? 'Make it Now puts it above your current Now. Up next leaves your Now as it is.' : 'Make it Now puts it at the top of Active.'}</p>`);
   }
+  // The sweep starts with the mascot still asleep; it wakes up as you arrive.
+  function wakeSweepMascot(ov) {
+    setTimeout(() => {
+      if (view.overlay !== ov || ov.step !== 'intro' || ov.awake) return;
+      ov.awake = true;
+      const old = document.querySelector('#overlay-root .sweep-mascot');
+      if (!old) return;
+      old.outerHTML = mascotSvg('awake', { width: 210, className: 'mascot-bob sweep-mascot mascot-hop', label: 'The Open Loops mascot, just awake' });
+      Sound.play('wake');
+    }, 900);
+  }
   // One card's choice, applied to the loop. Returns what to sync.
   function sweepApply(loop, pick, wakeAt) {
     const top = byStatus('active')[0];
@@ -4464,7 +4552,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
           ${SHEET_CLOSE}
         </div>
         <h2 class="overlay-title" id="still-title">Still yours?</h2>
-        <p class="overlay-subtitle">“${esc(shortText(loop.rawText, 80))}” has sat for ${days} days. Clay dries out when nobody touches it.</p>
+        <p class="overlay-subtitle">“${esc(shortText(loop.rawText, 80))}” hasn’t been touched in ${days} days.</p>
         <div class="still-actions">
           <button type="button" class="btn btn-primary" data-action="still-keep" data-loop-id="${esc(loop.id)}">Yes, keep it</button>
           <button type="button" class="btn btn-ghost" data-action="open-when" data-loop-id="${esc(loop.id)}">Park it until…</button>
@@ -4549,7 +4637,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
           <div class="head-tile t-open"><b>${s.open}</b><span>open now</span></div>
         </div>`;
     if (!s.closed.length) {
-      body += `<div class="empty-state head-empty"><strong>Nothing on your shelf yet.</strong>Close a loop and it lands here as a clay ring. Let one go and it becomes a pebble.</div>`;
+      body += `<div class="empty-state head-empty"><strong>Nothing on your shelf yet.</strong>Close a loop and it lands here as a ring. Let one go and it becomes a pebble.</div>`;
     } else {
       const shelfItems = s.closed.slice(-210);
       const more = s.closed.length - shelfItems.length;
@@ -4586,6 +4674,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       ? `<button type="button" class="btn btn-primary head-share no-autofocus" data-action="open-share">${SHARE_ICON}Share your ${esc(monthName)}</button>
          <p class="head-fine">The card shows colours and counts. Never what your loops say.</p>`
       : `<p class="head-fine">Close something this month to make a card you can share.</p>`;
+    body += accountHtml();
     return `
       <div class="overlay-card head-sheet" role="dialog" aria-modal="true" aria-labelledby="head-title">
         <div class="overlay-header"><div class="overlay-meta"><div class="overlay-eyebrow">Profile</div></div>${SHEET_CLOSE}</div>
@@ -4593,8 +4682,38 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       </div>`;
   }
 
+  // Who's signed in, whether it's syncing, and the way out: part of Your
+  // head instead of a sheet of its own. The sync dot in the header opens it.
+  function accountCardHtml() {
+    const email = Sync.userEmail();
+    const st = view.syncStatus || 'idle';
+    const line = st === 'error' ? 'Last sync didn’t go through. Your changes are safe on this device.'
+      : st === 'syncing' ? 'Syncing…'
+      : st === 'offline' ? 'Offline. Changes are saved here and sync when you’re back.'
+      : 'Synced across your devices.';
+    return `
+        <div class="head-card head-account" id="head-account-card">
+          ${email ? `<div class="head-account-email">${esc(email)}</div>` : ''}
+          <div class="head-sync ${esc(st)}">${esc(line)}</div>
+          <div class="head-account-actions">
+            ${st === 'error' ? `<button type="button" class="btn btn-ghost no-autofocus" data-action="sync-retry">Retry sync</button>` : ''}
+            <button type="button" class="btn btn-ghost no-autofocus" data-action="sign-out">Sign out</button>
+          </div>
+        </div>`;
+  }
+  function accountHtml() {
+    if (!Sync.isLoggedIn()) return '';
+    return `
+        <div class="head-label head-account-label" id="head-account"><span>Account</span></div>${accountCardHtml()}`;
+  }
+  function refreshAccountCard() {
+    if (!view.overlay || view.overlay.type !== 'profile') return;
+    const card = document.getElementById('head-account-card');
+    if (card && Sync.isLoggedIn()) card.outerHTML = accountCardHtml();
+  }
+
   // ── SHARE CARD ──
-  // Your month as clay: colours and counts only, never what your loops say.
+  // Your month on one card: colours and counts only, never what your loops say.
   const SHARE_COLORS = { do: '#1a3a3a', decide: '#e8b94a', ask: '#ff4d8b', schedule: '#b8a4ed', let_go: '#ffb084', inbox: '#d6cfbd' };
   let shareBlob = null;
   function monthCloses(d = new Date()) {
@@ -4699,7 +4818,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     return `
       <div class="overlay-card share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-title">
         <div class="overlay-header"><div class="overlay-meta"><div class="overlay-eyebrow">Share card</div></div>${SHEET_CLOSE}</div>
-        <h2 class="overlay-title" id="share-title">Your ${esc(ov.month)}, in clay.</h2>
+        <h2 class="overlay-title" id="share-title">Your ${esc(ov.month)} on one card.</h2>
         <p class="overlay-subtitle">Colours and counts only. Never what your loops say.</p>
         ${ov.img ? `<img class="share-preview" src="${ov.img}" alt="Share card: ${ov.count} things out of my head this ${esc(ov.month)}.">` : '<div class="share-preview is-loading" aria-hidden="true"></div>'}
         <div class="overlay-actions">
@@ -4717,20 +4836,25 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
 
-  // ── DAILY NUDGES (web push) ──
-  // At most one a day, at a time you pick, and only when something is
-  // waiting. The phone's permission lives in push_subscriptions; a small
-  // Supabase function decides what to say and sends it.
+  // ── NUDGES (web push) ──
+  // Two kinds, both optional: one the moment a parked loop wakes up, and a
+  // check-in at a time you pick that only comes when there's something to
+  // say (the Sunday recap, or a loop that has gone stale). One voice: cheeky.
+  // The phone's permission lives in push_subscriptions; a small Supabase
+  // function decides what to say and sends it.
   const Push = (() => {
     const KEY_BASE = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_push' : 'open_loops_push';
-    const DEFAULTS = { on: false, time: '09:00', voice: 'cheeky', wakeups: true, stale: true, recap: true };
+    const DEFAULTS = { on: false, time: '09:00', wakeups: true, stale: true, recap: true };
     const key = () => scopedKey(KEY_BASE);
     function supported() {
       return !IS_FILE && !!CFG.VAPID_PUBLIC_KEY && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
     }
     function permission() { return 'Notification' in window ? Notification.permission : 'denied'; }
     function prefs() {
-      try { return { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(key()) || '{}') || {}) }; } catch (_) { return { ...DEFAULTS }; }
+      let p;
+      try { p = { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(key()) || '{}') || {}) }; } catch (_) { p = { ...DEFAULTS }; }
+      if (!/^\d{2}:\d{2}$/.test(p.time || '')) p.time = DEFAULTS.time;
+      return p;
     }
     function store(p) { try { if (key()) localStorage.setItem(key(), JSON.stringify(p)); } catch (_) {} }
     function keyBytes(b64) {
@@ -4750,23 +4874,32 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(CFG.VAPID_PUBLIC_KEY) });
     }
     function timeZone() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (_) { return 'UTC'; } }
+    // Keep what the server said back: whether today's check-in already went.
+    function remember(p, sub, server) {
+      store({
+        ...p, endpoint: sub.endpoint, tz: timeZone(), dirty: false,
+        lastRunOn: server ? server.lastRunOn : (p.lastRunOn || null),
+        lastStaleAt: server ? server.lastStaleAt : (p.lastStaleAt || null)
+      });
+    }
     async function enable() {
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') return perm;
       const reg = await registration();
       let sub = await reg.pushManager.getSubscription();
       if (!sub) sub = await subscribe(reg);
-      const p = { ...prefs(), on: true, tz: timeZone() };
+      const p = { ...prefs(), on: true };
+      let server;
       try {
-        await Sync.savePush(sub.toJSON(), p);
+        server = await Sync.savePush(sub.toJSON(), p);
       } catch (e) {
         // This browser's subscription may still belong to an account that
         // signed out without tidying up. Start a fresh one for this account.
         await sub.unsubscribe().catch(() => {});
         sub = await subscribe(reg);
-        await Sync.savePush(sub.toJSON(), p);
+        server = await Sync.savePush(sub.toJSON(), p);
       }
-      store({ ...p, endpoint: sub.endpoint, dirty: false });
+      remember(p, sub, server);
       return 'granted';
     }
     async function save(patch) {
@@ -4776,8 +4909,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       const reg = await registration();
       const sub = await reg.pushManager.getSubscription();
       if (!sub) return;
-      await Sync.savePush(sub.toJSON(), p);
-      store({ ...p, endpoint: sub.endpoint, tz: timeZone(), dirty: false });
+      remember(p, sub, await Sync.savePush(sub.toJSON(), p));
     }
     async function disable() {
       store({ ...prefs(), on: false, endpoint: null, dirty: false });
@@ -4805,11 +4937,55 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       let sub = await reg.pushManager.getSubscription();
       if (!sub) sub = await subscribe(reg);
       if (sub.endpoint === p.endpoint && p.tz === timeZone() && !p.dirty) return;
-      await Sync.savePush(sub.toJSON(), p);
-      store({ ...p, endpoint: sub.endpoint, tz: timeZone(), dirty: false });
+      remember(p, sub, await Sync.savePush(sub.toJSON(), p));
     }
     return { supported, permission, prefs, enable, save, disable, test, resync };
   })();
+
+  // When the next check-in can come: today if its time is still ahead and
+  // today's hasn't gone yet, otherwise tomorrow.
+  function nextCheckIn(p, now = new Date()) {
+    const m = /^(\d{1,2}):(\d{2})/.exec(p.time || '') || [null, '9', '00'];
+    let at = atTime(now, +m[1], +m[2]);
+    if (at <= now || p.lastRunOn === localDateValue(now)) at = addDays(at, 1);
+    return at;
+  }
+  // What a check-in at that moment would say, by the sender's own rules:
+  // the Sunday recap, or a loop untouched for three weeks (at most weekly).
+  function checkInHas(p, at) {
+    const t = at.getTime();
+    const DAY = 86400000;
+    if (p.recap && at.getDay() === 0 && data.loops.some(l => l.status === 'released' && l.completedAt && new Date(l.completedAt).getTime() > t - 7 * DAY)) return 'recap';
+    const staleLately = p.lastStaleAt && new Date(p.lastStaleAt).getTime() > t - 6.5 * DAY;
+    if (p.stale && !staleLately && data.loops.some(l => (l.status === 'active' || (l.status === 'waiting' && !l.wakeAt)) && new Date(l.updatedAt).getTime() <= t - CRACK_DAYS * DAY)) return 'stale';
+    return '';
+  }
+  function nextWakeLoop() {
+    const now = Date.now();
+    return data.loops
+      .filter(l => l.status === 'waiting' && l.wakeAt && new Date(l.wakeAt).getTime() > now)
+      .sort((a, b) => new Date(a.wakeAt) - new Date(b.wakeAt))[0] || null;
+  }
+  // "Next wake-up: “Call the bank”, today 3:00 PM." and when the next
+  // check-in can come, said plainly.
+  function nudgeNextHtml(p) {
+    const lines = [];
+    if (p.wakeups) {
+      const w = nextWakeLoop();
+      lines.push(w
+        ? `Next wake-up: <b>“${esc(shortText(w.rawText, 40))}”</b>, ${esc(formatWake(w.wakeAt))}.`
+        : 'No parked loop is set to wake up yet.');
+    }
+    if (p.stale || p.recap) {
+      const at = nextCheckIn(p);
+      const day = isSameDay(at, new Date()) ? 'today' : 'tomorrow';
+      const has = checkInHas(p, at);
+      lines.push(has
+        ? `Check-in ${day} at ${esc(clockText(at))}: ${has === 'recap' ? 'your Sunday recap' : 'a loop that’s gone stale'}.`
+        : `Check-in ${day} at ${esc(clockText(at))}. Nothing to say yet, so it stays quiet unless that changes.`);
+    }
+    return lines.length ? `<p class="nudge-next" id="nudge-next">${lines.join('<br>')}</p>` : '';
+  }
   function nudgeSettingsHtml() {
     if (!Push.supported()) {
       const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -4824,33 +5000,27 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     const p = Push.prefs();
     if (!p.on) {
       return `
-          <p class="settings-helper">At most one a day, at a time you pick, and only when something is waiting: loops waking up, a Sunday recap, or one that’s gone stale.</p>
+          <p class="settings-helper">A nudge the moment a parked loop wakes up. Plus a check-in at a time you pick, only when there’s something to say: the Sunday recap, or a loop that’s gone stale.</p>
           <button type="button" class="btn btn-ghost" data-action="push-enable">Turn on nudges</button>`;
     }
-    const sw = (k, label) => `<button type="button" class="nudge-switch${p[k] ? ' on' : ''}" data-action="push-toggle" data-key="${k}" aria-pressed="${!!p[k]}"><span>${label}</span><span class="switch" aria-hidden="true"></span></button>`;
-    const sample = p.voice === 'plain'
-      ? 'Like: “Morning sweep. 3 parked loops are back in Up next today.”'
-      : 'Like: “3 loops woke up. Thirty seconds to sort them?”';
+    const sw = (k, label, sub) => `<button type="button" class="nudge-switch${p[k] ? ' on' : ''}" data-action="push-toggle" data-key="${k}" aria-pressed="${!!p[k]}"><span class="nudge-switch-text"><span>${label}</span><span class="nudge-switch-sub">${sub}</span></span><span class="switch" aria-hidden="true"></span></button>`;
     return `
-          <p class="settings-helper">On for this device. At most one a day, only when something is waiting.</p>
-          <div class="nudge-row"><label for="nudge-time">Time</label><input type="time" id="nudge-time" class="nudge-time" min="05:00" max="21:00" step="900" value="${esc(p.time)}"></div>
-          <div class="nudge-row"><span>Voice</span>
-            <div class="seg-row" role="group" aria-label="Nudge voice">
-              <button type="button" data-action="push-voice" data-voice="cheeky" class="${p.voice !== 'plain' ? 'active' : ''}" aria-pressed="${p.voice !== 'plain'}">Cheeky</button>
-              <button type="button" data-action="push-voice" data-voice="plain" class="${p.voice === 'plain' ? 'active' : ''}" aria-pressed="${p.voice === 'plain'}">Plain</button>
-            </div>
-          </div>
-          <p class="nudge-sample">${esc(sample)}</p>
-          <div class="nudge-switches">${sw('wakeups', 'Loops waking up')}${sw('stale', 'Still yours? checks, weekly')}${sw('recap', 'Sunday recap')}</div>
+          <p class="settings-helper">On for this device.</p>
+          <div class="nudge-switches">${sw('wakeups', 'When a loop wakes up', 'Right on time, with Done and Tomorrow')}${sw('stale', 'Still yours? checks', 'At most once a week')}${sw('recap', 'Sunday recap', 'What you closed this week')}</div>
+          ${p.stale || p.recap ? `<div class="nudge-row"><label for="nudge-time">Check-in time</label><input type="time" id="nudge-time" class="nudge-time" step="60" value="${esc(p.time)}"></div>` : ''}
+          ${nudgeNextHtml(p)}
+          <p class="nudge-sample">Like: Knock knock. “Call the bank” just woke up. Where does it go now?</p>
           <div class="nudge-actions">
             <button type="button" class="btn btn-ghost" data-action="push-test">Send a test</button>
             <button type="button" class="btn btn-ghost" data-action="push-disable">Turn off</button>
           </div>`;
   }
   async function savePushPrefs(patch) {
+    let ok = true;
     try { await Push.save(patch); }
-    catch (_) { toast('Saved here. It will sync next time you’re online.'); }
+    catch (_) { ok = false; toast('Saved here. It will sync next time you’re online.'); }
     if (view.overlay && view.overlay.type === 'settings') renderOverlay();
+    return ok;
   }
 
   // ── DEEP LINKS ──
@@ -4872,6 +5042,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       if (!items.length) { toast('All swept. Nothing is waiting.'); return; }
       view.overlay = { type: 'sweep', step: 'intro', items, idx: 0, picks: [] };
       renderOverlay();
+      wakeSweepMascot(view.overlay);
       return;
     }
     if (profile) {
@@ -4895,11 +5066,21 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
   // What the card's main button says. An Ask that was sent asks the real
   // question: did they reply?
   function actionLabel(loop) {
+    if (loop.kind === 'schedule' && loop.details && loop.details.calAt) return 'On your calendar?';
     if (loop.kind === 'ask' && loop.details && loop.details.sentAt) {
       const who = parseAsk(loop.promptAnswer).who;
       return who ? `Did ${who} reply?` : 'Did they reply?';
     }
     return (kindMeta[loop.kind] || kindMeta.inbox).action;
+  }
+
+  // The line under a card's title: the next step, or for a Schedule loop,
+  // when it happens.
+  function nextLineHtml(loop, label = 'Next', empty = 'No next step set.') {
+    const at = loop.kind === 'schedule' && loop.details && loop.details.at;
+    if (at) return `<div class="loop-next"><span class="loop-next-label">When</span><span>${esc(formatEvent(at))}</span></div>`;
+    const fallback = loop.kind === 'schedule' && label === 'Next' ? 'No time set yet.' : empty;
+    return `<div class="loop-next"><span class="loop-next-label">${label}</span><span>${esc(loop.promptAnswer || fallback)}</span></div>`;
   }
 
   // ── CLAY ART ──
@@ -5010,10 +5191,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
           </div>
         </div>
         <p class="loop-title" data-action="inline-edit-start" data-loop-id="${esc(loop.id)}" title="Click to edit" style="cursor:text">${esc(loop.rawText)}</p>
-        <div class="loop-next">
-          <span class="loop-next-label">Next</span>
-          <span>${esc(loop.promptAnswer || 'No next step set.')}</span>
-        </div>
+        ${nextLineHtml(loop)}
         ${loopMetaHtml(loop)}
         <div class="loop-card-bottom">
           <button class="btn-action kind-${loop.kind || 'inbox'}" data-action="primary-action" data-loop-id="${esc(loop.id)}">${esc(actionLabel(loop))}</button>
@@ -5095,7 +5273,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         const n = Combo.count();
         html += `<div class="empty-state cleared">${mascotSvg('proud', { width: 210, className: Combo.fresh() ? 'mascot-sealing' : '', label: 'The mascot, proud, closed into a ring' })}<strong>Active is clear.</strong>${n} closes, one full chord. Enjoy the quiet.</div>`;
       } else {
-        html += `<div class="empty-state">${clayArtHtml('closed')}<strong>Your head is clear.</strong>Capture a loop, then define it when you're ready.</div>`;
+        html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Your head is clear.</strong>Capture a loop, then define it when you're ready.</div>`;
       }
       html += `</div>`;
     }
@@ -5115,7 +5293,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
             <article class="loop-card kind-${loop.kind || 'inbox'}${dryClass(loop)}" data-loop-id="${esc(loop.id)}" style="animation-delay:${i*0.04}s">
               <div class="loop-card-top"><div class="loop-card-top-left">${chipHtml(loop.kind)}${reasonHtml(loop)}</div><button class="card-overflow" data-action="open-menu" data-loop-id="${esc(loop.id)}" title="More" aria-label="More options"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg></button></div>
               <p class="loop-title">${esc(loop.rawText)}</p>
-              <div class="loop-next"><span class="loop-next-label">Note</span><span>${esc(loop.promptAnswer || '-')}</span></div>
+              ${nextLineHtml(loop, 'Note', '-')}
               ${loopMetaHtml(loop)}
               <div class="loop-card-bottom">
                 <button class="btn-action" data-action="restore-active" data-loop-id="${esc(loop.id)}">Make active</button>
@@ -5126,7 +5304,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state">${clayArtHtml('open')}<strong>Nothing parked.</strong>Park loops here when the next move isn't yours yet.</div>`;
+        html += `<div class="empty-state">${mascotSvg('sleepy', { width: 190 })}<strong>Nothing parked.</strong>Park loops here when the next move isn't yours yet.</div>`;
       }
       html += `</div>`;
     }
@@ -5151,7 +5329,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state">${clayArtHtml('closed')}<strong>Nothing closed yet.</strong>When a loop is done, close it here.</div>`;
+        html += `<div class="empty-state">${mascotSvg('curious', { width: 190 })}<strong>Nothing closed yet.</strong>When a loop is done, close it here.</div>`;
       }
       html += `</div>`;
     }
@@ -5173,7 +5351,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         });
         html += `</div>`;
       } else {
-        html += `<div class="empty-state">${clayArtHtml('open')}<strong>Inbox zero.</strong>Captured loops land here before you define where they belong.</div>`;
+        html += `<div class="empty-state">${mascotSvg('cheeky', { width: 190 })}<strong>Inbox zero.</strong>Captured loops land here before you define where they belong.</div>`;
       }
       html += `</div>`;
     }
@@ -5226,7 +5404,9 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
   // offer, never an automatic change: "Wake it Fri 9:00 AM?". Accepting it
   // parks the loop until then instead of adding it to Inbox.
   function captureWhen(ov) {
-    const text = (ov && ov.rawText || '').trim();
+    // A Schedule loop's time is when it happens, not when to bring it back.
+    if (!ov || ov.kind === 'schedule') return null;
+    const text = (ov.rawText || '').trim();
     if (!text) return null;
     const hit = parseWhen(text);
     if (!hit || !hit.date || hit.date.getTime() <= Date.now() + 60000) return null;
@@ -5286,6 +5466,16 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     let_go: 'Choose to release it'
   };
 
+  // Where Define's "When is it?" starts: the time already picked, else what
+  // the note says, else tomorrow at 9:00.
+  function defineWhen(loop, ov) {
+    const picked = ov.at ? new Date(ov.at) : (loop.details && loop.details.at ? new Date(loop.details.at) : null);
+    if (picked && !Number.isNaN(picked.getTime())) return { date: picked, hint: 'You’ll put it on your calendar from its card.' };
+    const parsed = parseWhen(ov.rawText ?? loop.rawText) || parseWhen(loop.promptAnswer);
+    if (parsed) return { date: parsed.date, hint: `I read “${parsed.text}” from your note. Change it if that’s wrong.` };
+    return { date: atTime(addDays(new Date(), 1), 9), hint: 'You’ll put it on your calendar from its card.' };
+  }
+
   function renderDefineRaw(loop) {
     if (!loop) return '';
     const ov = view.overlay || {};
@@ -5312,6 +5502,20 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       body = `
         <h3 class="step-q" id="define-step-q">What kind of attention does this need?</h3>
         <div class="kind-tiles" role="group" aria-labelledby="define-step-q">${tiles}</div>`;
+    } else if (step === 2 && kind === 'schedule') {
+      const when = defineWhen(loop, ov);
+      body = `
+        <div class="step-kind">${kindChip}</div>
+        <h3 class="step-q" id="define-when-q">When is it?</h3>
+        <div class="act-row define-when" role="group" aria-labelledby="define-when-q">
+          ${actField('define-date', 'Day', `<input class="big-input act-input" id="define-date" type="date" value="${localDateValue(when.date)}">`)}
+          ${actField('define-time', 'Time', `<input class="big-input act-input" id="define-time" type="time" value="${localTimeValue(when.date)}">`)}
+        </div>
+        <p class="input-hint">${esc(when.hint)}</p>
+        <div class="overlay-actions">
+          <button class="btn btn-ghost" data-action="define-next" data-skip="1">Not sure yet</button>
+          <button class="btn btn-primary" data-action="define-next">Next</button>
+        </div>`;
     } else if (step === 2) {
       const q = DEFINE_Q[kind] || DEFINE_Q.do;
       const ans = ov.promptAnswer || '';
@@ -5344,6 +5548,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         </button>`).join('');
       body = `
         <div class="step-kind">${kindChip}</div>
+        ${kind === 'schedule' && ov.at ? `<p class="step-note define-when-note"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true">${REASON_ICON.cal}</svg><span>${esc(formatEvent(ov.at))}</span></p>` : ''}
         <h3 class="step-q" id="define-route-q">Where does it go?</h3>
         ${full && !wasActive && kind !== 'let_go' ? `<p class="step-note">Active is full (${active} of ${cap}). Parking keeps your focus clear.</p>` : ''}
         <div class="route-bigs" role="group" aria-labelledby="define-route-q">${routes}</div>`;
@@ -5444,6 +5649,10 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             ${released ? 'Reopen' : 'Make active'}
           </button>` : ''}
+          ${active || waiting ? `<button class="menu-item" data-action="complete-done" data-loop-id="${esc(loop.id)}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.8 7.4 5.6 10.2 11.2 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Done, close it
+          </button>` : ''}
           ${active ? `<button class="menu-item" data-action="move-released" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 11.5V4.5M7 4.5 4.5 7M7 4.5 9.5 7M3.5 2.5h7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Let go
@@ -5465,7 +5674,9 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     const opts = kinds.map(k => {
       const m = kindMeta[k];
       const sel = loop.kind === k ? ` selected ${k}` : '';
-      return `<button class="kind-option${sel}" data-action="set-kind-direct" data-kind="${k}" data-loop-id="${esc(loop.id)}" type="button">
+      // Switching to Schedule asks when it happens (Define's time step).
+      const act = k === 'schedule' && loop.kind !== 'schedule' ? 'define-schedule' : 'set-kind-direct';
+      return `<button class="kind-option${sel}" data-action="${act}" data-kind="${k}" data-loop-id="${esc(loop.id)}" type="button">
         <div class="kind-option-dot"></div>
         <div><span class="kind-option-label">${m.label}</span><span class="kind-option-desc">${esc(m.helper)}</span></div>
       </button>`;
@@ -5880,7 +6091,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         </section>
 
         <section class="settings-section" id="nudge-settings">
-          <div class="settings-label">Daily nudge</div>
+          <div class="settings-label">Nudges</div>
           ${nudgeSettingsHtml()}
         </section>
 
@@ -5943,7 +6154,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         <div class="auth-gate">
           <div class="auth-gate-card">
             <div class="auth-gate-logo">
-              <div class="auth-gate-logo-mark"><svg class="ol-mark" viewBox="0 0 30 30" fill="none" aria-hidden="true"><path d="M22 7.6A10 10 0 1 0 22.6 21.6" stroke="#ffb084" stroke-width="6" stroke-linecap="round"/><circle cx="24.4" cy="14.6" r="2.6" fill="#ff4d8b"/></svg></div>
+              <div class="auth-gate-logo-mark">${mascotSvg('awake', { mark: true, width: 30 })}</div>
               <span class="auth-gate-logo-name">Open Loops</span>
             </div>
             <h1 class="auth-gate-headline">Sign-in setup needed.</h1>
@@ -5959,7 +6170,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         <div class="auth-gate">
           <div class="auth-gate-card">
             <div class="auth-gate-logo">
-              <div class="auth-gate-logo-mark"><svg class="ol-mark" viewBox="0 0 30 30" fill="none" aria-hidden="true"><path d="M22 7.6A10 10 0 1 0 22.6 21.6" stroke="#ffb084" stroke-width="6" stroke-linecap="round"/><circle cx="24.4" cy="14.6" r="2.6" fill="#ff4d8b"/></svg></div>
+              <div class="auth-gate-logo-mark">${mascotSvg('awake', { mark: true, width: 30 })}</div>
               <span class="auth-gate-logo-name">Open Loops</span>
             </div>
             <div class="auth-gate-sent">
@@ -5979,10 +6190,10 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       <div class="auth-gate">
         <div class="auth-gate-card">
           <div class="auth-gate-logo">
-            <div class="auth-gate-logo-mark"><svg class="ol-mark" viewBox="0 0 30 30" fill="none" aria-hidden="true"><path d="M22 7.6A10 10 0 1 0 22.6 21.6" stroke="#ffb084" stroke-width="6" stroke-linecap="round"/><circle cx="24.4" cy="14.6" r="2.6" fill="#ff4d8b"/></svg></div>
+            <div class="auth-gate-logo-mark">${mascotSvg('awake', { mark: true, width: 30 })}</div>
             <span class="auth-gate-logo-name">Open Loops</span>
           </div>
-          ${clayArtHtml('open')}
+          ${mascotSvg('awake', { width: 220, className: 'clay-art mascot-bob', label: 'The Open Loops mascot' })}
           <h1 class="auth-gate-headline">Clear your head everywhere.</h1>
           <p class="auth-gate-sub">Sign in first. Your loops live in Supabase so every device sees the same state.</p>
           <div class="auth-gate-email-row">
@@ -6196,12 +6407,15 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       </div>`;
   }
 
-  // Default start for a Schedule event: what the note says, else tomorrow 9:00.
+  // Default start for a Schedule event: what you typed here, else the time
+  // picked in Define, else what the note says, else tomorrow 9:00.
   function scheduleStart(loop, ov) {
     const typed = fromLocalInputs(ov.calDate, ov.calTime);
-    if (typed) return { start: typed, parsed: null };
+    if (typed) return { start: typed, parsed: null, saved: false };
+    const at = loop.details && loop.details.at ? new Date(loop.details.at) : null;
+    if (at && !Number.isNaN(at.getTime())) return { start: at, parsed: null, saved: true };
     const parsed = parseWhen(loop.promptAnswer) || parseWhen(loop.rawText);
-    return { start: parsed ? parsed.date : atTime(addDays(new Date(), 1), 9), parsed };
+    return { start: parsed ? parsed.date : atTime(addDays(new Date(), 1), 9), parsed, saved: false };
   }
 
   function renderPrimaryAction(loop) {
@@ -6211,7 +6425,9 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     const d = loop.details || {};
     const id = loop.id;
     const sentAsk = kind === 'ask' && !!d.sentAt && loop.status === 'active';
-    const step = ov.step || (sentAsk ? 'reply' : 'main');
+    // Sent to a calendar already: the first question is whether it made it.
+    const sentToCal = kind === 'schedule' && !!d.calAt && loop.status === 'active';
+    const step = ov.step || (sentAsk ? 'reply' : sentToCal ? 'confirm' : 'main');
     const editLink = `<button type="button" class="act-link" data-action="complete-update" data-loop-id="${esc(id)}">Edit the note</button>`;
     let title = '', sub = '', body = '';
 
@@ -6278,10 +6494,10 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
           </div>${ov.nudge ? '' : editLink}`;
       }
     } else if (kind === 'schedule') {
-      const { start, parsed } = scheduleStart(loop, ov);
+      const { start, parsed, saved } = scheduleStart(loop, ov);
       if (step === 'confirm') {
         title = 'On your calendar?';
-        sub = 'Once it is saved there, your calendar holds it and this loop can close.';
+        sub = 'Once it’s saved there, your calendar holds it and this loop can close.';
         const when = `${start.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}, ${clockText(start)}`;
         body = actLoopBox(ov.calTitle || loop.rawText, when) + `
           <div class="act-list">
@@ -6291,7 +6507,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
           </div>`;
       } else {
         title = 'Add to calendar';
-        sub = parsed ? `I read "${parsed.text}" from your note. Check it, then pick a calendar.` : 'Pick a day and time, then a calendar.';
+        sub = saved ? 'Check the time, then pick a calendar.' : parsed ? `I read "${parsed.text}" from your note. Check it, then pick a calendar.` : 'Pick a day and time, then a calendar.';
         body = actField('cal-title', 'Event',
             `<input class="big-input act-input no-autofocus" id="cal-title" type="text" maxlength="200" value="${esc(ov.calTitle != null ? ov.calTitle : loop.rawText)}">`) + `
           <div class="act-row">
@@ -6301,13 +6517,14 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
           <div class="act-list">
             ${actBtn({ action: 'cal-google', label: 'Google Calendar', sub: 'Opens a ready-made event, 30 minutes', primary: true, loopId: id, icon: ACT_ICON.cal })}
             ${actBtn({ action: 'cal-ics', label: 'Apple, Outlook or other', sub: 'Downloads an event file', loopId: id, icon: ACT_ICON.file })}
+            ${actBtn({ action: 'complete-done', label: 'It’s already on my calendar', sub: 'Close the loop now', loopId: id, icon: ACT_ICON.ring })}
             ${notYetBtn(loop)}
-          </div>${editLink}`;
+          </div>`;
       }
     } else if (kind === 'let_go') {
       title = 'Ready to let it go?';
       sub = 'Letting go is a choice, not a failure. It leaves your head, not your history.';
-      body = actLoopBox(loop.rawText, loop.promptAnswer ? `Letting go of: ${loop.promptAnswer}` : '') + `
+      body = `<div class="act-mascot">${mascotSvg('calm', { width: 132 })}</div>` + actLoopBox(loop.rawText, loop.promptAnswer ? `Letting go of: ${loop.promptAnswer}` : '') + `
         <div class="act-list">
           ${actBtn({ action: 'complete-done', label: 'Let it go', primary: true, loopId: id, icon: ACT_ICON.drift })}
           ${notYetBtn(loop)}
@@ -6860,11 +7077,17 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       };
     }
 
+    // Something new landed: the capture sound, and the mascot looks up.
+    function captured() {
+      Sound.play('capture');
+      BrandMascot.react('curious', 1600);
+    }
+
     // Brain-dump capture: a pellet leaves the text box for the Inbox tab.
     function pelletToInbox(kind, tab = 'inbox') {
       const src = document.getElementById('capture-input');
       const target = tabTarget(tab);
-      if (!src || reduced()) { Sound.play('capture'); return; }
+      if (!src || reduced()) { captured(); return; }
       const r = src.getBoundingClientRect();
       const S = 22;
       const x0 = r.left + 28, y0 = r.top + 22;
@@ -6879,7 +7102,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       }));
       t.animate(kf, { duration: 560, easing: 'cubic-bezier(.45,0,.25,1)', fill: 'forwards' }).onfinish = () => {
         t.remove();
-        Sound.play('capture');
+        captured();
         if (target) bump(target);
       };
     }
@@ -6887,7 +7110,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     // Capture: the sheet's pellet drops onto the new Inbox card.
     function landCapture(el, fromRect, kind) {
       el.style.animation = 'none';
-      if (!fromRect || reduced()) { Sound.play('capture'); return; }
+      if (!fromRect || reduced()) { captured(); return; }
       const r = el.getBoundingClientRect();
       const S = 26;
       const x0 = fromRect.left + fromRect.width / 2 - S / 2, y0 = fromRect.top + fromRect.height / 2 - S / 2;
@@ -6899,7 +7122,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         transform: `translate(${x}px, ${y}px) scale(${p < 0.2 ? 0.2 + p * 4 : 1})`
       }));
       t.animate(kf, { duration: 520, delay: 180, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'both' }).onfinish = () => {
-        Sound.play('capture');
+        captured();
         t.animate([
           { transform: `translate(${x1}px, ${y1}px) scale(1.25, .7)`, opacity: 1 },
           { transform: `translate(${x1}px, ${y1}px) scale(.2)`, opacity: 0 }
@@ -7070,6 +7293,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     // A close lands with its chord; in a sitting of several closes the chord
     // gains a note each time, and clearing Active plays the whole thing.
     function landSound(letGo, quick) {
+      BrandMascot.react(letGo ? 'calm' : 'proud');
       Sound.play(letGo ? 'softLand' : quick ? 'quickLand' : 'land');
       if (letGo) return;
       const step = Combo.count() - 1;
@@ -7511,6 +7735,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
           b.classList.toggle('on', on);
           b.setAttribute('aria-pressed', String(on));
         });
+        refreshCaptureWhen(ov);
       }
       return;
     }
@@ -7573,9 +7798,21 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     if (action === 'define-next') {
       const ov = view.overlay;
       if (ov?.type === 'define-raw') {
-        const d = document.getElementById('define-detail-input');
-        if (el.dataset.skip) ov.promptAnswer = ov.promptAnswer || '';
-        else if (d) ov.promptAnswer = d.value;
+        if (ov.kind === 'schedule') {
+          if (el.dataset.skip) {
+            ov.at = null;
+            ov.atCleared = true;
+          } else {
+            const picked = fromLocalInputs(document.getElementById('define-date')?.value, document.getElementById('define-time')?.value);
+            if (!picked) { toast('Pick a day, or tap Not sure yet.'); return; }
+            ov.at = picked.toISOString();
+            ov.atCleared = false;
+          }
+        } else {
+          const d = document.getElementById('define-detail-input');
+          if (el.dataset.skip) ov.promptAnswer = ov.promptAnswer || '';
+          else if (d) ov.promptAnswer = d.value;
+        }
         goDefineStep(3, 1);
       }
       return;
@@ -7603,6 +7840,14 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       // A new note means a new ask: forget that the old one was sent.
       const details = { ...((prevLoop && prevLoop.details) || {}) };
       if (prevLoop && ans !== (prevLoop.promptAnswer || '')) { delete details.sentAt; delete details.nudges; }
+      // A Schedule keeps its time; a new time means the calendar has the old one.
+      if (ov.kind === 'schedule') {
+        if (ov.at) { if (details.at !== ov.at) delete details.calAt; details.at = ov.at; }
+        else if (ov.atCleared) { delete details.at; delete details.calAt; }
+      } else {
+        delete details.at;
+        delete details.calAt;
+      }
       if (status === 'waiting') {
         // Parking asks "when?" first; the define choices are applied then.
         view.overlay = { type: 'when', loopId: ov.loopId, define: { rawText: raw, kind: ov.kind, promptAnswer: ans, details: cleanDetails(details) } };
@@ -7612,6 +7857,8 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       if (status === 'released') details.outcome = ov.kind === 'let_go' ? 'let_go' : 'done';
       else delete details.outcome;
       const patch = { rawText: raw, kind: ov.kind, promptAnswer: ans, status, completedAt: status === 'released' ? nowIso() : null, details: cleanDetails(details) };
+      // In Active now: a wake time still ahead would only send a nudge for nothing.
+      if (status === 'active' && prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now()) patch.wakeAt = null;
       const prevStatus = prevLoop?.status;
       const upNext = status === 'active' && prevStatus !== 'active' ? upNextPosition(ov.loopId) : null;
       if (upNext) patch.position = upNext.position;
@@ -7810,10 +8057,18 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       } else {
         downloadIcs(icsText({ uidValue: target.id, title, start, end, details }), `${fileSlug(title) || 'open-loops-event'}.ics`);
       }
+      // Remember it went to a calendar: the card asks "On your calendar?",
+      // and so does the app when you come back, even if this sheet is gone.
+      const patch = { details: cleanDetails({ ...target.details, at: start.toISOString(), calAt: nowIso() }) };
+      updateLoop(target.id, patch);
+      save();
+      Sync.updateLoop(target.id, patch);
+      askedCal.add(target.id);
       ov.calDate = localDateValue(start);
       ov.calTime = localTimeValue(start);
       ov.calTitle = title;
       ov.step = 'confirm';
+      renderMain();
       renderActStep();
       return;
     }
@@ -7962,6 +8217,17 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       renderOverlay();
       return;
     }
+    if (action === 'define-schedule') {
+      if (requireLogin()) return;
+      const target = getLoop(loopId);
+      if (!target) { closeOverlay(); return; }
+      view.overlay = {
+        type: 'define-raw', loopId, rawText: target.rawText, kind: 'schedule',
+        promptAnswer: target.promptAnswer || '', status: target.status === 'inbox' ? 'active' : target.status, step: 2
+      };
+      renderOverlay();
+      return;
+    }
     if (action === 'set-kind-direct') {
       if (requireLogin()) return;
       const newKind = el.dataset.kind;
@@ -8017,6 +8283,16 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     // Sync
     if (action === 'open-sync') {
       rememberOverlayOpener(el);
+      if (Sync.isLoggedIn()) {
+        // Signed in: the account (email, sync, sign out) lives in Your head.
+        view.overlay = { type: 'profile' };
+        renderOverlay();
+        setTimeout(() => {
+          const acct = document.getElementById('head-account');
+          if (acct) acct.scrollIntoView({ block: 'start' });
+        }, 90);
+        return;
+      }
       view.overlay = { type: 'sync' };
       renderOverlay();
       return;
@@ -8056,7 +8332,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       const result = await Sync.retry();
       if (result?.ok) toast('Sync restored.');
       else toast('Still having trouble syncing.');
-      if (!fromBanner && view.overlay?.type === 'sync') renderOverlay();
+      if (!fromBanner && (view.overlay?.type === 'sync' || view.overlay?.type === 'profile')) renderOverlay();
       return;
     }
 
@@ -8273,7 +8549,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       return;
     }
 
-    // ── Daily nudges ──
+    // ── Nudges ──
     if (action === 'push-enable') {
       if (requireLogin()) return;
       el.disabled = true;
@@ -8292,10 +8568,6 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       await Push.disable().catch(() => {});
       toast('Nudges are off for this device.');
       if (view.overlay && view.overlay.type === 'settings') renderOverlay();
-      return;
-    }
-    if (action === 'push-voice') {
-      await savePushPrefs({ voice: el.dataset.voice === 'plain' ? 'plain' : 'cheeky' });
       return;
     }
     if (action === 'push-toggle') {
@@ -8525,14 +8797,22 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     }
   }, true);
 
-  // Nudge time: snapped to the quarter hour, between 05:00 and 21:00.
-  document.addEventListener('change', e => {
+  // Check-in time: any minute of the day, kept exactly as picked. The toast
+  // says what was saved and when the next check-in can come.
+  document.addEventListener('change', async e => {
     if (!e.target || e.target.id !== 'nudge-time') return;
     const m = /^(\d{1,2}):(\d{2})/.exec(e.target.value || '');
     if (!m) return;
-    const mins = Math.min(21 * 60, Math.max(5 * 60, Math.round((+m[1] * 60 + +m[2]) / 15) * 15));
-    const time = `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
-    savePushPrefs({ time }).then(() => toast(`Saved. Nudges come around ${time}.`));
+    const time = `${m[1].padStart(2, '0')}:${m[2]}`;
+    if (!(await savePushPrefs({ time }))) return;
+    const p = Push.prefs();
+    const at = nextCheckIn(p);
+    const clock = clockText(at);
+    const has = checkInHas(p, at);
+    toast(!isSameDay(at, new Date())
+      ? `Saved. Next check-in tomorrow at ${clock}.`
+      : has ? `Saved. Check-in today at ${clock}.` : `Saved for ${clock}. Nothing to say today, so it stays quiet.`,
+      { duration: 5000 });
   });
 
   // Enter key on auth gate email → submit
@@ -8572,6 +8852,21 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
   });
 
   // ── AUTO-RETRY ON NETWORK / VISIBILITY EVENTS ──
+  // ── BACK FROM THE CALENDAR ──
+  // A loop just sent to a calendar asks, as soon as you're back in the app,
+  // whether it made it. Once per loop; the card keeps asking quietly.
+  const askedCal = new Set();
+  function askCalendarBack() {
+    if (!Sync.isLoggedIn() || view.overlay || view.onboardingStep >= 0) return;
+    const since = Date.now() - 30 * 60000;
+    const loop = data.loops.find(l => l.status === 'active' && l.kind === 'schedule' && !askedCal.has(l.id) &&
+      l.details && l.details.calAt && new Date(l.details.calAt).getTime() > since);
+    if (!loop) return;
+    askedCal.add(loop.id);
+    view.overlay = { type: 'primary-action', loopId: loop.id, step: 'confirm' };
+    renderOverlay();
+  }
+
   // When we come back online or refocus the tab, drain any queued offline
   // operations. Individual edits already sync immediately when online.
   window.addEventListener('online', async () => {
@@ -8591,6 +8886,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
   document.addEventListener('visibilitychange', async () => {
     if (document.hidden) return;
     if (!Sync.isLoggedIn()) return;
+    askCalendarBack();
     await Sync.processQueue();
     Sync.ensureRealtime();
     wakeDueLoops();
@@ -8651,6 +8947,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         savePush:      async () => { throw new Error('Sign in first.'); },
         deletePush:    async () => {},
         testPush:      async () => { throw new Error('Sign in first.'); },
+        userEmail:     () => '',
         isLoggedIn:    () => false
       };
     }
@@ -9386,6 +9683,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
           startOnboarding();
         } else {
           takeDeepLink(location.search);
+          askCalendarBack();
         }
       },
 
@@ -9453,8 +9751,9 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 
       async signOut() { await db.auth.signOut(); },
       isLoggedIn() { return !!currentUser; },
+      userEmail() { return (currentUser && currentUser.email) || ''; },
 
-      // Daily nudges: this device's push subscription and its settings.
+      // Nudges: this device's push subscription and its settings.
       async savePush(sub, p) {
         if (!currentUser) throw new Error('Sign in first.');
         const keys = (sub && sub.keys) || {};
@@ -9465,13 +9764,22 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
           auth: keys.auth,
           tz: (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (_) { return 'UTC'; } })(),
           nudge_time: p.time || '09:00',
-          voice: p.voice === 'plain' ? 'plain' : 'cheeky',
           wakeups: !!p.wakeups,
           stale: !!p.stale,
           recap: !!p.recap
         };
-        const { error } = await db.from('push_subscriptions').upsert(row, { onConflict: 'endpoint' });
+        // A check-in time that has already passed today starts tomorrow, so
+        // changing the time never fires a surprise check-in right away. A
+        // time still ahead today can come today (unless one already did).
+        const now = new Date();
+        const t = /^(\d{1,2}):(\d{2})/.exec(row.nudge_time);
+        row.quiet_on = t && atTime(now, +t[1], +t[2]) <= now ? localDateValue(now) : null;
+        const { data: saved, error } = await db.from('push_subscriptions')
+          .upsert(row, { onConflict: 'endpoint' })
+          .select('last_run_on, last_stale_at')
+          .maybeSingle();
         if (error) throw error;
+        return saved ? { lastRunOn: saved.last_run_on || null, lastStaleAt: saved.last_stale_at || null } : null;
       },
       async deletePush(endpoint) {
         if (!currentUser || !endpoint) return;
@@ -9490,6 +9798,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     view.syncStatus = key;
     view.syncText = text;
     renderHeader();
+    refreshAccountCard();
   }
 
   // ── THEME ──
@@ -9548,6 +9857,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
   // ── INIT ──
   loadTheme();
   Motion.init();
+  BrandMascot.init();
   renderAll(); // First paint
 
   // Kick off auth check. Sign-in is required because Supabase is the
@@ -9631,12 +9941,23 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     // A tapped notification on a phone that already has the app open: the
     // service worker focuses this window and says where to go. After a
     // notification button (Done / Tomorrow) changed a loop, pull it in.
+    // A nudge that arrives while the app is open and in front of you is said
+    // here, not as a phone notification.
     navigator.serviceWorker.addEventListener('message', e => {
       const msg = e.data || {};
       if (msg.type === 'open' && msg.url) {
         try { takeDeepLink(new URL(msg.url, location.href).search); } catch (_) {}
       } else if (msg.type === 'loops-changed' && Sync.isLoggedIn()) {
         Sync.retry();
+      } else if (msg.type === 'nudge' && Sync.isLoggedIn()) {
+        // A wake-up: wake it here too, which shows its own note.
+        if (wakeDueLoops().length) return;
+        let search = '';
+        try { search = new URL(msg.url, location.href).search; } catch (_) {}
+        const text = shortText(`${msg.title || ''} ${msg.body || ''}`, 120);
+        toast(text, search && !view.overlay
+          ? { action: 'Open', onAction: () => takeDeepLink(search), duration: 7000 }
+          : { duration: 7000 });
       }
     });
 

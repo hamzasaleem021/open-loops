@@ -1,5 +1,5 @@
 // Bump on every release, together with APP_VERSION in open-loops.html.
-const CACHE = 'open-loops-v19-ritual';
+const CACHE = 'open-loops-v20-mascot';
 
 const NETWORK_FIRST = [
   './open-loops.html',
@@ -8,8 +8,9 @@ const NETWORK_FIRST = [
 
 const CACHE_FIRST = [
   './open-loops-manifest.json',
-  './open-loops-icon-192-v3.png',
-  './open-loops-icon-512-v3.png',
+  './open-loops-icon-192-v4.png',
+  './open-loops-icon-512-v4.png',
+  './open-loops-nudge-192.png',
   './open-loops-badge-96.png'
 ];
 
@@ -117,26 +118,45 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// ── DAILY NUDGES (web push) ──
-// The Supabase "push" function sends at most one nudge a day. The payload is
-// JSON: { title, body, url, tag, actions?, token?, actionUrl? }.
-const ICON = './open-loops-icon-192-v3.png';
+// ── NUDGES (web push) ──
+// The Supabase "push" function sends a nudge when a parked loop wakes up, and
+// a check-in at the time you picked. The payload is JSON:
+// { title, body, url, tag, renotify?, actions?, token?, actionUrl? }.
+const ICON = './open-loops-nudge-192.png';
 const BADGE = './open-loops-badge-96.png';
+
+// The app is open and in front of you: it says it there instead of buzzing
+// the phone. A test always shows as a real notification.
+async function focusedWindow() {
+  const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  return wins.find(w => w.focused && w.visibilityState === 'visible') || null;
+}
 
 self.addEventListener('push', event => {
   let msg = {};
   try { msg = event.data ? event.data.json() : {}; }
   catch (_) { msg = { body: event.data ? event.data.text() : '' }; }
+  const title = msg.title || 'Open Loops';
+  const url = new URL(msg.url || './open-loops.html', self.registration.scope).href;
   const options = {
     body: msg.body || '',
     icon: ICON,
     badge: BADGE,
     tag: msg.tag || 'open-loops-nudge',
-    data: { url: msg.url || './open-loops.html', token: msg.token || null, actionUrl: msg.actionUrl || null }
+    // A new wake-up rings again even if an older one is still showing.
+    renotify: !!msg.renotify,
+    data: { url, token: msg.token || null, actionUrl: msg.actionUrl || null }
   };
   // Done / Tomorrow need a signed token; without one, a tap just opens the app.
   if (msg.token && Array.isArray(msg.actions)) options.actions = msg.actions.slice(0, 2);
-  event.waitUntil(self.registration.showNotification(msg.title || 'Open Loops', options));
+  event.waitUntil((async () => {
+    const win = msg.tag === 'open-loops-test' ? null : await focusedWindow();
+    if (win) {
+      win.postMessage({ type: 'nudge', title, body: options.body, url });
+      return;
+    }
+    await self.registration.showNotification(title, options);
+  })());
 });
 
 async function openApp(url) {
