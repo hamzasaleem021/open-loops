@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="./open-loops-icon-192-v4.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@100..125,500..900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ── CLAY DESIGN SYSTEM (landing) ──
    Cream canvas, near-black ink, saturated single-color feature cards,
@@ -263,9 +263,6 @@ footer { background: var(--surface-soft); margin-top: 96px; padding-block: 56px;
 footer .container { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .footer-note { font-size: 14px; color: var(--muted); }
 .footer-right { display: flex; align-items: center; gap: 12px 28px; flex-wrap: wrap; }
-.powered { font-size: 14px; color: var(--muted); text-decoration: none; }
-.powered b { font-weight: 600; color: var(--ink); }
-.powered:hover b { text-decoration: underline; text-underline-offset: 3px; }
 
 
 /* ── WHY STORY (same scenes as the app's Why sheet) ── */
@@ -395,9 +392,44 @@ footer .container { display: flex; align-items: center; justify-content: space-b
   footer { margin-top: 64px; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* ── Auxila endorsement (parent brand). Same on every Auxila release;
+      the product's own identity stays everything below this strip. ── */
+.aux-strip { background: #09090a; color: #b6b5b0; font-family: 'Mona Sans', system-ui, sans-serif; font-size: 13px; line-height: 1; position: relative; z-index: 11; }
+.aux-strip .aux-in { height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.aux-by, .aux-cat { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
+.aux-word { font-family: 'Mona Sans', system-ui, sans-serif; font-stretch: 125%; font-weight: 900; letter-spacing: -0.03em; color: #f1f0ec; font-size: 14px; }
+.aux-word i { font-style: normal; font-weight: 500; font-stretch: 100%; color: #87867f; letter-spacing: 0; }
+.aux-disc { width: 18px; height: 18px; border-radius: 50%; flex: none; position: relative;
+  background: repeating-radial-gradient(circle, #0d0d0e 0 1px, #232326 1px 2px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+.aux-disc::after { content: ''; position: absolute; inset: 32%; border-radius: 50%; background: var(--aux-acc); }
+.aux-cat { color: #87867f; font-weight: 600; }
+.aux-cat b { color: var(--aux-acc); font-weight: 800; letter-spacing: .02em; }
+.aux-by:hover .aux-word, .aux-cat:hover { color: #f1f0ec; }
+.aux-strip a:focus-visible { outline: 2px solid var(--aux-acc); outline-offset: 3px; border-radius: 2px; }
+@media (prefers-reduced-motion: no-preference) {
+  .aux-by:hover .aux-disc { animation: aux-spin 1.6s linear infinite; }
+  @keyframes aux-spin { to { transform: rotate(360deg); } }
+}
+@media (max-width: 420px) { .aux-cat span { display: none; } }
+
+/* Footer credit: Auxila wordmark in its own face, colours from the product */
+.aux-credit { display: inline-flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-size: 14px; white-space: nowrap; }
+.aux-credit .aux-word { color: var(--ink, currentColor); font-size: 15px; }
+.aux-credit .aux-word i { color: inherit; opacity: .6; }
+.aux-credit:hover .aux-word { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.aux-bc { display: inline-flex; gap: 2px; height: 16px; align-items: stretch; opacity: .75; }
+.aux-bc i { background: currentColor; display: block; }
+.aux-cat-s { font-family: 'Mona Sans', system-ui, sans-serif; font-weight: 700; font-size: 12px; letter-spacing: .04em; opacity: .7; }
 </style>
 </head>
 <body>
+<div class="aux-strip" style="--aux-acc:#ff4d8b">
+  <div class="container aux-in">
+    <a class="aux-by" href="https://auxila.cc" aria-label="Powered by auxila.cc"><span class="aux-disc" aria-hidden="true"></span><span>Powered by</span><span class="aux-word">auxila<i>.cc</i></span></a>
+    <a class="aux-cat" href="https://auxila.cc/#aux-001"><b>AUX 001</b><span>Focus</span></a>
+  </div>
+</div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -636,7 +668,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
     </a>
     <div class="footer-right">
       <span class="footer-note">Auth-first, cross-device, and intentionally calm.</span>
-      <a class="powered" href="https://auxila.cc">Powered by <b>auxila.cc</b></a>
+      <a class="aux-credit" href="https://auxila.cc"><span class="aux-bc" aria-hidden="true"><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:1px"></i><i style="width:3px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:3px"></i><i style="width:1px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i></span><span class="aux-cat-s">AUX 001</span><span>Powered by</span><span class="aux-word">auxila<i>.cc</i></span></a>
     </div>
   </div>
 </footer>
