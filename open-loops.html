@@ -2681,7 +2681,6 @@ button.brand:focus-visible { outline: 2px solid var(--text); outline-offset: 2px
 @media (max-width: 420px) {
   .brand-name { font-size: 16px; }
   .topbar-right { gap: 2px; }
-  #sync-pill { padding: 0 10px; }
 }
 .brand-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 /* The page column can never be widened by its content (a wide header used
@@ -2694,10 +2693,6 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
   /* Theme and Install live in Settings on phones; sync shows as a dot with
      its status in the label and title. The header needs the room. */
   #theme-toggle, #install-btn { display: none !important; }
-  #sync-label { display: none; }
-  #sync-pill { width: 32px; padding: 0; justify-content: center; }
-  #sync-pill.error { width: auto; padding: 0 10px; }
-  #sync-pill.error #sync-label { display: inline; }
 }
 @media (max-width: 420px) {
   /* The logo still opens the Why story; the pill makes room for Your head. */
@@ -3212,15 +3207,33 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 .define-when-note { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-2); }
 .define-when-note svg { width: 15px; height: 15px; flex-shrink: 0; }
 
-/* ── v20: account in Your head ── */
-.head-account-label { margin-top: 26px; }
-.head-account { display: grid; gap: 12px; }
-.head-account-email { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); overflow-wrap: anywhere; }
-.head-sync { display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 1.45; color: var(--text-2); }
-.head-sync::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--do); flex-shrink: 0; }
+/* ── v21: one button for Your head and the account ── */
+.profile-btn { position: relative; width: 36px; height: 36px; padding: 0; border: none; border-radius: var(--r-pill); background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+.profile-face { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--text); color: var(--bg); font: 600 14px/1 var(--sans); letter-spacing: 0; transition: transform .15s ease; }
+.profile-face svg { width: 15px; height: 15px; }
+.profile-btn:hover .profile-face { transform: scale(1.06); }
+.profile-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.profile-dot { position: absolute; right: 1px; bottom: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--text-3); box-shadow: 0 0 0 2px var(--bg); transition: background .2s ease; }
+.profile-btn.synced .profile-dot { background: var(--success); }
+.profile-btn.syncing .profile-dot { background: var(--warning); }
+.profile-btn.offline .profile-dot { background: var(--schedule); }
+.profile-btn.error .profile-dot { background: var(--error); }
+
+/* The account, at the top of Your head */
+.head-account { display: flex; align-items: center; gap: 12px; margin: 2px 0 14px; padding: 12px 10px 12px 12px; border-radius: var(--r-lg); background: var(--surface-2); }
+.head-account-face { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--text); color: var(--bg); font: 600 17px/1 var(--sans); }
+.head-account-face svg { width: 18px; height: 18px; }
+.head-account-who { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.head-account-email { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.head-sync { display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 1.4; color: var(--text-2); }
+.head-sync > span { min-width: 0; }
+.head-sync::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+.head-sync.syncing::before { background: var(--warning); }
+.head-sync.offline::before { background: var(--schedule); }
 .head-sync.error::before { background: var(--error); }
-.head-sync.syncing::before, .head-sync.offline::before { background: var(--decide); }
-.head-account-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.head-sync.idle::before { background: var(--text-3); }
+.head-retry { margin: 0; padding: 0; font-size: 13px; }
+.head-signout { flex-shrink: 0; height: 36px; padding: 0 14px; }
 
 @media (prefers-reduced-motion: reduce) {
   .mascot.mascot-hop { animation: none; }
@@ -3268,18 +3281,15 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       <button class="icon-btn" id="theme-toggle" type="button" data-action="toggle-theme" title="Toggle theme" aria-label="Toggle theme">
         <svg id="theme-icon-dark" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <button class="icon-btn" id="head-btn" type="button" data-action="open-profile" title="Your head" aria-label="Your head: everything you’ve closed">
-        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.6" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" stroke="currentColor" stroke-width="1.5"/></svg>
-      </button>
       <button class="icon-btn" id="settings-btn" type="button" data-action="open-settings" title="Settings" aria-label="Settings">
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4"/><path d="M12.5 8c0-.3 0-.7-.1-1l1.4-1.1-1-1.7-1.7.7c-.5-.4-1-.7-1.6-.9L9.2 2H6.8l-.3 2c-.6.2-1.1.5-1.6.9l-1.7-.7-1 1.7L3.6 7C3.5 7.3 3.5 7.7 3.5 8s0 .7.1 1l-1.4 1.1 1 1.7 1.7-.7c.5.4 1 .7 1.6.9l.3 2h2.4l.3-2c.6-.2 1.1-.5 1.6-.9l1.7.7 1-1.7L12.4 9c.1-.3.1-.7.1-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
       </button>
       <button class="icon-btn" id="archive-btn" type="button" data-action="set-tab" data-tab="done" title="Archive" aria-label="Archive">
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 4h10l-.7 8.5H3.7L3 4Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M2.5 4h11V2.7h-11V4ZM6 7.2h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <button class="pill-btn" id="sync-pill" type="button" data-action="open-sync">
-        <span class="dot"></span>
-        <span id="sync-label">Sync</span>
+      <button class="profile-btn idle" id="profile-btn" type="button" data-action="open-profile" title="Your head" aria-label="Your head and account">
+        <span class="profile-face" aria-hidden="true"></span>
+        <span class="profile-dot" aria-hidden="true"></span>
       </button>
     </div>
   </header>
@@ -3321,7 +3331,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 20, date: '19 Oct 2026' };
+  const APP_VERSION = { number: 21, date: '19 Oct 2026' };
   let swRegistration = null;
 
   // UX constraints
@@ -4631,6 +4641,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
           ${mascotSvg(s.closed.length ? 'proud' : 'curious', { width: 104 })}
           <div><h2 class="overlay-title head-title" id="head-title">Your head</h2><p class="head-since">${esc(since)}</p></div>
         </div>
+        ${accountHtml()}
         <div class="head-tiles">
           <div class="head-tile t-done"><b>${s.done.length}</b><span>closed</span></div>
           <div class="head-tile t-letgo"><b>${s.letGo.length}</b><span>let go</span></div>
@@ -4674,7 +4685,6 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       ? `<button type="button" class="btn btn-primary head-share no-autofocus" data-action="open-share">${SHARE_ICON}Share your ${esc(monthName)}</button>
          <p class="head-fine">The card shows colours and counts. Never what your loops say.</p>`
       : `<p class="head-fine">Close something this month to make a card you can share.</p>`;
-    body += accountHtml();
     return `
       <div class="overlay-card head-sheet" role="dialog" aria-modal="true" aria-labelledby="head-title">
         <div class="overlay-header"><div class="overlay-meta"><div class="overlay-eyebrow">Profile</div></div>${SHEET_CLOSE}</div>
@@ -4682,29 +4692,33 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       </div>`;
   }
 
-  // Who's signed in, whether it's syncing, and the way out: part of Your
-  // head instead of a sheet of its own. The sync dot in the header opens it.
+  // Who's signed in, whether it's syncing, and the way out, at the top of
+  // Your head. One header button (your initial, with the sync dot) opens it;
+  // there's no separate account or sign-out sheet.
+  function accountInitial() {
+    const m = /[a-z0-9]/i.exec(Sync.userEmail() || '');
+    return m ? m[0].toUpperCase() : '';
+  }
   function accountCardHtml() {
     const email = Sync.userEmail();
     const st = view.syncStatus || 'idle';
-    const line = st === 'error' ? 'Last sync didn’t go through. Your changes are safe on this device.'
+    const line = st === 'error' ? 'Not synced yet. Safe on this device.'
       : st === 'syncing' ? 'Syncing…'
-      : st === 'offline' ? 'Offline. Changes are saved here and sync when you’re back.'
-      : 'Synced across your devices.';
+      : st === 'offline' ? 'Offline. Syncs when you’re back.'
+      : st === 'synced' ? 'Synced'
+      : 'Signed in';
     return `
-        <div class="head-card head-account" id="head-account-card">
-          ${email ? `<div class="head-account-email">${esc(email)}</div>` : ''}
-          <div class="head-sync ${esc(st)}">${esc(line)}</div>
-          <div class="head-account-actions">
-            ${st === 'error' ? `<button type="button" class="btn btn-ghost no-autofocus" data-action="sync-retry">Retry sync</button>` : ''}
-            <button type="button" class="btn btn-ghost no-autofocus" data-action="sign-out">Sign out</button>
+        <div class="head-account" id="head-account-card">
+          <span class="head-account-face" aria-hidden="true">${accountInitial() ? esc(accountInitial()) : PERSON_ICON}</span>
+          <div class="head-account-who">
+            ${email ? `<div class="head-account-email" title="${esc(email)}">${esc(email)}</div>` : ''}
+            <div class="head-sync ${esc(st)}"><span>${esc(line)}</span>${st === 'error' ? `<button type="button" class="act-link head-retry no-autofocus" data-action="sync-retry">Retry</button>` : ''}</div>
           </div>
+          <button type="button" class="btn btn-ghost head-signout no-autofocus" data-action="sign-out">Sign out</button>
         </div>`;
   }
   function accountHtml() {
-    if (!Sync.isLoggedIn()) return '';
-    return `
-        <div class="head-label head-account-label" id="head-account"><span>Account</span></div>${accountCardHtml()}`;
+    return Sync.isLoggedIn() ? `<div class="head-account-wrap" id="head-account">${accountCardHtml()}</div>` : '';
   }
   function refreshAccountCard() {
     if (!view.overlay || view.overlay.type !== 'profile') return;
@@ -6097,7 +6111,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 
         <section class="settings-section">
           <div class="settings-label">Your head</div>
-          <p class="settings-helper">Everything you’ve closed, how long things take, and what you decided.</p>
+          <p class="settings-helper">Your account, everything you’ve closed, how long things take, and what you decided.</p>
           <button class="btn btn-ghost" data-action="open-profile">Open Your head</button>
         </section>
 
@@ -7549,14 +7563,23 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     }
   }
 
+  const PERSON_ICON = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M3 13.5a5 5 0 0 1 10 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
   function renderHeader() {
-    const pill = document.getElementById('sync-pill');
-    const label = document.getElementById('sync-label');
-    if (pill && label) {
-      pill.className = `pill-btn ${view.syncStatus}`;
-      label.textContent = view.syncText;
-      pill.title = view.syncText;
-      pill.setAttribute('aria-label', `Sync: ${view.syncText}`);
+    // One button for Your head and the account: your initial, with the sync
+    // status as a small dot (green synced, amber syncing, red stuck).
+    const prof = document.getElementById('profile-btn');
+    if (prof) {
+      let initial = '';
+      let signedIn = false;
+      try { signedIn = Sync.isLoggedIn(); initial = signedIn ? accountInitial() : ''; } catch (_) {}
+      prof.className = `profile-btn ${view.syncStatus || 'idle'}`;
+      const face = prof.querySelector('.profile-face');
+      if (face && face.dataset.initial !== (initial || '-')) {
+        face.dataset.initial = initial || '-';
+        face.innerHTML = initial ? esc(initial) : PERSON_ICON;
+      }
+      prof.title = signedIn ? `Your head · ${view.syncText}` : 'Your head';
+      prof.setAttribute('aria-label', signedIn ? `Your head and account. Sync: ${view.syncText}.` : 'Your head and account');
     }
     const archive = document.getElementById('archive-btn');
     if (archive) {
@@ -8283,17 +8306,8 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     // Sync
     if (action === 'open-sync') {
       rememberOverlayOpener(el);
-      if (Sync.isLoggedIn()) {
-        // Signed in: the account (email, sync, sign out) lives in Your head.
-        view.overlay = { type: 'profile' };
-        renderOverlay();
-        setTimeout(() => {
-          const acct = document.getElementById('head-account');
-          if (acct) acct.scrollIntoView({ block: 'start' });
-        }, 90);
-        return;
-      }
-      view.overlay = { type: 'sync' };
+      // Signed in, the account (email, sync, sign out) is part of Your head.
+      view.overlay = { type: Sync.isLoggedIn() ? 'profile' : 'sync' };
       renderOverlay();
       return;
     }

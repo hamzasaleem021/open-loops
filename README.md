@@ -58,7 +58,7 @@ Open Loops is built around one personal workflow:
 - **Music that builds** - Each loop you close in one sitting adds a note on top of the landing chord, with a bead per close next to the Active title. Clearing Active after two or more closes plays the whole chord and shows the mascot closed into a ring.
 - **The mascot** - The open C from the logo, with a face. It is the logo in the header (it blinks, closes into a ring when you close a loop, goes calm when you let one go, and looks up when you capture), the home-screen icon, the picture on notifications, and the face on every empty screen (calm on a clear Active, asleep in an empty Parked, winking at Inbox zero, curious before your first close). It's still asleep when a nudge opens the sweep, and wakes up as you arrive.
 - **A date in a new loop becomes an offer** - Type "call the bank friday" and Capture offers "Wake it Fri 9:00 AM?". Accept it and the loop goes to Parked until then instead of Inbox. Nothing changes unless you tap it. (A Schedule loop doesn't get the offer: its time is when it happens, which Define asks for.)
-- **Your head** - A look back built from loops you've already closed (header ring button, the Closed shelf, or Settings): your shelf of rings and pebbles, the longest-held loop you finally closed, how long each kind typically takes, and the decisions you made. Your account lives here too: email, sync status (with Retry when it's stuck) and Sign out. The sync dot in the header opens it.
+- **Your head** - Your profile, opened from the one account button in the header (your initial, with the sync status as a small dot: green synced, amber syncing, red stuck), the Closed shelf, or Settings. At the top: your email, sync status (Retry when it's stuck) and Sign out. Below it, a look back built from loops you've already closed: your shelf of rings and pebbles, the longest-held loop you finally closed, how long each kind typically takes, and the decisions you made.
 - **Share card** - "Share your October" draws a 1080×1350 card of your month: counts and colours only, never what your loops say. Share it through the phone's share sheet or save the image.
 - **Nudges** - Optional web push, in one cheeky voice with copy that doesn't repeat and never streaks:
   - **When a loop wakes up**, right on time (within a minute): "Knock knock. “Call the bank” just woke up." with **Done** and **Tomorrow** buttons, or "Did Bilal reply?" for an Ask you're waiting on. Loops that wake together share one nudge.
@@ -222,7 +222,7 @@ open-loops-icon-512-v3.png
 The service worker cache is currently:
 
 ```js
-open-loops-v20-mascot
+open-loops-v21-profile
 ```
 
 **On every release, bump both** `CACHE` in `open-loops-sw.js` and `APP_VERSION` in `open-loops.html` (number and date). The new cache name is what tells installed apps there's a new version; `APP_VERSION` is what Settings → App version shows, so you can see which version a phone is running.
@@ -289,7 +289,7 @@ After deploying, test on the real URL:
 14. On the installed phone app, open Settings → App version and confirm it shows the version you just released (tap Check for update if not).
 15. Park two loops for a minute ahead, wait, and open Active: the sweep banner appears. Sweep them; each card's choice lands where it says.
 16. Capture "call the bank friday", accept "Wake it Fri 9:00 AM?" and confirm it lands in Parked with that wake time.
-17. Open Your head from the header ring button; tap Share your month and save the image. It shows counts and colours only.
+17. Tap your initial in the header: Your head opens with your email, a green Synced dot and Sign out at the top. Tap Share your month and save the image. It shows counts and colours only.
 18. Settings → Nudges → Turn on nudges, then Send a test. The test notification arrives on the phone within seconds.
 19. Park a loop with "Pick a day and time" two minutes ahead and lock the phone. A wake-up nudge arrives within a minute of that time; Done closes the loop without opening the app.
 20. Set the check-in time to a minute that has already passed: Settings says the next check-in is tomorrow, and nothing arrives today.
