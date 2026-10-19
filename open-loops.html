@@ -3099,12 +3099,6 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
 .still-actions .btn { width: 100%; height: 52px; justify-content: center; }
 
 /* ── Music that builds ── */
-.combo-meter { display: inline-flex; align-items: center; gap: 10px; margin-top: 12px; }
-.combo-beads { display: inline-flex; gap: 5px; }
-.combo-bead { width: 12px; height: 12px; border-radius: 50%; background: var(--surface-strong); }
-.combo-bead.on { box-shadow: inset -2px -2px 3px rgba(0,0,0,.18), inset 2px 2px 3px rgba(255,255,255,.35); }
-.combo-bead.pop { animation: ol-pop 420ms ease-out both; }
-.combo-label { font-size: 13px; font-weight: 500; color: var(--text-3); }
 .empty-state.cleared .mascot { margin: 0 auto 6px; }
 
 /* ── Date chip on capture ── */
@@ -3237,7 +3231,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 
 @media (prefers-reduced-motion: reduce) {
   .mascot.mascot-hop { animation: none; }
-  .mascot-bob .mascot-body, .mascot-eyes, .sweep-loop, .rise, .sweep-banner, .when-chip, .combo-bead.pop { animation: none !important; }
+  .mascot-bob .mascot-body, .mascot-eyes, .sweep-loop, .rise, .sweep-banner, .when-chip { animation: none !important; }
   .mascot-sealing .mascot-seal { animation: none; stroke-dashoffset: 0; }
 }
 </style>
@@ -3331,7 +3325,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 21, date: '19 Oct 2026' };
+  const APP_VERSION = { number: 22, date: '19 Oct 2026' };
   let swRegistration = null;
 
   // UX constraints
@@ -4587,20 +4581,6 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       fresh() { return Date.now() - lastAt < 4000; }
     };
   })();
-  function comboMeterHtml() {
-    const kinds = Combo.kinds();
-    if (!kinds.length) return '';
-    const n = kinds.length;
-    const shown = Math.min(n, 5);
-    const beads = Array.from({ length: 5 }, (_, i) => {
-      const k = kinds[i];
-      const pop = k && i === shown - 1 && Combo.fresh() ? ' pop' : '';
-      return `<span class="combo-bead${k ? ' on' : ''}${pop}"${k ? ` style="background:var(--${k})"` : ''}></span>`;
-    }).join('');
-    const label = n >= 5 ? 'Full chord' : `${n} of 5 notes`;
-    return `<div class="combo-meter" role="img" aria-label="${n} ${n === 1 ? 'close' : 'closes'} this sitting. ${label}."><span class="combo-beads">${beads}</span><span class="combo-label">${label}</span></div>`;
-  }
-
   // ── YOUR HEAD ──
   // A look back, built only from loops you've already closed: your shelf,
   // how long things take, and what you decided. Nothing here leaves the app.
@@ -5256,7 +5236,6 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         <div>
           <h1 class="page-title">${head.title}</h1>
           <p class="page-sub">${head.sub}</p>
-          ${tabKey === 'now' ? comboMeterHtml() : ''}
         </div>
         ${meter}
       </header>`;

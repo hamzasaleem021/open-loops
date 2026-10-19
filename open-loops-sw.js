@@ -1,5 +1,5 @@
 // Bump on every release, together with APP_VERSION in open-loops.html.
-const CACHE = 'open-loops-v21-profile';
+const CACHE = 'open-loops-v22-no-beads';
 
 const NETWORK_FIRST = [
   './open-loops.html',

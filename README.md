@@ -55,7 +55,7 @@ Open Loops is built around one personal workflow:
 - **Reasons on cards** - A small label says why a card is where it is: "Woke today", "Waiting on Bilal · back Thu 9:00 AM", "Checking back", "From your decision".
 - **The sweep** - The daily ritual. When loops wake up or dry out, a banner on Active offers a sweep: one card at a time, Make it Now / Up next / Park again / Let go, in about thirty seconds. Each choice plays the next note up; the last one resolves. "Later" hides the banner for the day unless something new comes up. Nothing else on the list moves.
 - **Drying out** - Cards dry out when nobody touches them. A loop untouched for 10 days goes matte; after 21 days it cracks and asks **Still yours?** (Yes, keep it / Park it until… / Let it go). Keeping it makes it fresh again. Parked loops with a wake time are asleep on purpose and never dry.
-- **Music that builds** - Each loop you close in one sitting adds a note on top of the landing chord, with a bead per close next to the Active title. Clearing Active after two or more closes plays the whole chord and shows the mascot closed into a ring.
+- **Music that builds** - Each loop you close in one sitting adds a note on top of the landing chord. Clearing Active after two or more closes plays the whole chord and shows the mascot closed into a ring.
 - **The mascot** - The open C from the logo, with a face. It is the logo in the header (it blinks, closes into a ring when you close a loop, goes calm when you let one go, and looks up when you capture), the home-screen icon, the picture on notifications, and the face on every empty screen (calm on a clear Active, asleep in an empty Parked, winking at Inbox zero, curious before your first close). It's still asleep when a nudge opens the sweep, and wakes up as you arrive.
 - **A date in a new loop becomes an offer** - Type "call the bank friday" and Capture offers "Wake it Fri 9:00 AM?". Accept it and the loop goes to Parked until then instead of Inbox. Nothing changes unless you tap it. (A Schedule loop doesn't get the offer: its time is when it happens, which Define asks for.)
 - **Your head** - Your profile, opened from the one account button in the header (your initial, with the sync status as a small dot: green synced, amber syncing, red stuck), the Closed shelf, or Settings. At the top: your email, sync status (Retry when it's stuck) and Sign out. Below it, a look back built from loops you've already closed: your shelf of rings and pebbles, the longest-held loop you finally closed, how long each kind typically takes, and the decisions you made.
@@ -222,7 +222,7 @@ open-loops-icon-512-v3.png
 The service worker cache is currently:
 
 ```js
-open-loops-v21-profile
+open-loops-v22-no-beads
 ```
 
 **On every release, bump both** `CACHE` in `open-loops-sw.js` and `APP_VERSION` in `open-loops.html` (number and date). The new cache name is what tells installed apps there's a new version; `APP_VERSION` is what Settings → App version shows, so you can see which version a phone is running.
