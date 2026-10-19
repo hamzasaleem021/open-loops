@@ -4,7 +4,7 @@
 
 Open Loops is a small PWA for getting unfinished thoughts out of your head, shaping them, and keeping only a few active commitments in view. It is intentionally simple: capture a loop, define what kind of attention it needs, park it if it is not for now, and close it when it is done or released.
 
-![Open Loops](open-loops-icon-192-v3.png)
+![Open Loops](open-loops-icon-192-v4.png)
 
 ---
 
@@ -32,12 +32,12 @@ Open Loops is built around one personal workflow:
 ## Features
 
 - **Inbox capture** - Capture from the bottom Capture button. Only the text is required; kind is optional. Press Enter to add and write the next one.
-- **Define and route** - Three short steps: pick a kind, answer that kind's next-step question (or skip), then choose Up next, Park, or Close. Let go skips straight to Close.
+- **Define and route** - Three short steps: pick a kind, answer that kind's next-step question (or skip), then choose Up next, Park, or Close. Schedule asks **When is it?** with a day and a time (read from your note when it says one, or Not sure yet). Let go skips straight to Close.
 - **Active focus cap** - Show 3, 5, or 7 active loops before "Show more". Configure this in Settings. The Active view shows how many focus slots are in use.
 - **Now card** - The top Active loop is shown as a large card in its kind's color, with the rest listed under "Up next".
 - **Up next, not Now** - Loops entering Active (defined, reopened, or brought back from Parked) land in Up next. Only you promote a loop to Now, by reordering.
-- **Motion and sound** - Every move shows where the loop went. Closing seals the loop into a clay ring that lands in the Closed archive in the header. Sounds can be turned off in Settings.
-- **Closed shelf** - The Closed view shows one clay ring per loop closed this week (a pebble for each loop you let go of); the archive button shows the weekly count.
+- **Motion and sound** - Every move shows where the loop went. Closing seals the loop into a ring that lands in the Closed archive in the header. Sounds can be turned off in Settings.
+- **Closed shelf** - The Closed view shows one ring per loop closed this week (a pebble for each loop you let go of); the archive button shows the weekly count.
 - **Why Open Loops** - Tap the logo (or Settings → Why Open Loops) for a five-scene animated story: why unfinished things nag, the research behind next steps, how the app works, and who it's for. The landing page plays the same story. Music follows the Sounds setting; the voice-over is opt-in (Voice button in the sheet). On the landing page both start muted behind a Sound button.
 - **Quiet feedback** - Moves that animate don't also show a toast. Screen readers still hear each change. Toasts remain for Undo, errors and sync.
 - **Archive/Closed** - Closed loops live behind the small archive button in the header instead of taking a main tab.
@@ -47,19 +47,23 @@ Open Loops is built around one personal workflow:
   - **Do → Done**: "All done, close it", or "Did the step, set the next one". A Do holds your next step, and finishing the step isn't always finishing the loop.
   - **Decide → I decided**: name the decision in a line (options like "Air 15 or X1" become one-tap choices), then optionally turn it into the next Do, which lands in Up next.
   - **Ask → Reach out**: the ask is drafted from your note and sent through your phone's share sheet (or copied). Sending doesn't close it; it parks until it's time to check back, then asks "Did Bilal reply?" with Got it / Nudge / Wait longer.
-  - **Schedule → Add to calendar**: reads the time from your note ("Saturday 10am"), then opens a ready-made Google Calendar event or downloads an `.ics` file for Apple, Outlook and others. No sign-in. Once it's saved, the loop closes, because the calendar holds it now.
+  - **Schedule → Add to calendar**: uses the time you gave it in Define (or reads one from your note, "Saturday 10am"), then opens a ready-made Google Calendar event or downloads an `.ics` file for Apple, Outlook and others. No sign-in. The loop remembers it was sent: its card asks **On your calendar?**, and when you come back to the app it asks right away. Yes closes it, because the calendar holds it now. **It's already on my calendar** closes it without sending anything.
   - **Let go → Let go**: its own ending. Finished loops sit on the Closed shelf as rings; loops you let go of sit there as pebbles.
+- **Done, close it** - Any Active or Parked loop can be closed from its ⋯ menu, whatever its kind.
 - **Not yet asks "when?"** - Every "not yet" and every Park asks when the loop should come back: tonight, tomorrow morning, this weekend, next week, a day you pick, or no date.
 - **Wake-ups** - A parked loop with a wake time comes back to Up next on its own (never straight to Now) when the app opens, returns to the foreground, or is already open. Parked shows the soonest wake time first.
 - **Reasons on cards** - A small label says why a card is where it is: "Woke today", "Waiting on Bilal · back Thu 9:00 AM", "Checking back", "From your decision".
 - **The sweep** - The daily ritual. When loops wake up or dry out, a banner on Active offers a sweep: one card at a time, Make it Now / Up next / Park again / Let go, in about thirty seconds. Each choice plays the next note up; the last one resolves. "Later" hides the banner for the day unless something new comes up. Nothing else on the list moves.
-- **Drying clay** - Clay dries when nobody touches it. A loop untouched for 10 days goes matte; after 21 days it cracks and asks **Still yours?** (Yes, keep it / Park it until… / Let it go). Keeping it makes it fresh again. Parked loops with a wake time are asleep on purpose and never dry.
+- **Drying out** - Cards dry out when nobody touches them. A loop untouched for 10 days goes matte; after 21 days it cracks and asks **Still yours?** (Yes, keep it / Park it until… / Let it go). Keeping it makes it fresh again. Parked loops with a wake time are asleep on purpose and never dry.
 - **Music that builds** - Each loop you close in one sitting adds a note on top of the landing chord, with a bead per close next to the Active title. Clearing Active after two or more closes plays the whole chord and shows the mascot closed into a ring.
-- **The mascot** - The open C from the logo, in the same clay, with a face: awake in the sweep, cheeky when asking "Still yours?", proud when you finish.
-- **A date in a new loop becomes an offer** - Type "call the bank friday" and Capture offers "Wake it Fri 9:00 AM?". Accept it and the loop goes to Parked until then instead of Inbox. Nothing changes unless you tap it.
-- **Your head** - A look back built from loops you've already closed (header ring button, the Closed shelf, or Settings): your shelf of rings and pebbles, the longest-held loop you finally closed, how long each kind typically takes, and the decisions you made.
-- **Share card** - "Share your October" draws a 1080×1350 card of your month in clay: counts and colours only, never what your loops say. Share it through the phone's share sheet or save the image.
-- **Daily nudges** - Optional web push, at most one a day at a time you pick, and only when something is waiting: loops waking up (with Done / Tomorrow buttons when it's just one), a Sunday recap, or a weekly "Still yours?". Cheeky or Plain voice, copy that doesn't repeat, never streaks. Settings → Daily nudge has Send a test. On iPhone, nudges need Open Loops on the Home Screen.
+- **The mascot** - The open C from the logo, with a face. It is the logo in the header (it blinks, closes into a ring when you close a loop, goes calm when you let one go, and looks up when you capture), the home-screen icon, the picture on notifications, and the face on every empty screen (calm on a clear Active, asleep in an empty Parked, winking at Inbox zero, curious before your first close). It's still asleep when a nudge opens the sweep, and wakes up as you arrive.
+- **A date in a new loop becomes an offer** - Type "call the bank friday" and Capture offers "Wake it Fri 9:00 AM?". Accept it and the loop goes to Parked until then instead of Inbox. Nothing changes unless you tap it. (A Schedule loop doesn't get the offer: its time is when it happens, which Define asks for.)
+- **Your head** - A look back built from loops you've already closed (header ring button, the Closed shelf, or Settings): your shelf of rings and pebbles, the longest-held loop you finally closed, how long each kind typically takes, and the decisions you made. Your account lives here too: email, sync status (with Retry when it's stuck) and Sign out. The sync dot in the header opens it.
+- **Share card** - "Share your October" draws a 1080×1350 card of your month: counts and colours only, never what your loops say. Share it through the phone's share sheet or save the image.
+- **Nudges** - Optional web push, in one cheeky voice with copy that doesn't repeat and never streaks:
+  - **When a loop wakes up**, right on time (within a minute): "Knock knock. “Call the bank” just woke up." with **Done** and **Tomorrow** buttons, or "Did Bilal reply?" for an Ask you're waiting on. Loops that wake together share one nudge.
+  - **A check-in** at a time you pick (any minute of the day, kept exactly), only when there's something to say: the Sunday recap or a weekly "Still yours?". At most one a day; a time that has already passed today starts tomorrow, and Settings says when the next one comes.
+  - If the app is open on screen, the nudge shows inside the app instead of buzzing the phone. Settings → Nudges has Send a test. On iPhone, nudges need Open Loops on the Home Screen.
 - **Reorder active loops** - Drag on desktop, or use the up/down controls. Order syncs across devices.
 - **Magic-link sign-in** - Sign in with email; no password required.
 - **Offline queue** - Signed-in edits made during brief connection drops are queued locally and retried.
@@ -131,14 +135,14 @@ This creates:
 - `wake_at` (when a parked loop comes back) and `details` (how a loop is moving or how it ended)
 - `batch_upsert_loops`
 - Realtime publication setup
-- `public.push_subscriptions` (one row per phone that allowed nudges) and the helpers the push sender uses: `push_due_subscriptions`, `push_apply_action`, `push_config` (service role only)
+- `public.push_subscriptions` (one row per phone that allowed nudges) and the helpers the push sender uses: `push_due_wakeups`, `push_due_subscriptions`, `push_apply_action`, `push_config` (service role only)
 - The nudge schedule (`pg_cron` + `pg_net`, both on the free plan)
 
 The SQL is written to be safe to re-run.
 
-### 2b. Daily nudges (optional)
+### 2b. Nudges (optional)
 
-Nudges need the `push` Edge Function in `supabase/functions/push` and five values in Supabase Vault. Everything stays on the free plan: the schedule runs every 15 minutes inside Postgres and only calls the function when a phone's nudge time has come, so it is roughly one call per phone per day.
+Nudges need the `push` Edge Function in `supabase/functions/push` and five values in Supabase Vault. Everything stays on the free plan: the schedule runs every minute inside Postgres (a tiny query) and only calls the function when a loop just woke or a phone's check-in time came, so it is a handful of calls per phone per day against the 500,000 a month the free plan allows.
 
 1. Make a key pair for signing nudges: `npx web-push generate-vapid-keys`. Put the public key in `open-loops-config.js` as `VAPID_PUBLIC_KEY`.
 2. Store the secrets in Vault (SQL editor), with your own values:
@@ -165,7 +169,7 @@ window.OL_CONFIG = Object.freeze({
   SUPABASE_URL: 'https://YOUR_PROJECT.supabase.co',
   SUPABASE_KEY: 'YOUR_PUBLISHABLE_KEY',
   EMAIL_REDIRECT_TO: null,
-  VAPID_PUBLIC_KEY: null,   // see "Daily nudges" below
+  VAPID_PUBLIC_KEY: null,   // see "2b. Nudges" above
   STORAGE_KEY: 'open_loops_data'
 });
 ```
@@ -185,7 +189,7 @@ https://YOUR_USERNAME.github.io/REPO_NAME/open-loops.html
 
 ## Upgrade / Upload Checklist
 
-**Run `open-loops-supabase.sql` in the Supabase SQL editor first.** Version 17 added two columns (`wake_at`, `details`); version 19 adds `push_subscriptions` and the nudge schedule. The statements are idempotent, so running the whole file again is safe. If the app is deployed before the SQL runs, it keeps syncing everything else; wake times stay on the device until the columns exist, and nudges can't be turned on until the table exists.
+**Run `open-loops-supabase.sql` in the Supabase SQL editor first.** Version 17 added two columns (`wake_at`, `details`); version 19 added `push_subscriptions` and the nudge schedule; version 20 adds wake-up nudges (`push_due_wakeups`, `wake_checked_at`), check-ins at any time of day (`quiet_on`, `last_run_at`), and runs the schedule every minute. Then redeploy `supabase/functions/push`. The statements are idempotent, so running the whole file again is safe. If the app is deployed before the SQL runs, it keeps syncing everything else; wake times stay on the device until the columns exist, and nudges can't be turned on until the table exists.
 
 When deploying this version, upload the full app folder or at least:
 
@@ -194,8 +198,9 @@ open-loops.html
 open-loops-config.js
 open-loops-manifest.json
 open-loops-sw.js
-open-loops-icon-192-v3.png
-open-loops-icon-512-v3.png
+open-loops-icon-192-v4.png
+open-loops-icon-512-v4.png
+open-loops-nudge-192.png
 open-loops-badge-96.png
 open-loops-supabase.sql
 supabase/functions/push/
@@ -210,12 +215,14 @@ open-loops-icon-192.png
 open-loops-icon-512.png
 open-loops-icon-192-v2.png
 open-loops-icon-512-v2.png
+open-loops-icon-192-v3.png
+open-loops-icon-512-v3.png
 ```
 
 The service worker cache is currently:
 
 ```js
-open-loops-v19-ritual
+open-loops-v20-mascot
 ```
 
 **On every release, bump both** `CACHE` in `open-loops-sw.js` and `APP_VERSION` in `open-loops.html` (number and date). The new cache name is what tells installed apps there's a new version; `APP_VERSION` is what Settings → App version shows, so you can see which version a phone is running.
@@ -227,7 +234,7 @@ How installed apps pick up a release:
 - The page and config are always re-checked with the server, so GitHub Pages' 10-minute browser cache can't keep showing the old page after a release.
 - Settings → App version shows the version number and has a **Check for update** button.
 
-The icon filenames are versioned (`-v3`, the Clay icon) so browsers and installed PWAs have a clean cache break. If an installed PWA still shows an old icon after deployment, uninstall and reinstall the PWA.
+The icon filenames are versioned (`-v4`, the mascot) so browsers and installed PWAs have a clean cache break. Android refreshes an installed app's icon on its own within a day or so; if it still shows the old one, uninstall and reinstall the PWA (your loops stay in Supabase).
 
 ---
 
@@ -277,13 +284,15 @@ After deploying, test on the real URL:
 9. Confirm no stale "Still saving" banner remains when sync is healthy.
 10. Park a loop with "Pick a day and time" set a minute or two ahead. Confirm it comes back to Up next (not Now) on both devices.
 11. Ask: Reach out → Send… → In 3 days. Confirm it shows "Waiting on …" in Parked, and `wake_at` / `details.sentAt` are set in Supabase.
-12. Schedule: Add to calendar → Google Calendar opens with the right day and time; the .ics file opens in Apple Calendar.
+12. Schedule: Define asks "When is it?". Add to calendar → Google Calendar opens with that day and time; the .ics file opens in Apple Calendar. Back in the app it asks "On your calendar?" and Yes closes it.
 13. Let go of a loop and confirm a pebble (not a ring) appears on the Closed shelf.
 14. On the installed phone app, open Settings → App version and confirm it shows the version you just released (tap Check for update if not).
 15. Park two loops for a minute ahead, wait, and open Active: the sweep banner appears. Sweep them; each card's choice lands where it says.
 16. Capture "call the bank friday", accept "Wake it Fri 9:00 AM?" and confirm it lands in Parked with that wake time.
 17. Open Your head from the header ring button; tap Share your month and save the image. It shows counts and colours only.
-18. Settings → Daily nudge → Turn on nudges, then Send a test. The test notification arrives on the phone within seconds.
+18. Settings → Nudges → Turn on nudges, then Send a test. The test notification arrives on the phone within seconds.
+19. Park a loop with "Pick a day and time" two minutes ahead and lock the phone. A wake-up nudge arrives within a minute of that time; Done closes the loop without opening the app.
+20. Set the check-in time to a minute that has already passed: Settings says the next check-in is tomorrow, and nothing arrives today.
 
 ---
 
@@ -295,11 +304,14 @@ open-loops-config.js         Supabase credentials and app config
 open-loops-supabase.sql      Database schema, RLS policies, RPC, realtime, nudge table and schedule
 open-loops-sw.js             Service worker: offline cache, updates, nudges (push + buttons)
 open-loops-manifest.json     PWA manifest
-open-loops-icon-192-v3.png   Current PWA icon (Clay)
-open-loops-icon-512-v3.png   Current large PWA icon (Clay)
+open-loops-icon-192-v4.png   Current PWA icon (the mascot)
+open-loops-icon-512-v4.png   Current large PWA icon (the mascot)
+open-loops-nudge-192.png     The mascot (winking) shown on notifications
 open-loops-badge-96.png      Small one-colour icon Android shows in the status bar for nudges
 supabase/functions/push/     The nudge sender (Edge Function): what to say, when, and Web Push
-open-loops-icon-192-v2.png   Previous icon kept for cache compatibility
+open-loops-icon-192-v3.png   Previous icon (Clay C) kept for cache compatibility
+open-loops-icon-512-v3.png   Previous large icon kept for cache compatibility
+open-loops-icon-192-v2.png   Older icon kept for cache compatibility
 open-loops-icon-512-v2.png   Previous large icon kept for cache compatibility
 open-loops-icon-192.png      Legacy icon kept for cache compatibility
 open-loops-icon-512.png      Legacy large icon kept for cache compatibility
@@ -328,7 +340,7 @@ The app and landing page use a Clay-inspired system.
 - **Type:** Inter throughout. Display headings use weight 500 with tight negative tracking.
 - **Kinds map to the six card colors:** Do = teal, Decide = ochre, Ask = pink, Schedule = lavender, Let go = peach, Inbox = cream.
 - **One loud thing per screen:** only the top Active loop gets a saturated card. Everything else uses quiet cream cards with a colored kind pill, because Open Loops is meant to lower pressure.
-- **Clay illustrations:** the soft 3D shapes (the open "C" loop, the closed ring) are plain SVG with a lighting filter, drawn by `clayArtHtml()`. There are no image assets to manage.
+- **Clay illustrations:** the soft 3D shapes are plain SVG with a lighting filter. The mascot (`mascotSvg()`, moods sleepy · awake · curious · cheeky · proud · calm) draws the header logo, empty screens and sheets; `mascotSvg(mood, { mark: true })` is the square crop used at logo size. The PNG icons are renders of the same SVG.
 - **Radii:** 12px buttons and inputs, 16px cards, 24px focus cards and sheets, pills for chips and tabs.
 - **Motion:** `Motion` and `Sound` modules in `open-loops.html`. `renderMain()` snapshots card positions before each render and plays the change after, so every action animates without touching its handler. Flights and sounds run only for this device's own taps, never for realtime updates from another device. "Reduce motion" turns flights into fades.
 - **Sound:** synthesized with Web Audio (no audio files). One soft pluck, notes from D major pentatonic. An open loop is an unresolved interval; closing resolves it.

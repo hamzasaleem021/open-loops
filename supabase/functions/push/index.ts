@@ -1,9 +1,11 @@
 // Open Loops push sender (Supabase Edge Function, deployed with verify_jwt
 // off because it checks every request itself).
 //
-//   { job: 'run' }               from the scheduler (pg_cron), with the
-//                                x-cron-secret header. Sends today's nudge to
-//                                every phone that is due.
+//   { job: 'run' }               from the scheduler (pg_cron, every minute,
+//                                only when something is due), with the
+//                                x-cron-secret header. Sends wake-up nudges for
+//                                loops whose time just came, and the daily
+//                                check-in to phones whose time it is.
 //   { job: 'test', endpoint }    from the app, with the signed-in user's JWT.
 //                                Sends a sample nudge to that phone.
 //   { job: 'action', token, action: 'done' | 'tomorrow' }
@@ -14,7 +16,7 @@
 // only the service role may call.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { b64u, sendWebPush, unb64u, type Vapid } from './webpush.ts';
-import { composeNudge, composeTest, type Loop, type Nudge } from './compose.ts';
+import { composeNudge, composeTest, composeWake, type Loop, type Nudge } from './compose.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -78,7 +80,8 @@ async function payloadFor(nudge: Nudge, sub: { user_id: string; tz: string }, cf
     title: nudge.title,
     body: nudge.body,
     url: `${APP_URL}?${nudge.query}`,
-    tag: 'open-loops-nudge',
+    tag: nudge.tag || 'open-loops-nudge',
+    renotify: !!nudge.tag,
   };
   if (nudge.loopId && nudge.actions) {
     payload.actions = nudge.actions;
@@ -92,49 +95,83 @@ async function payloadFor(nudge: Nudge, sub: { user_id: string; tz: string }, cf
 }
 
 type DueSub = {
-  endpoint: string; user_id: string; p256dh: string; auth: string; tz: string; voice: string;
-  wakeups: boolean; stale: boolean; recap: boolean; last_stale_at: string | null;
+  endpoint: string; user_id: string; p256dh: string; auth: string; tz: string;
+  stale: boolean; recap: boolean; last_stale_at: string | null;
   recent_lines: string[] | null; local_date: string; local_dow: number;
+};
+type WakeDue = {
+  endpoint: string; user_id: string; p256dh: string; auth: string; tz: string;
+  recent_lines: string[] | null; checked_from: string; checked_to: string;
 };
 
 async function run(req: Request, cfg: Config): Promise<Response> {
   if (!sameText(req.headers.get('x-cron-secret') || '', cfg.open_loops_cron_secret)) return json({ error: 'forbidden' }, 403);
-  const { data, error } = await admin.rpc('push_due_subscriptions');
-  if (error) throw error;
-  const due = (data || []) as DueSub[];
-  const byUser = new Map<string, DueSub[]>();
-  for (const s of due) byUser.set(s.user_id, [...(byUser.get(s.user_id) || []), s]);
+  const [dailyRes, wakeRes] = await Promise.all([admin.rpc('push_due_subscriptions'), admin.rpc('push_due_wakeups')]);
+  if (dailyRes.error) throw dailyRes.error;
+  if (wakeRes.error) throw wakeRes.error;
+  const daily = (dailyRes.data || []) as DueSub[];
+  const wakes = (wakeRes.data || []) as WakeDue[];
 
-  const results: { kind: string; status: number }[] = [];
-  for (const [userId, subs] of byUser) {
-    const { data: rows, error: loopsError } = await admin
+  const loopsByUser = new Map<string, Loop[]>();
+  for (const userId of new Set([...daily, ...wakes].map(s => s.user_id))) {
+    const { data: rows, error } = await admin
       .from('loops')
       .select('id, raw_text, kind, status, prompt_answer, updated_at, completed_at, wake_at, details')
       .eq('user_id', userId)
       .is('deleted_at', null);
-    if (loopsError) throw loopsError;
-    const loops = (rows || []) as Loop[];
-    for (const sub of subs) {
-      const patch: Record<string, unknown> = { last_run_on: sub.local_date };
-      const nudge = composeNudge(sub, loops, new Date());
-      if (nudge) {
-        const r = await sendWebPush(sub, await payloadFor(nudge, sub, cfg), vapid(cfg), { topic: 'nudge' });
-        results.push({ kind: nudge.kind, status: r.status });
-        if (r.gone) {
-          await admin.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
-          continue;
-        }
-        if (r.ok) {
-          patch.recent_lines = [nudge.lineId, ...(sub.recent_lines || []).filter(id => id !== nudge.lineId)].slice(0, 12);
-          if (nudge.kind === 'stale') patch.last_stale_at = new Date().toISOString();
-        } else {
-          console.warn('push failed', r.status, r.detail);
-        }
-      }
-      await admin.from('push_subscriptions').update(patch).eq('endpoint', sub.endpoint);
-    }
+    if (error) throw error;
+    loopsByUser.set(userId, (rows || []) as Loop[]);
   }
-  return json({ due: due.length, sent: results.filter(r => r.status < 300).length, results });
+
+  const results: { kind: string; status: number }[] = [];
+  const recent = new Map<string, string[]>();
+  const gone = new Set<string>();
+  const send = async (sub: { endpoint: string; p256dh: string; auth: string; user_id: string; tz: string; recent_lines: string[] | null }, nudge: Nudge, opts: Parameters<typeof sendWebPush>[3]) => {
+    const r = await sendWebPush(sub, await payloadFor(nudge, sub, cfg), vapid(cfg), opts);
+    results.push({ kind: nudge.kind, status: r.status });
+    if (r.gone) {
+      gone.add(sub.endpoint);
+      await admin.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+    } else if (r.ok) {
+      const seen = recent.get(sub.endpoint) ?? sub.recent_lines ?? [];
+      recent.set(sub.endpoint, [nudge.lineId, ...seen.filter(id => id !== nudge.lineId)].slice(0, 12));
+    } else {
+      console.warn('push failed', r.status, r.detail);
+    }
+    return r;
+  };
+
+  // Wake-ups: whatever woke since this phone last checked, in one nudge.
+  for (const sub of wakes) {
+    const from = Date.parse(sub.checked_from);
+    const to = Date.parse(sub.checked_to);
+    const woke = (loopsByUser.get(sub.user_id) || [])
+      .filter(l => (l.status === 'waiting' || l.status === 'active') && l.wake_at &&
+        Date.parse(l.wake_at) > from && Date.parse(l.wake_at) <= to)
+      .sort((a, b) => Date.parse(a.wake_at as string) - Date.parse(b.wake_at as string));
+    const nudge = composeWake({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines }, woke, new Date());
+    if (nudge) await send(sub, nudge, { ttl: 3 * 3600, urgency: 'high' });
+    if (gone.has(sub.endpoint)) continue;
+    const patch: Record<string, unknown> = { wake_checked_at: sub.checked_to };
+    if (recent.has(sub.endpoint)) patch.recent_lines = recent.get(sub.endpoint);
+    await admin.from('push_subscriptions').update(patch).eq('endpoint', sub.endpoint);
+  }
+
+  // The daily check-in: Sunday recap or a weekly "Still yours?".
+  for (const sub of daily) {
+    if (gone.has(sub.endpoint)) continue;
+    const patch: Record<string, unknown> = { last_run_on: sub.local_date, last_run_at: new Date().toISOString() };
+    const nudge = composeNudge({ ...sub, recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines }, loopsByUser.get(sub.user_id) || [], new Date());
+    if (nudge) {
+      const r = await send(sub, nudge, { topic: 'nudge' });
+      if (r.gone) continue;
+      if (r.ok && nudge.kind === 'stale') patch.last_stale_at = new Date().toISOString();
+    }
+    if (recent.has(sub.endpoint)) patch.recent_lines = recent.get(sub.endpoint);
+    await admin.from('push_subscriptions').update(patch).eq('endpoint', sub.endpoint);
+  }
+
+  return json({ due: daily.length, woke: wakes.length, sent: results.filter(r => r.status < 300).length, results });
 }
 
 async function test(req: Request, body: Record<string, unknown>, cfg: Config): Promise<Response> {
@@ -144,7 +181,7 @@ async function test(req: Request, body: Record<string, unknown>, cfg: Config): P
   if (error || !user) return json({ error: 'sign in first' }, 401);
   const { data: rows } = await admin
     .from('push_subscriptions')
-    .select('endpoint, user_id, p256dh, auth, tz, voice, nudge_time')
+    .select('endpoint, user_id, p256dh, auth, tz, nudge_time')
     .eq('user_id', user.id)
     .eq('endpoint', String(body.endpoint || ''));
   const sub = rows && rows[0];
