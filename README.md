@@ -63,7 +63,9 @@ Open Loops is built around one personal workflow:
 - **Nudges** - Optional web push, in one cheeky voice with copy that doesn't repeat and never streaks:
   - **When a loop wakes up**, right on time (within a minute): "Knock knock. “Call the bank” just woke up." with **Done** and **Tomorrow** buttons, or "Did Bilal reply?" for an Ask you're waiting on. Loops that wake together share one nudge.
   - **A check-in** at a time you pick (any minute of the day, kept exactly), only when there's something to say: the Sunday recap or a weekly "Still yours?". At most one a day; a time that has already passed today starts tomorrow, and Settings says when the next one comes.
-  - If the app is open on screen, the nudge shows inside the app instead of buzzing the phone. Settings → Nudges has Send a test. On iPhone, nudges need Open Loops on the Home Screen.
+  - If the app is open on screen, the nudge shows inside the app instead of buzzing the phone (on iPhone and Safari it also shows briefly, because those browsers drop nudges that never show). Settings → Nudges has Send a test. On iPhone, nudges need Open Loops on the Home Screen.
+  - **One switch.** Settings → Nudges → On this device. Every way it can fail says what happened and what to do, right under the switch: offline, still loading, the prompt dismissed, the server unreachable, a browser with push turned off (Brave says which setting). If the browser has blocked notifications, the page can't ask again, so the switch shows how to allow them in this browser (iPhone, Android app, Android Chrome, Chrome/Edge, Firefox, Safari) with Check again, and nudges turn on by themselves the moment notifications are allowed.
+  - **Self-healing.** If the server drops this device (its push address expired), Send a test renews it and tries again, and an open app checks about once a day that the server still has it. Turning off while offline finishes on the server later. A notification permission taken away in the browser switches nudges off and says so once.
 - **Reorder active loops** - Drag on desktop, or use the up/down controls. Order syncs across devices.
 - **Magic-link sign-in** - Sign in with email; no password required.
 - **Offline queue** - Signed-in edits made during brief connection drops are queued locally and retried.
@@ -222,7 +224,7 @@ open-loops-icon-512-v3.png
 The service worker cache is currently:
 
 ```js
-open-loops-v22-no-beads
+open-loops-v23-nudge-switch
 ```
 
 **On every release, bump both** `CACHE` in `open-loops-sw.js` and `APP_VERSION` in `open-loops.html` (number and date). The new cache name is what tells installed apps there's a new version; `APP_VERSION` is what Settings → App version shows, so you can see which version a phone is running.
@@ -290,7 +292,8 @@ After deploying, test on the real URL:
 15. Park two loops for a minute ahead, wait, and open Active: the sweep banner appears. Sweep them; each card's choice lands where it says.
 16. Capture "call the bank friday", accept "Wake it Fri 9:00 AM?" and confirm it lands in Parked with that wake time.
 17. Tap your initial in the header: Your head opens with your email, a green Synced dot and Sign out at the top. Tap Share your month and save the image. It shows counts and colours only.
-18. Settings → Nudges → Turn on nudges, then Send a test. The test notification arrives on the phone within seconds.
+18. Settings → Nudges → flip **On this device**, allow the prompt, then Send a test. The test notification arrives on the phone within seconds.
+18a. On a second browser, flip the switch and choose **Block** in the prompt: the switch stays off and shows the unblock steps for that browser. Allow notifications in its site settings and come back: nudges turn on by themselves.
 19. Park a loop with "Pick a day and time" two minutes ahead and lock the phone. A wake-up nudge arrives within a minute of that time; Done closes the loop without opening the app.
 20. Set the check-in time to a minute that has already passed: Settings says the next check-in is tomorrow, and nothing arrives today.
 

@@ -1,5 +1,5 @@
 // Bump on every release, together with APP_VERSION in open-loops.html.
-const CACHE = 'open-loops-v22-no-beads';
+const CACHE = 'open-loops-v23-nudge-switch';
 
 const NETWORK_FIRST = [
   './open-loops.html',
@@ -127,6 +127,12 @@ const BADGE = './open-loops-badge-96.png';
 
 // The app is open and in front of you: it says it there instead of buzzing
 // the phone. A test always shows as a real notification.
+//
+// Safari and iPhone require every push to show a notification, and revoke
+// the subscription after a few that don't. There, the notification always
+// shows (quietly, and briefly, when the app is already in front of you).
+const SW_UA = self.navigator.userAgent || '';
+const MUST_SHOW = /iPhone|iPad|iPod/.test(SW_UA) || (/AppleWebKit/.test(SW_UA) && !/Chrome|Chromium|Edg|OPR|Android/.test(SW_UA));
 async function focusedWindow() {
   const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
   return wins.find(w => w.focused && w.visibilityState === 'visible') || null;
@@ -151,11 +157,14 @@ self.addEventListener('push', event => {
   if (msg.token && Array.isArray(msg.actions)) options.actions = msg.actions.slice(0, 2);
   event.waitUntil((async () => {
     const win = msg.tag === 'open-loops-test' ? null : await focusedWindow();
-    if (win) {
-      win.postMessage({ type: 'nudge', title, body: options.body, url });
-      return;
-    }
-    await self.registration.showNotification(title, options);
+    if (win) win.postMessage({ type: 'nudge', title, body: options.body, url });
+    if (win && !MUST_SHOW) return;
+    if (!win) { await self.registration.showNotification(title, options); return; }
+    // In front of you on Safari: show it (required), then tidy it away.
+    await self.registration.showNotification(title, { ...options, silent: true, renotify: false });
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    const shown = await self.registration.getNotifications({ tag: options.tag });
+    shown.forEach(n => n.close());
   })());
 });
 
@@ -201,10 +210,15 @@ self.addEventListener('notificationclick', event => {
   event.waitUntil(openApp(d.url));
 });
 
-// The browser rotated this phone's subscription: get a new one. The app
-// saves it to Supabase the next time it opens.
+// The browser rotated this phone's subscription: get a new one. An open app
+// saves it to Supabase now; otherwise it does the next time it opens.
 self.addEventListener('pushsubscriptionchange', event => {
   const options = event.oldSubscription && event.oldSubscription.options;
-  if (!options || !options.applicationServerKey) return;
-  event.waitUntil(self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: options.applicationServerKey }).catch(() => {}));
+  event.waitUntil((async () => {
+    if (options && options.applicationServerKey) {
+      await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: options.applicationServerKey }).catch(() => {});
+    }
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    wins.forEach(w => w.postMessage({ type: 'push-renewed' }));
+  })());
 });
