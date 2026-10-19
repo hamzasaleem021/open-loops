@@ -3099,12 +3099,6 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
 .still-actions .btn { width: 100%; height: 52px; justify-content: center; }
 
 /* ── Music that builds ── */
-.combo-meter { display: inline-flex; align-items: center; gap: 10px; margin-top: 12px; }
-.combo-beads { display: inline-flex; gap: 5px; }
-.combo-bead { width: 12px; height: 12px; border-radius: 50%; background: var(--surface-strong); }
-.combo-bead.on { box-shadow: inset -2px -2px 3px rgba(0,0,0,.18), inset 2px 2px 3px rgba(255,255,255,.35); }
-.combo-bead.pop { animation: ol-pop 420ms ease-out both; }
-.combo-label { font-size: 13px; font-weight: 500; color: var(--text-3); }
 .empty-state.cleared .mascot { margin: 0 auto 6px; }
 
 /* ── Date chip on capture ── */
@@ -3195,6 +3189,27 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 .nudge-next { margin: 0 0 10px; padding: 10px 12px; border-radius: var(--r-md); background: var(--surface-3); font-size: 14px; line-height: 1.55; color: var(--text-2); }
 .nudge-next b { color: var(--text); font-weight: 600; }
 
+/* ── v23: one Nudges switch ── */
+.nudge-master, .nudge-switch.nudge-master:last-child { width: 100%; margin: 0 0 10px; border: 1px solid var(--border); border-radius: var(--r-lg); }
+.nudge-master:disabled { cursor: default; opacity: .62; }
+.nudge-master.busy { cursor: progress; }
+.nudge-master.busy .switch::after { transform: translateX(9px); animation: ol-pulse 1s ease-in-out infinite; }
+.nudge-switch:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; }
+.nudge-note { margin: 0 0 10px; padding: 10px 12px; border-radius: var(--r-md); background: var(--surface-3); font-size: 14px; line-height: 1.5; color: var(--text); }
+.nudge-note.ok { background: var(--do-dim); }
+.nudge-note.error { background: var(--let_go-dim); }
+.nudge-note b, .nudge-help b { font-weight: 600; }
+.nudge-note-btn { margin-left: 2px; padding: 0; border: none; background: none; color: inherit; font: 600 14px var(--sans); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.nudge-help { margin: 0 0 12px; padding: 12px 14px; border-radius: var(--r-md); background: var(--decide-dim); font-size: 14px; line-height: 1.5; color: var(--text); }
+.nudge-help p { margin: 0 0 8px; }
+.nudge-help .nudge-help-title { font-weight: 600; }
+.nudge-help .nudge-help-foot { color: var(--text-2); }
+.nudge-steps { margin: 0 0 10px; padding-left: 20px; display: grid; gap: 6px; }
+ol.nudge-help.nudge-steps { padding-left: 34px; }
+/* Night: an off switch's knob was dark on dark. Light it, like the track's edge. */
+:root[data-theme="dark"] .nudge-switch:not(.on) .switch { box-shadow: inset 0 0 0 1px var(--border); }
+:root[data-theme="dark"] .nudge-switch:not(.on) .switch::after { background: rgba(255,250,240,0.78); }
+
 /* ── v20: the mascot as the logo, and on empty screens ── */
 .brand-mark .mascot, .auth-gate-logo-mark .mascot { width: 30px; height: 30px; }
 .mascot.mascot-hop { transform-origin: 50% 100%; animation: mascot-hop 520ms cubic-bezier(.3,.7,.3,1); }
@@ -3237,7 +3252,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 
 @media (prefers-reduced-motion: reduce) {
   .mascot.mascot-hop { animation: none; }
-  .mascot-bob .mascot-body, .mascot-eyes, .sweep-loop, .rise, .sweep-banner, .when-chip, .combo-bead.pop { animation: none !important; }
+  .mascot-bob .mascot-body, .mascot-eyes, .sweep-loop, .rise, .sweep-banner, .when-chip, .nudge-master.busy .switch::after { animation: none !important; }
   .mascot-sealing .mascot-seal { animation: none; stroke-dashoffset: 0; }
 }
 </style>
@@ -3331,8 +3346,9 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 21, date: '19 Oct 2026' };
+  const APP_VERSION = { number: 23, date: '19 Oct 2026' };
   let swRegistration = null;
+  let swState = 'pending';   // 'ready' once the service worker registers, 'failed' if it can't
 
   // UX constraints
   const MAX_LOOP_TEXT_LEN = 500;
@@ -4587,20 +4603,6 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       fresh() { return Date.now() - lastAt < 4000; }
     };
   })();
-  function comboMeterHtml() {
-    const kinds = Combo.kinds();
-    if (!kinds.length) return '';
-    const n = kinds.length;
-    const shown = Math.min(n, 5);
-    const beads = Array.from({ length: 5 }, (_, i) => {
-      const k = kinds[i];
-      const pop = k && i === shown - 1 && Combo.fresh() ? ' pop' : '';
-      return `<span class="combo-bead${k ? ' on' : ''}${pop}"${k ? ` style="background:var(--${k})"` : ''}></span>`;
-    }).join('');
-    const label = n >= 5 ? 'Full chord' : `${n} of 5 notes`;
-    return `<div class="combo-meter" role="img" aria-label="${n} ${n === 1 ? 'close' : 'closes'} this sitting. ${label}."><span class="combo-beads">${beads}</span><span class="combo-label">${label}</span></div>`;
-  }
-
   // ── YOUR HEAD ──
   // A look back, built only from loops you've already closed: your shelf,
   // how long things take, and what you decided. Nothing here leaves the app.
@@ -4854,16 +4856,24 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
   // Two kinds, both optional: one the moment a parked loop wakes up, and a
   // check-in at a time you pick that only comes when there's something to
   // say (the Sunday recap, or a loop that has gone stale). One voice: cheeky.
-  // The phone's permission lives in push_subscriptions; a small Supabase
-  // function decides what to say and sends it.
+  // Each device that turns them on is a row in push_subscriptions; a small
+  // Supabase function decides what to say and sends it.
   const Push = (() => {
     const KEY_BASE = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_push' : 'open_loops_push';
-    const DEFAULTS = { on: false, time: '09:00', wakeups: true, stale: true, recap: true };
+    // on: nudges are on for this device. wanted: the person asked for them but
+    // the browser said no, so they turn on by themselves once it says yes.
+    const DEFAULTS = { on: false, wanted: false, time: '09:00', wakeups: true, stale: true, recap: true };
+    // How often an open app checks that the server still has this device.
+    const VERIFY_MS = 20 * 3600000;
     const key = () => scopedKey(KEY_BASE);
+
+    function configured() { return !!CFG.VAPID_PUBLIC_KEY; }
     function supported() {
-      return !IS_FILE && !!CFG.VAPID_PUBLIC_KEY && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+      return configured() && !IS_FILE && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
     }
-    function permission() { return 'Notification' in window ? Notification.permission : 'denied'; }
+    function permission() {
+      try { return 'Notification' in window ? Notification.permission : 'denied'; } catch (_) { return 'denied'; }
+    }
     function prefs() {
       let p;
       try { p = { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(key()) || '{}') || {}) }; } catch (_) { p = { ...DEFAULTS }; }
@@ -4871,90 +4881,500 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       return p;
     }
     function store(p) { try { if (key()) localStorage.setItem(key(), JSON.stringify(p)); } catch (_) {} }
+    function patch(change) { const p = { ...prefs(), ...change }; store(p); return p; }
     function keyBytes(b64) {
       const s = String(b64).replace(/-/g, '+').replace(/_/g, '/');
       const bin = atob(s + '='.repeat((4 - (s.length % 4)) % 4));
       return Uint8Array.from(bin, c => c.charCodeAt(0));
     }
+    // A subscription made with an older key can't receive anything we send.
+    function sameKey(sub) {
+      try {
+        const k = sub && sub.options && sub.options.applicationServerKey;
+        if (!k) return true;   // the browser doesn't say: assume it matches
+        const a = new Uint8Array(k), b = keyBytes(CFG.VAPID_PUBLIC_KEY);
+        return a.length === b.length && a.every((x, i) => x === b[i]);
+      } catch (_) { return true; }
+    }
+    function fail(reason, cause) { const e = new Error(reason); e.reason = reason; e.cause = cause; return e; }
     async function registration() {
       if (swRegistration) return swRegistration;
-      // ready never settles if the service worker couldn't register; don't hang the button.
+      if (swState === 'failed') throw fail('no-sw');
+      // ready never settles if the service worker can't register; don't hang.
       return Promise.race([
         navigator.serviceWorker.ready,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('no-service-worker')), 8000))
+        new Promise((_, reject) => setTimeout(() => reject(fail('not-ready')), 8000))
       ]);
     }
     async function subscribe(reg) {
-      return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(CFG.VAPID_PUBLIC_KEY) });
+      const opts = { userVisibleOnly: true, applicationServerKey: keyBytes(CFG.VAPID_PUBLIC_KEY) };
+      try { return await reg.pushManager.subscribe(opts); }
+      catch (e) {
+        if (e && e.name === 'NotAllowedError') throw fail(permission() === 'denied' ? 'blocked' : 'push-denied', e);
+        if (e && e.name === 'InvalidStateError') {
+          // Something made with another key is in the way: replace it once.
+          const old = await reg.pushManager.getSubscription().catch(() => null);
+          if (old) {
+            await old.unsubscribe().catch(() => {});
+            try { return await reg.pushManager.subscribe(opts); } catch (e2) { throw fail('push-service', e2); }
+          }
+        }
+        throw fail(navigator.onLine === false ? 'offline' : 'push-service', e);
+      }
+    }
+    // This device's subscription: the one it has if it still fits, else a new one.
+    async function ensureSubscription(reg) {
+      let sub = await reg.pushManager.getSubscription();
+      if (sub && !sameKey(sub)) { await sub.unsubscribe().catch(() => {}); sub = null; }
+      return sub || subscribe(reg);
     }
     function timeZone() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (_) { return 'UTC'; } }
+    function errorText(e) { return String((e && (e.message || e.details || e.hint)) || e || ''); }
+    // Why saving this device to Supabase failed, in a word the UI can explain.
+    function saveReason(e) {
+      const code = (e && e.code) || '';
+      const msg = errorText(e);
+      const status = e && (e.status || (e.context && e.context.status));
+      if (code === '42501' || /row-level security/i.test(msg)) return 'conflict';
+      if (code === '42P01' || code === 'PGRST205' || code === 'PGRST204' || /does not exist|could not find the table/i.test(msg)) return 'server-missing';
+      if (status === 401 || code === 'PGRST301' || code === 'PGRST303' || /jwt|sign in first/i.test(msg)) return 'auth';
+      if (navigator.onLine === false || (e && e.name === 'TypeError') || /failed to fetch|networkerror|load failed|network request failed/i.test(msg)) return 'network';
+      return 'server';
+    }
+    async function saveRow(reg, sub, p) {
+      try { return { sub, server: await Sync.savePush(sub.toJSON(), p) }; }
+      catch (e) {
+        const reason = saveReason(e);
+        if (reason !== 'conflict') throw fail(reason, e);
+        // The browser's subscription still belongs to an account that signed
+        // out without tidying up. A fresh one belongs to this account.
+        await sub.unsubscribe().catch(() => {});
+        const fresh = await subscribe(reg);
+        try { return { sub: fresh, server: await Sync.savePush(fresh.toJSON(), p) }; }
+        catch (e2) { const r = saveReason(e2); throw fail(r === 'conflict' ? 'server' : r, e2); }
+      }
+    }
     // Keep what the server said back: whether today's check-in already went.
     function remember(p, sub, server) {
       store({
-        ...p, endpoint: sub.endpoint, tz: timeZone(), dirty: false,
+        ...p, on: true, wanted: false, endpoint: sub.endpoint, tz: timeZone(), dirty: false, verifiedAt: Date.now(),
+        pendingDelete: p.pendingDelete && p.pendingDelete !== sub.endpoint ? p.pendingDelete : null,
         lastRunOn: server ? server.lastRunOn : (p.lastRunOn || null),
         lastStaleAt: server ? server.lastStaleAt : (p.lastStaleAt || null)
       });
     }
-    async function enable() {
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') return perm;
-      const reg = await registration();
-      let sub = await reg.pushManager.getSubscription();
-      if (!sub) sub = await subscribe(reg);
-      const p = { ...prefs(), on: true };
-      let server;
+    // Ask the browser. It must start inside the tap that asked for it: Safari
+    // and Firefox only show the prompt from a user gesture, so nothing may be
+    // awaited before it. Old Safari only takes a callback.
+    function askPermission() {
+      return new Promise(resolve => {
+        let done = false;
+        const finish = v => { if (!done) { done = true; resolve(typeof v === 'string' ? v : permission()); } };
+        try {
+          const r = Notification.requestPermission(finish);
+          if (r && typeof r.then === 'function') r.then(finish, () => finish(permission()));
+        } catch (_) { finish(permission()); }
+      });
+    }
+    // Permission is granted: make (or reuse) this device's subscription and
+    // save it. Never throws; says why when it can't. `quiet` is for background
+    // repairs: a passing failure leaves nudges on and marked to retry, and
+    // only a lasting one (blocked) switches them off.
+    // Only one at a time: a second tap, a late prompt answer and a background
+    // repair arriving together share one attempt instead of racing.
+    let turning = null;
+    function turnOn(opts) {
+      if (!turning) turning = turnOnNow(opts).finally(() => { turning = null; });
+      return turning;
+    }
+    async function turnOnNow({ quiet = false } = {}) {
       try {
-        server = await Sync.savePush(sub.toJSON(), p);
+        const reg = await registration();
+        const sub = await ensureSubscription(reg);
+        const p = { ...prefs(), on: true };
+        const saved = await saveRow(reg, sub, p);
+        remember(p, saved.sub, saved.server);
+        return { ok: true };
       } catch (e) {
-        // This browser's subscription may still belong to an account that
-        // signed out without tidying up. Start a fresh one for this account.
-        await sub.unsubscribe().catch(() => {});
-        sub = await subscribe(reg);
-        server = await Sync.savePush(sub.toJSON(), p);
+        const reason = (e && e.reason) || saveReason(e);
+        patch(reason === 'blocked' ? { on: false, wanted: true } : quiet ? { dirty: true } : { on: false });
+        console.warn('[open-loops] nudges could not be turned on:', reason, (e && e.cause) || e);
+        return { ok: false, reason };
       }
-      remember(p, sub, server);
-      return 'granted';
     }
-    async function save(patch) {
-      const p = { ...prefs(), ...patch };
+    // The switch, flipped on. `onWaiting` fires if the browser's prompt is
+    // still open after a few seconds (Chrome's quiet prompt hides in the
+    // address bar). Returns { ok } or { ok: false, reason }.
+    async function enable({ onWaiting } = {}) {
+      if (!supported()) return { ok: false, reason: 'unsupported' };
+      if (navigator.onLine === false) return { ok: false, reason: 'offline' };
+      // Check before asking: a yes we can't act on would be a broken promise.
+      if (!swRegistration) return { ok: false, reason: swState === 'failed' ? 'no-sw' : 'not-ready' };
+      let perm = permission();
+      if (perm !== 'granted') {
+        const before = perm;
+        const asked = Date.now();
+        const timer = onWaiting ? setTimeout(onWaiting, 6000) : null;
+        perm = await askPermission();
+        if (timer) clearTimeout(timer);
+        if (perm === 'denied') {
+          patch({ on: false, wanted: true });
+          // A no with no prompt: blocked before, or the browser stopped asking
+          // after a few dismissed prompts.
+          return { ok: false, reason: 'blocked', instant: before !== 'denied' && Date.now() - asked < 300 };
+        }
+        if (perm !== 'granted') return { ok: false, reason: 'dismissed' };
+      }
+      return turnOn();
+    }
+    // Remember that they want nudges even though the browser blocks them.
+    function want() { patch({ wanted: true }); }
+    // Settings below the switch: which nudges, and when.
+    async function save(change) {
+      const p = { ...prefs(), ...change };
       store({ ...p, dirty: true });
-      if (!p.on) return;
-      const reg = await registration();
-      const sub = await reg.pushManager.getSubscription();
-      if (!sub) return;
-      remember(p, sub, await Sync.savePush(sub.toJSON(), p));
+      if (!p.on) return { ok: true };
+      try {
+        const reg = await registration();
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub) return turnOn({ quiet: true });   // the subscription went away: make a new one
+        const saved = await saveRow(reg, sub, p);
+        remember(p, saved.sub, saved.server);
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, reason: (e && e.reason) || saveReason(e) };
+      }
     }
+    // Off right away on this device; the server row goes now if it can,
+    // otherwise on the next open. Unsubscribing also makes the push service
+    // refuse anything still sent to the old address.
     async function disable() {
-      store({ ...prefs(), on: false, endpoint: null, dirty: false });
-      if (!supported()) return;
-      const reg = await registration();
-      const sub = await reg.pushManager.getSubscription();
-      if (!sub) return;
-      await Sync.deletePush(sub.endpoint).catch(() => {});
-      await sub.unsubscribe().catch(() => {});
-    }
-    async function test() {
-      const reg = await registration();
-      const sub = await reg.pushManager.getSubscription();
-      if (!sub) throw new Error('not-subscribed');
-      return Sync.testPush(sub.endpoint);
-    }
-    // On every open: keep the server's copy in step with this phone (a new
-    // subscription, a new time zone, or a change that couldn't sync offline).
-    async function resync() {
-      if (!supported() || !Sync.isLoggedIn()) return;
       const p = prefs();
-      if (!p.on) return;
-      if (permission() !== 'granted') { store({ ...p, on: false }); return; }
-      const reg = await registration();
-      let sub = await reg.pushManager.getSubscription();
-      if (!sub) sub = await subscribe(reg);
-      if (sub.endpoint === p.endpoint && p.tz === timeZone() && !p.dirty) return;
-      remember(p, sub, await Sync.savePush(sub.toJSON(), p));
+      store({ ...p, on: false, wanted: false, endpoint: null, dirty: false, pendingDelete: null });
+      if (!supported()) return { ok: true, serverOk: true };
+      let sub = null;
+      try { const reg = await registration(); sub = await reg.pushManager.getSubscription(); } catch (_) {}
+      const endpoint = (sub && sub.endpoint) || p.endpoint || null;
+      let serverOk = true;
+      if (endpoint) {
+        try { await Sync.deletePush(endpoint); }
+        catch (_) { serverOk = false; patch({ pendingDelete: endpoint }); }
+      }
+      if (sub) await sub.unsubscribe().catch(() => {});
+      return { ok: true, serverOk };
     }
-    return { supported, permission, prefs, enable, save, disable, test, resync };
+    function testReason(e) {
+      const status = e && e.context && typeof e.context.status === 'number' ? e.context.status : (e && e.status);
+      if (status === 401 || /sign in first/i.test(errorText(e))) return 'auth';
+      if (status === 404 || status === 410) return 'gone';
+      if (status === 502) return 'push-rejected';
+      if (navigator.onLine === false || (e && e.name === 'FunctionsFetchError')) return 'network';
+      return 'server';
+    }
+    // Send a test. If the server no longer knows this device (its push
+    // address expired, or the row was cleaned up), renew it and try once more.
+    async function test() {
+      if (navigator.onLine === false) return { ok: false, reason: 'offline' };
+      if (permission() !== 'granted') { patch({ on: false, wanted: true }); return { ok: false, reason: 'blocked' }; }
+      let reg, sub;
+      try { reg = await registration(); sub = await reg.pushManager.getSubscription(); }
+      catch (e) { return { ok: false, reason: (e && e.reason) || 'not-ready' }; }
+      const send = async s => { try { await Sync.testPush(s.endpoint); return null; } catch (e) { return testReason(e); } };
+      let reason = sub && sameKey(sub) ? await send(sub) : 'gone';
+      if (reason !== 'gone') return reason ? { ok: false, reason } : { ok: true };
+      if (sub) await sub.unsubscribe().catch(() => {});
+      const renewed = await turnOn();
+      if (!renewed.ok) return renewed;
+      const fresh = await reg.pushManager.getSubscription();
+      reason = fresh ? await send(fresh) : 'server';
+      if (reason) return { ok: false, reason: reason === 'gone' ? 'server' : reason };
+      return { ok: true, repaired: true };
+    }
+    // On every open, return to the app, permission change and reconnect:
+    // keep the server's copy in step with this device. Says what changed:
+    // 'resumed' (allowed at last, so on), 'lost' (no longer allowed, so off),
+    // 'saved', or null.
+    let running = null;
+    function resync() {
+      if (!running) running = doResync().catch(() => null).finally(() => { running = null; });
+      return running;
+    }
+    async function doResync() {
+      if (!supported() || !Sync.isLoggedIn() || navigator.onLine === false) return null;
+      let p = prefs();
+      if (p.pendingDelete) {
+        try { await Sync.deletePush(p.pendingDelete); p = patch({ pendingDelete: null }); } catch (_) {}
+      }
+      const perm = permission();
+      if (!p.on) {
+        if (p.wanted && perm === 'granted') return (await turnOn()).ok ? 'resumed' : null;
+        return null;
+      }
+      if (perm !== 'granted') { patch({ on: false, wanted: true }); return 'lost'; }
+      const reg = await registration();
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub || !sameKey(sub)) return (await turnOn({ quiet: true })).ok ? 'saved' : null;
+      const same = sub.endpoint === p.endpoint && p.tz === timeZone() && !p.dirty;
+      if (same) {
+        if (p.verifiedAt && Date.now() - p.verifiedAt < VERIFY_MS) return null;
+        // The server drops a device when its push service says the address
+        // is gone. Check now and then that this one is still there.
+        const exists = await Sync.pushRowExists(sub.endpoint);
+        if (exists === null) return null;   // couldn't tell; next time
+        if (exists) { patch({ verifiedAt: Date.now() }); return null; }
+      }
+      const saved = await saveRow(reg, sub, p);
+      remember(p, saved.sub, saved.server);
+      return 'saved';
+    }
+    // Some browsers say when the permission changes (unblocked in site
+    // settings, or blocked from the notification itself).
+    function watchPermission(onChange) {
+      try {
+        if (!navigator.permissions || !navigator.permissions.query) return;
+        navigator.permissions.query({ name: 'notifications' }).then(status => {
+          if (!status) return;
+          if (status.addEventListener) status.addEventListener('change', onChange);
+          else status.onchange = onChange;
+        }).catch(() => {});
+      } catch (_) {}
+    }
+    return { KEY_BASE, configured, supported, permission, prefs, enable, want, save, disable, test, resync, watchPermission };
   })();
+
+  // ── The Nudges switch ──
+  // One switch. Every way it can fail ends in a sentence that says what
+  // happened and what to do next, right under it, never a dead end. A browser
+  // that has blocked notifications can't be asked again by the page, so the
+  // switch shows how to allow them for this browser, and nudges turn on by
+  // themselves the moment they are allowed.
+  const nudgeUi = { busy: false, waiting: false, testing: false, disabling: null, note: null };
+  function isIOS() { return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+  function isAndroid() { return /Android/i.test(navigator.userAgent); }
+  function isStandaloneApp() {
+    try { return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+    catch (_) { return false; }
+  }
+  function deviceWord() { return isIOS() ? 'iPhone' : isAndroid() ? 'phone' : 'computer'; }
+  function browserWord() {
+    const ua = navigator.userAgent || '';
+    if (isStandaloneApp()) return 'Open Loops';
+    if (navigator.brave) return 'Brave';
+    if (/Edg\//.test(ua)) return 'Edge';
+    if (/Firefox\//.test(ua)) return 'Firefox';
+    if (/Chrome\//.test(ua)) return 'Chrome';
+    if (/Safari\//.test(ua)) return 'Safari';
+    return 'this browser';
+  }
+  function nudgeState() {
+    if (!Push.configured()) return 'hidden';
+    if (!Push.supported()) return !isIOS() ? 'unsupported' : isStandaloneApp() ? 'ios-update' : 'ios-install';
+    if (nudgeUi.busy) return 'busy';
+    const perm = Push.permission();
+    if (Push.prefs().on && perm === 'granted') return 'on';
+    if (perm === 'denied') return 'blocked';
+    return 'off';
+  }
+  // How to allow notifications again, for the browser this is running in.
+  function nudgeUnblockSteps() {
+    const ua = navigator.userAgent || '';
+    const host = esc(location.hostname || 'this site');
+    if (isIOS()) return ['Open the iPhone Settings app.', 'Tap <b>Notifications</b>, then <b>Open Loops</b>.', 'Turn on <b>Allow Notifications</b>, then come back here.'];
+    if (isAndroid()) {
+      if (isStandaloneApp()) return [
+        'Long-press the Open Loops icon on your home screen and tap <b>App info</b>.',
+        'Tap <b>Notifications</b> and turn them on.',
+        `Already on there? Open Chrome, tap <b>⋮ → Settings → Site settings → Notifications</b> and allow <b>${host}</b>.`
+      ];
+      return [
+        'Tap the icon to the left of the web address.',
+        'Tap <b>Permissions</b>, then <b>Notifications</b>, and choose <b>Allow</b>.',
+        `Still blocked? Open your phone’s <b>Settings → Apps → ${esc(browserWord())} → Notifications</b> and turn them on.`
+      ];
+    }
+    if (/Firefox\//.test(ua)) return ['Click the icon to the left of the web address.', 'Next to <b>Send notifications</b>, click <b>×</b> to clear Blocked.', 'Come back and flip the switch. Firefox will ask once more.'];
+    if (/Safari\//.test(ua) && !/Chrome|Chromium|Edg\//.test(ua)) return ['In the menu bar, choose <b>Safari → Settings → Websites</b>.', 'Click <b>Notifications</b> in the sidebar.', `Set <b>${host}</b> to <b>Allow</b>, then come back here.`];
+    if (isStandaloneApp()) return ['Click <b>⋮</b> at the top of the Open Loops window, then <b>App info</b>.', 'Set <b>Notifications</b> to <b>Allow</b>.', 'Come back to this window.'];
+    return ['Click the icon to the left of the web address.', 'Turn <b>Notifications</b> on, or set them to <b>Allow</b>.', 'Come back to this tab.'];
+  }
+  // What each failure says, and whether trying again could help.
+  function nudgeNote(reason, retry) {
+    const device = deviceWord();
+    const T = {
+      offline: 'You’re offline. Nudges need a connection to turn on.',
+      network: 'Couldn’t reach Open Loops. Check your connection and try again.',
+      'not-ready': 'Open Loops is still getting ready on this device. Try again in a moment.',
+      'no-sw': 'This window can’t run nudges in the background. Private windows often can’t: open Open Loops in a normal window, or install it.',
+      dismissed: 'No problem, nothing changed. Flip the switch whenever you’re ready.',
+      'push-service': navigator.brave
+        ? 'Brave has push messaging switched off. Turn on <b>Settings → Privacy and security → Use Google services for push messaging</b>, then try again.'
+        : 'This browser’s push service isn’t available right now, so nudges can’t reach it. Try again later, or use another browser.',
+      'push-denied': `Your ${device} isn’t letting ${esc(browserWord())} show notifications. Allow them in your ${device}’s settings, then try again.`,
+      'server-missing': 'Nudges aren’t set up on the server yet. Everything else still syncs.',
+      auth: 'Your sign-in has expired. Sign out and back in, then try again.',
+      server: 'Something went wrong on our side. Try again in a minute.',
+      'push-rejected': 'The push service didn’t take the test. Try again in a minute.'
+    };
+    const RETRY = { offline: 1, network: 1, 'not-ready': 1, 'push-service': 1, 'push-denied': 1, server: 1, 'push-rejected': 1 };
+    if (!T[reason]) return { kind: 'error', text: T.server, retry };
+    return { kind: reason === 'dismissed' || reason === 'not-ready' ? 'info' : 'error', text: T[reason], retry: RETRY[reason] ? retry : null };
+  }
+  function nudgeSectionInner() {
+    const state = nudgeState();
+    const p = Push.prefs();
+    const on = state === 'on';
+    const STATUS = {
+      'ios-install': 'On iPhone, nudges need Open Loops on your Home Screen.',
+      'ios-update': 'Nudges need iOS 16.4 or newer. Update your iPhone, then turn them on here.',
+      unsupported: 'This browser can’t show notifications.',
+      busy: 'Turning on…',
+      on: 'Wake-ups and check-ins arrive here.',
+      blocked: 'Blocked in this browser’s settings.',
+      off: nudgeUi.waiting ? 'Waiting for your answer…' : 'A nudge when a parked loop wakes up, and a check-in only when there’s something to say.'
+    };
+    const inert = state === 'ios-install' || state === 'ios-update' || state === 'unsupported';
+    let html = `
+          <div class="settings-label" id="nudge-label">Nudges</div>
+          <button type="button" class="nudge-switch nudge-master${on ? ' on' : ''}${state === 'busy' ? ' busy' : ''}" data-action="push-master" role="switch" aria-checked="${on}" aria-labelledby="nudge-label nudge-master-name" aria-describedby="nudge-status"${state === 'busy' ? ' aria-busy="true" aria-disabled="true"' : ''}${inert ? ' disabled' : ''}>
+            <span class="nudge-switch-text"><span id="nudge-master-name">On this device</span><span class="nudge-switch-sub" id="nudge-status">${STATUS[state]}</span></span>
+            <span class="switch" aria-hidden="true"></span>
+          </button>`;
+    const note = nudgeUi.note;
+    if (note && !inert) {
+      html += `<p class="nudge-note ${note.kind}" role="status">${note.text}${note.retry ? ` <button type="button" class="nudge-note-btn" data-action="${note.retry}">${note.retryLabel || 'Try again'}</button>` : ''}</p>`;
+    }
+    if (state === 'ios-install') {
+      html += `
+          <ol class="nudge-help nudge-steps">
+            <li>Tap the <b>Share</b> button.</li>
+            <li>Choose <b>Add to Home Screen</b>.</li>
+            <li>Open Open Loops from your Home Screen and turn nudges on there.</li>
+          </ol>`;
+    }
+    if (state === 'blocked') {
+      html += `
+          <div class="nudge-help" id="nudge-help">
+            <p class="nudge-help-title">Notifications are blocked for Open Loops.</p>
+            <p>A browser only asks once, so this one has to be allowed in its settings:</p>
+            <ol class="nudge-steps">${nudgeUnblockSteps().map(s => `<li>${s}</li>`).join('')}</ol>
+            <p class="nudge-help-foot">${p.wanted ? 'Nudges turn on by themselves once notifications are allowed.' : 'Then flip the switch.'}</p>
+            <button type="button" class="btn btn-ghost" data-action="push-recheck">Check again</button>
+          </div>`;
+    }
+    if (on) {
+      const sw = (k, label, sub) => `<button type="button" class="nudge-switch${p[k] ? ' on' : ''}" data-action="push-toggle" data-key="${k}" role="switch" aria-checked="${!!p[k]}"><span class="nudge-switch-text"><span>${label}</span><span class="nudge-switch-sub">${sub}</span></span><span class="switch" aria-hidden="true"></span></button>`;
+      const none = !p.wakeups && !p.stale && !p.recap;
+      html += `
+          <div class="nudge-switches">${sw('wakeups', 'When a loop wakes up', 'Right on time, with Done and Tomorrow')}${sw('stale', 'Stale loop check-ins', '“Still yours?”, at most once a week')}${sw('recap', 'Sunday recap', 'What you closed this week')}</div>
+          ${p.stale || p.recap ? `<div class="nudge-row"><label for="nudge-time">Check-in time</label><input type="time" id="nudge-time" class="nudge-time" step="60" value="${esc(p.time)}"></div>` : ''}
+          ${none ? '<p class="nudge-next" id="nudge-next">Every kind is switched off, so nothing will arrive. Turn one back on, or switch nudges off above.</p>' : nudgeNextHtml(p)}
+          <p class="nudge-sample">Like: Knock knock. “Call the bank” just woke up. Where does it go now?</p>
+          <div class="nudge-actions">
+            <button type="button" class="btn btn-ghost" data-action="push-test"${nudgeUi.testing ? ' aria-busy="true" aria-disabled="true"' : ''}>${nudgeUi.testing ? 'Sending…' : 'Send a test'}</button>
+          </div>`;
+    }
+    return html;
+  }
+  function nudgeSectionHtml() {
+    if (nudgeState() === 'hidden') return '';
+    return `
+        <section class="settings-section" id="nudge-settings">${nudgeSectionInner()}
+        </section>`;
+  }
+  // Redraw just the Nudges section, keeping focus where it was.
+  function refreshNudgeSettings() {
+    const sec = document.getElementById('nudge-settings');
+    if (!sec) return false;
+    const a = document.activeElement;
+    let focus = null;
+    if (a && sec.contains(a)) focus = a.id ? `#${a.id}` : a.dataset && a.dataset.action ? `[data-action="${a.dataset.action}"]${a.dataset.key ? `[data-key="${a.dataset.key}"]` : ''}` : null;
+    sec.innerHTML = nudgeSectionInner();
+    if (focus) {
+      const el = sec.querySelector(focus) || sec.querySelector('[data-action="push-master"]');
+      if (el && !el.disabled) { try { el.focus({ preventScroll: true }); } catch (_) { el.focus(); } }
+    }
+    return true;
+  }
+  function showNudgeNote(note) {
+    nudgeUi.note = note;
+    return refreshNudgeSettings();
+  }
+  function openNudgeSettings() {
+    view.overlay = { type: 'settings' };
+    nudgeUi.note = null;
+    renderOverlay();
+    setTimeout(() => { const sec = document.getElementById('nudge-settings'); if (sec) sec.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 80);
+  }
+  // Turn on from the switch (or Check again). Called straight from the tap so
+  // the browser's prompt is allowed to show.
+  async function turnNudgesOn() {
+    nudgeUi.busy = true; nudgeUi.waiting = false; nudgeUi.note = null;
+    refreshNudgeSettings();
+    const r = await Push.enable({
+      onWaiting: () => {
+        // The prompt may never be answered (Chrome's quiet prompt sits
+        // behind a bell in the address bar). Unlock the switch so it's never
+        // stuck; a late answer still finishes the job below.
+        if (!nudgeUi.busy) return;
+        nudgeUi.busy = false;
+        nudgeUi.waiting = true;
+        showNudgeNote({ kind: 'info', text: 'No prompt on screen? Look for a bell or notification icon in the address bar, or flip the switch to ask again.' });
+      }
+    });
+    nudgeUi.busy = false; nudgeUi.waiting = false;
+    let note = null;
+    if (r.ok) {
+      note = { kind: 'ok', text: 'Nudges are on. Send a test to see one.' };
+      announce('Nudges are on.');
+    } else if (r.reason === 'blocked') {
+      note = r.instant ? { kind: 'info', text: `${esc(browserWord())} answered without asking: it had blocked notifications for this site, or stopped asking after the prompt was dismissed a few times.` } : null;
+      announce('Notifications are blocked for Open Loops.');
+    } else {
+      note = nudgeNote(r.reason, 'push-master');
+    }
+    if (!showNudgeNote(note)) {
+      // Settings closed while it worked: say it where they are now.
+      if (r.ok) toast('Nudges are on.');
+      else if (r.reason === 'blocked') toast('Notifications are blocked for Open Loops.', { action: 'How to fix', onAction: openNudgeSettings, duration: 7000 });
+      else if (note && r.reason !== 'dismissed') toast(note.text.replace(/<[^>]+>/g, ''), { duration: 6000 });
+    }
+    if (r.reason === 'blocked') {
+      const help = document.getElementById('nudge-help');
+      if (help) help.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+  // Blocked: the page can't ask again, so check whether it's been allowed
+  // since. Called straight from the tap, like turnNudgesOn.
+  function nudgeRecheck() {
+    Push.want();
+    if (Push.permission() !== 'denied') { turnNudgesOn(); return; }   // allowed now, or the browser can ask again
+    showNudgeNote({ kind: 'info', text: 'Still blocked. Changed it already? Some browsers only notice after a reload.', retry: 'push-reload', retryLabel: 'Reload' });
+    const help = document.getElementById('nudge-help');
+    if (help) help.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  async function savePushPrefs(change) {
+    const r = await Push.save(change);
+    if (!r.ok) {
+      if (r.reason === 'blocked') { refreshNudgeSettings(); return false; }
+      showNudgeNote({ kind: 'info', text: 'Saved on this device. It reaches the server next time Open Loops can connect.' });
+      return false;
+    }
+    nudgeUi.note = null;
+    refreshNudgeSettings();
+    return true;
+  }
+  // After a background check: tell them only when something changed.
+  function afterNudgeResync(result) {
+    if (result === 'resumed') {
+      announce('Nudges are on.');
+      if (!showNudgeNote({ kind: 'ok', text: 'Notifications are allowed now, so nudges are on.' })) toast('Notifications are allowed now, so nudges are on.');
+    } else if (result === 'lost') {
+      if (!refreshNudgeSettings()) toast('Nudges went off: notifications aren’t allowed for Open Loops anymore.', { action: 'Fix', onAction: openNudgeSettings, duration: 8000 });
+    } else {
+      refreshNudgeSettings();
+    }
+  }
+  function resyncNudges() { return Push.resync().then(afterNudgeResync).catch(() => {}); }
 
   // When the next check-in can come: today if its time is still ahead and
   // today's hasn't gone yet, otherwise tomorrow.
@@ -4999,42 +5419,6 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         : `Check-in ${day} at ${esc(clockText(at))}. Nothing to say yet, so it stays quiet unless that changes.`);
     }
     return lines.length ? `<p class="nudge-next" id="nudge-next">${lines.join('<br>')}</p>` : '';
-  }
-  function nudgeSettingsHtml() {
-    if (!Push.supported()) {
-      const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
-      return `<p class="settings-helper">${ios && !standalone
-        ? 'On iPhone, nudges only arrive once Open Loops is on your Home Screen. Tap Share, then Add to Home Screen, and turn this on from there.'
-        : 'This browser can’t show notifications.'}</p>`;
-    }
-    if (Push.permission() === 'denied') {
-      return `<p class="settings-helper">Notifications are blocked for Open Loops on this device. Allow them in your browser’s site settings, then come back here.</p>`;
-    }
-    const p = Push.prefs();
-    if (!p.on) {
-      return `
-          <p class="settings-helper">A nudge the moment a parked loop wakes up. Plus a check-in at a time you pick, only when there’s something to say: the Sunday recap, or a loop that’s gone stale.</p>
-          <button type="button" class="btn btn-ghost" data-action="push-enable">Turn on nudges</button>`;
-    }
-    const sw = (k, label, sub) => `<button type="button" class="nudge-switch${p[k] ? ' on' : ''}" data-action="push-toggle" data-key="${k}" aria-pressed="${!!p[k]}"><span class="nudge-switch-text"><span>${label}</span><span class="nudge-switch-sub">${sub}</span></span><span class="switch" aria-hidden="true"></span></button>`;
-    return `
-          <p class="settings-helper">On for this device.</p>
-          <div class="nudge-switches">${sw('wakeups', 'When a loop wakes up', 'Right on time, with Done and Tomorrow')}${sw('stale', 'Still yours? checks', 'At most once a week')}${sw('recap', 'Sunday recap', 'What you closed this week')}</div>
-          ${p.stale || p.recap ? `<div class="nudge-row"><label for="nudge-time">Check-in time</label><input type="time" id="nudge-time" class="nudge-time" step="60" value="${esc(p.time)}"></div>` : ''}
-          ${nudgeNextHtml(p)}
-          <p class="nudge-sample">Like: Knock knock. “Call the bank” just woke up. Where does it go now?</p>
-          <div class="nudge-actions">
-            <button type="button" class="btn btn-ghost" data-action="push-test">Send a test</button>
-            <button type="button" class="btn btn-ghost" data-action="push-disable">Turn off</button>
-          </div>`;
-  }
-  async function savePushPrefs(patch) {
-    let ok = true;
-    try { await Push.save(patch); }
-    catch (_) { ok = false; toast('Saved here. It will sync next time you’re online.'); }
-    if (view.overlay && view.overlay.type === 'settings') renderOverlay();
-    return ok;
   }
 
   // ── DEEP LINKS ──
@@ -5256,7 +5640,6 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         <div>
           <h1 class="page-title">${head.title}</h1>
           <p class="page-sub">${head.sub}</p>
-          ${tabKey === 'now' ? comboMeterHtml() : ''}
         </div>
         ${meter}
       </header>`;
@@ -6104,10 +6487,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
           </div>
         </section>
 
-        <section class="settings-section" id="nudge-settings">
-          <div class="settings-label">Nudges</div>
-          ${nudgeSettingsHtml()}
-        </section>
+        ${nudgeSectionHtml()}
 
         <section class="settings-section">
           <div class="settings-label">Your head</div>
@@ -8564,24 +8944,38 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     }
 
     // ── Nudges ──
-    if (action === 'push-enable') {
+    if (action === 'push-master') {
       if (requireLogin()) return;
-      el.disabled = true;
-      el.textContent = 'Turning on…';
-      let result;
-      try { result = await Push.enable(); }
-      catch (err) { console.warn('[open-loops] nudges could not be turned on', err); result = 'error'; }
-      if (result === 'granted') toast('Nudges are on. Send a test to see one.');
-      else if (result === 'denied') toast('Notifications are blocked. Allow them in your browser’s settings.');
-      else if (result === 'default') toast('No problem. Turn them on whenever you like.');
-      else toast('Couldn’t turn on nudges. Check your connection and try again.');
-      if (view.overlay && view.overlay.type === 'settings') renderOverlay();
+      if (nudgeUi.busy || el.disabled) return;
+      const state = nudgeState();
+      if (state === 'on') {
+        // Off at once on this device; the server catches up behind it.
+        nudgeUi.note = null;
+        const done = Push.disable();
+        nudgeUi.disabling = done;
+        refreshNudgeSettings();
+        announce('Nudges are off for this device.');
+        const r = await done;
+        if (nudgeUi.disabling === done) nudgeUi.disabling = null;
+        if (r && r.serverOk === false) showNudgeNote({ kind: 'info', text: 'Off for this device. Open Loops finishes tidying up when it can reach the server.' });
+        return;
+      }
+      if (state === 'blocked') { nudgeRecheck(); return; }
+      if (state !== 'off') return;
+      // Just switched off and back on: let the off finish first (no prompt
+      // is waiting on this tap, permission is already granted).
+      if (nudgeUi.disabling && Push.permission() === 'granted') await nudgeUi.disabling;
+      await turnNudgesOn();
       return;
     }
-    if (action === 'push-disable') {
-      await Push.disable().catch(() => {});
-      toast('Nudges are off for this device.');
-      if (view.overlay && view.overlay.type === 'settings') renderOverlay();
+    if (action === 'push-recheck') {
+      if (requireLogin()) return;
+      if (nudgeUi.busy) return;
+      nudgeRecheck();
+      return;
+    }
+    if (action === 'push-reload') {
+      window.location.reload();
       return;
     }
     if (action === 'push-toggle') {
@@ -8592,17 +8986,23 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     }
     if (action === 'push-test') {
       if (requireLogin()) return;
-      el.disabled = true;
-      el.textContent = 'Sending…';
-      try {
-        await Push.test();
-        toast('Sent. It should arrive in a few seconds.');
-      } catch (err) {
-        console.warn('[open-loops] test nudge failed', err);
-        toast('Couldn’t send a test. Turn nudges off and on again, then retry.');
+      if (nudgeUi.testing) return;
+      nudgeUi.testing = true;
+      nudgeUi.note = null;
+      refreshNudgeSettings();
+      const r = await Push.test();
+      nudgeUi.testing = false;
+      if (r.ok) {
+        const from = isStandaloneApp() || isIOS() ? 'Open Loops' : browserWord();
+        showNudgeNote({
+          kind: 'ok',
+          text: `${r.repaired ? 'This device’s nudge address had expired, so it was renewed. ' : ''}Sent. It should arrive within a few seconds. Nothing? Check that your ${deviceWord()} allows notifications from ${esc(from)} and that Do Not Disturb is off.`
+        });
+      } else if (r.reason === 'blocked') {
+        refreshNudgeSettings();
+      } else {
+        showNudgeNote(nudgeNote(r.reason, 'push-test'));
       }
-      el.disabled = false;
-      el.textContent = 'Send a test';
       return;
     }
 
@@ -8635,6 +9035,8 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     }
     if (action === 'open-settings') {
       rememberOverlayOpener(el);
+      nudgeUi.note = null;
+      nudgeUi.waiting = false;   // a prompt left unanswered earlier isn't on screen now
       view.overlay = { type: 'settings' };
       renderOverlay();
       return;
@@ -8821,12 +9223,11 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     if (!(await savePushPrefs({ time }))) return;
     const p = Push.prefs();
     const at = nextCheckIn(p);
-    const clock = clockText(at);
+    const clock = esc(clockText(at));
     const has = checkInHas(p, at);
-    toast(!isSameDay(at, new Date())
+    showNudgeNote({ kind: 'ok', text: !isSameDay(at, new Date())
       ? `Saved. Next check-in tomorrow at ${clock}.`
-      : has ? `Saved. Check-in today at ${clock}.` : `Saved for ${clock}. Nothing to say today, so it stays quiet.`,
-      { duration: 5000 });
+      : has ? `Saved. Check-in today at ${clock}.` : `Saved for ${clock}. Nothing to say today, so it stays quiet.` });
   });
 
   // Enter key on auth gate email → submit
@@ -8889,7 +9290,16 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       // Network just came back — the realtime channel may have died during
       // the outage. Ask Sync to verify/repair it.
       Sync.ensureRealtime();
+      resyncNudges();
     }
+  });
+
+  // Nudges follow the browser's permission: allowed in site settings → on by
+  // themselves (when they'd asked for them); blocked → off, and Settings says
+  // why. Another tab flipping the switch shows here too.
+  Push.watchPermission(() => { resyncNudges(); });
+  window.addEventListener('storage', e => {
+    if (e.key && e.key.indexOf(Push.KEY_BASE) === 0) refreshNudgeSettings();
   });
 
   // Fix 3: 'focus' is unreliable on mobile PWAs — returning from background
@@ -8904,6 +9314,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
     await Sync.processQueue();
     Sync.ensureRealtime();
     wakeDueLoops();
+    resyncNudges();
   });
 
   // While the app stays open, parked loops still come back on time.
@@ -8961,6 +9372,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         savePush:      async () => { throw new Error('Sign in first.'); },
         deletePush:    async () => {},
         testPush:      async () => { throw new Error('Sign in first.'); },
+        pushRowExists: async () => null,
         userEmail:     () => '',
         isLoggedIn:    () => false
       };
@@ -9682,7 +10094,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
             setupRealtime({ skipInitialPull: true });
             if (foundLegacy) toast('Older local data was kept aside for safety.');
             else wakeDueLoops({ quiet: /[?&](sweep|loop)=/.test(location.search) });
-            Push.resync().catch(() => {});
+            resyncNudges();
           }
         } catch(e) {
           console.error('Sync init error:', e);
@@ -9804,6 +10216,15 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         const { data, error } = await db.functions.invoke('push', { body: { job: 'test', endpoint } });
         if (error) throw error;
         return data;
+      },
+      // Whether the server still has this device. null when it can't tell.
+      async pushRowExists(endpoint) {
+        if (!currentUser || !endpoint) return null;
+        try {
+          const { data, error } = await db.from('push_subscriptions').select('endpoint').eq('endpoint', endpoint).maybeSingle();
+          if (error) return null;
+          return !!data;
+        } catch (_) { return null; }
       }
     };
   })();
@@ -9963,6 +10384,8 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
         try { takeDeepLink(new URL(msg.url, location.href).search); } catch (_) {}
       } else if (msg.type === 'loops-changed' && Sync.isLoggedIn()) {
         Sync.retry();
+      } else if (msg.type === 'push-renewed') {
+        resyncNudges();
       } else if (msg.type === 'nudge' && Sync.isLoggedIn()) {
         // A wake-up: wake it here too, which shows its own note.
         if (wakeDueLoops().length) return;
@@ -9987,6 +10410,8 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
       navigator.serviceWorker.register('./open-loops-sw.js')
         .then(registration => {
           swRegistration = registration;
+          swState = 'ready';
+          if (nudgeUi.note && /getting ready/.test(nudgeUi.note.text)) nudgeUi.note = null;
           if (view.overlay && view.overlay.type === 'settings') renderOverlay();
           const checkForUpdate = () => { registration.update().catch(() => {}); };
           setInterval(checkForUpdate, 60000);
@@ -9994,7 +10419,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
             if (!document.hidden) checkForUpdate();
           });
         })
-        .catch(() => {});
+        .catch(() => { swState = 'failed'; refreshNudgeSettings(); });
     });
   }
 })();
