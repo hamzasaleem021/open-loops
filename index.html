@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Open Loops — A calm place for unfinished things</title>
-<meta name="description" content="Open Loops is a calm space for unfinished things. Capture what's open, clarify it, and process it with intention.">
+<meta name="description" content="Open Loops is a calm place for unfinished things. Catch what's open, give it one next step, and keep only a few things in focus.">
 <meta name="theme-color" content="#fffaf0">
 <link rel="icon" href="./open-loops-icon-192-v4.png">
 <link rel="apple-touch-icon" href="./open-loops-icon-192-v4.png">
@@ -201,6 +201,14 @@ nav .container { height: 100%; display: flex; align-items: center; justify-conte
 }
 .mock-card h4 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.015em; color: var(--ink); }
 .mock-card .next { font-size: 14px; color: var(--body); }
+.mock-tabs { display: flex; gap: 4px; padding: 0 4px 2px; flex-wrap: wrap; }
+.mock-tabs span { height: 34px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: var(--muted); }
+.mock-tabs span.on { background: var(--surface-card); color: var(--ink); font-weight: 600; }
+.mock-tabs b { font-size: 12px; font-weight: 600; min-width: 20px; height: 20px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; }
+.mock-tabs .on b { background: var(--ink); color: var(--canvas); }
+.reason { font-size: 12px; font-weight: 600; color: var(--muted); }
+.focus .reason { color: inherit; opacity: .85; }
+.mock-btn { justify-self: start; height: 36px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--hairline); background: var(--canvas); font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; margin-top: 4px; }
 .next b { font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; margin-right: 8px; opacity: .6; }
 
 /* ── SECTIONS ── */
@@ -211,6 +219,7 @@ section { padding-block: 96px; }
 .section-head p { font-size: 18px; margin-top: 16px; max-width: 36em; }
 
 .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.how-grid.four { grid-template-columns: repeat(4, 1fr); }
 .how-card { background: var(--surface-card); border-radius: 24px; padding: 32px; display: grid; gap: 12px; align-content: start; }
 .how-num {
   width: 40px; height: 40px; border-radius: 50%;
@@ -242,6 +251,18 @@ section { padding-block: 96px; }
 .k-schedule { background: var(--schedule); color: var(--ink); }
 .k-letgo { background: var(--let-go); color: var(--ink); }
 .k-decide .sample, .k-schedule .sample, .k-letgo .sample { background: rgba(10,10,10,0.08); }
+.kind-btn { display: grid; gap: 8px; }
+.kind-btn .pill { justify-self: start; height: 34px; padding: 0 14px; border-radius: 12px; background: var(--canvas); color: var(--ink); font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; }
+.kind-btn p { font-size: 15px; }
+
+/* ── KEEPS ITSELF TIDY / YOUR HEAD ── */
+.tidy-card { background: var(--paper); border: 1px solid var(--hairline); border-radius: 24px; padding: 28px; display: grid; gap: 10px; align-content: start; }
+.tidy-card h3 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+.tidy-card p { font-size: 15px; color: var(--body); }
+.tidy-card .says { justify-self: start; margin-top: 6px; padding: 8px 12px; border-radius: 12px; background: var(--surface-card); font-size: 13px; font-weight: 600; color: var(--ink); }
+.shelf { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 6px 0 2px; }
+.shelf .ring { width: 26px; height: 26px; border-radius: 50%; border: 6px solid var(--c); }
+.shelf .pebble { width: 26px; height: 18px; border-radius: 50%; background: var(--peach); }
 
 /* ── CTA BAND ── */
 .cta-band {
@@ -370,6 +391,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
 @keyframes w-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
 .why-scene.play .w-breathe { animation: w-breathe 3.2s ease-in-out infinite; }
 @media (max-width: 1024px) {
+  .how-grid.four { grid-template-columns: repeat(2, 1fr); }
   .kinds-grid { grid-template-columns: repeat(2, 1fr); }
   .kind-card, .kind-card:nth-child(4), .kind-card:nth-child(5) { grid-column: span 1; }
   .kind-card:nth-child(5) { grid-column: span 2; }
@@ -380,7 +402,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
   .hero-grid { grid-template-columns: 1fr; gap: 32px; }
   .hero-art { aspect-ratio: 4 / 3; }
   .nav-links .nav-link { display: none; }
-  .how-grid { grid-template-columns: 1fr; }
+  .how-grid, .how-grid.four { grid-template-columns: 1fr; }
   .kinds-grid { grid-template-columns: 1fr; }
   .kind-card, .kind-card:nth-child(4), .kind-card:nth-child(5) { grid-column: span 1; min-height: 0; padding: 26px; }
   section { padding-block: 64px; }
@@ -465,6 +487,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
       <a href="#why" class="nav-link">Why</a>
       <a href="#how" class="nav-link">How it works</a>
       <a href="#kinds" class="nav-link">Loop kinds</a>
+      <a href="#tidy" class="nav-link">Stays tidy</a>
       <a href="./open-loops.html" class="btn btn-primary">Open app</a>
     </div>
   </div>
@@ -475,7 +498,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
     <div>
       <span class="badge-pill"><i></i>A calm place for unfinished things</span>
       <h1>Stop carrying things in your head.</h1>
-      <p class="hero-sub">Open Loops helps you name what is unfinished, sort it into the kind of attention it needs, and process it with intention instead of background stress.</p>
+      <p class="hero-sub">Catch what's unfinished, give it one next step, and keep only a few things in focus. Everything else waits quietly until its day comes, then wakes up on its own.</p>
       <div class="hero-actions">
         <a href="./open-loops.html" class="btn btn-primary btn-lg">
           Open the app
@@ -502,7 +525,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
 
 <div class="mockup-band">
   <div class="container">
-    <div class="mockup" role="img" aria-label="Preview of the Open Loops Active view: one focus loop in pink, with three loops up next">
+    <div class="mockup" role="img" aria-label="Preview of the Open Loops Active view: an Ask loop as Now in pink with a Reach out button, and three loops up next with their own buttons">
       <div class="mock-top">
         <div>
           <div class="mock-title">Active</div>
@@ -510,31 +533,36 @@ footer .container { display: flex; align-items: center; justify-content: space-b
         </div>
         <div class="meter"><span class="meter-dots"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></span>4 of 5 focus slots</div>
       </div>
+      <div class="mock-tabs"><span class="on">Active <b>4</b></span><span>Parked <b>3</b></span><span>Inbox <b>2</b></span></div>
       <div class="focus">
         <span class="eyebrow">Now</span>
         <span class="chip"><i></i>Ask</span>
         <h3>Confirm the meeting time with Sarah</h3>
-        <div class="next"><b>Next</b>Send the text and lock in the time</div>
+        <div class="next"><b>Next</b>Sarah, for a yes on Thursday</div>
         <span class="btn-on-color">Reach out</span>
       </div>
       <div class="up-next">Up next</div>
       <div class="mock-card">
         <span class="chip decide"><i></i>Decide</span>
-        <h4>Which design direction to go with</h4>
-        <div class="next"><b>Next</b>Choose between option A and B before Friday</div>
+        <h4>Pick a direction for the homepage</h4>
+        <div class="next"><b>Next</b>Draft A or draft B</div>
+        <span class="mock-btn">I decided</span>
       </div>
       <div class="mock-card">
         <span class="chip do"><i></i>Do</span>
-        <h4>Reply to the contractor quote</h4>
-        <div class="next"><b>Next</b>Send the revised scope by Thursday</div>
+        <span class="reason">From your decision</span>
+        <h4>Send draft B to the team</h4>
+        <div class="next"><b>Next</b>Write the two-line summary</div>
+        <span class="mock-btn">Done</span>
       </div>
       <div class="mock-card">
         <span class="chip schedule"><i></i>Schedule</span>
+        <span class="reason">Woke today</span>
         <h4>Book the annual check-up</h4>
-        <div class="next"><b>Next</b>Call the clinic on Monday morning</div>
+        <div class="next"><b>Next</b>Monday, 9:00 AM</div>
+        <span class="mock-btn">Add to calendar</span>
       </div>
     </div>
-  </div>
 </div>
 
 <section id="why">
@@ -570,23 +598,28 @@ footer .container { display: flex; align-items: center; justify-content: space-b
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">How it works</span>
-      <h2>Three steps to a quieter mind</h2>
+      <h2>Catch it. Shape it. Focus. Close it.</h2>
     </div>
-    <div class="how-grid">
+    <div class="how-grid four">
       <div class="how-card">
         <div class="how-num">1</div>
-        <h3>Capture what's open</h3>
-        <p>Write down anything unfinished — tasks, decisions, conversations, worries. One thought at a time, as it arrives.</p>
+        <h3>Catch it</h3>
+        <p>Drop anything unfinished into Inbox, one thought at a time. Type a day, like "call the bank friday", and it offers to wake the loop then.</p>
       </div>
       <div class="how-card">
         <div class="how-num">2</div>
-        <h3>Clarify what it needs</h3>
-        <p>Every loop gets a type: Do, Decide, Ask, Schedule, or Let go. Naming the kind of attention is what makes it lighter.</p>
+        <h3>Shape it</h3>
+        <p>Pick its kind, write one next step, then send it Up next, park it until a day you choose, or close it.</p>
       </div>
       <div class="how-card">
         <div class="how-num">3</div>
-        <h3>Process it with intention</h3>
-        <p>Review your loops one at a time, update the next move, and release what is no longer yours to carry.</p>
+        <h3>Focus</h3>
+        <p>Active shows three, five or seven loops before the rest fold under Show more. The top one is Now, and only you move a loop there.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">4</div>
+        <h3>Close it</h3>
+        <p>Finished loops land on your Closed shelf as rings. Loops you let go of land there as pebbles.</p>
       </div>
     </div>
   </div>
@@ -604,30 +637,92 @@ footer .container { display: flex; align-items: center; justify-content: space-b
         <h3>Start it now</h3>
         <p>A concrete action you can start right now without extra planning.</p>
         <div class="sample">Reply to the contractor quote</div>
+        <div class="kind-btn"><span class="pill">Done</span><p>Close it, or mark the step done and set the next one.</p></div>
       </div>
       <div class="kind-card k-decide">
         <span class="eyebrow">Decide</span>
         <h3>Stop circling</h3>
         <p>A choice you are holding open. Name it cleanly and stop circling it.</p>
         <div class="sample">Which design direction to go with</div>
+        <div class="kind-btn"><span class="pill">I decided</span><p>Name the decision in a line. Options in your note, like "A or B", become one-tap choices.</p></div>
       </div>
       <div class="kind-card k-ask">
         <span class="eyebrow">Ask</span>
         <h3>One person, one ask</h3>
         <p>Something you need from someone else.</p>
         <div class="sample">Confirm the meeting time with Sarah</div>
+        <div class="kind-btn"><span class="pill">Reach out</span><p>Drafts the message from your note and sends it through your share sheet. Later it asks: did Sarah reply?</p></div>
       </div>
       <div class="kind-card k-schedule">
         <span class="eyebrow">Schedule</span>
         <h3>Give it a time</h3>
         <p>Something that needs a real time on the calendar to move forward.</p>
         <div class="sample">Book the annual check-up</div>
+        <div class="kind-btn"><span class="pill">Add to calendar</span><p>Opens a ready-made Google Calendar event, or an .ics file for any other calendar. No sign-in.</p></div>
       </div>
       <div class="kind-card k-letgo">
         <span class="eyebrow">Let go</span>
         <h3>Release it</h3>
         <p>Choosing to release it. The goal is relief, not proving it was important.</p>
         <div class="sample">Learn a third language this year</div>
+        <div class="kind-btn"><span class="pill">Let go</span><p>Its own ending, with no guilt attached. It lands on your shelf as a pebble.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tidy">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">It keeps itself tidy</span>
+      <h2>Nothing piles up quietly</h2>
+      <p>A list only helps if it stays honest. Open Loops brings things back when they're due and asks about the ones you've stopped touching.</p>
+    </div>
+    <div class="how-grid four">
+      <div class="tidy-card">
+        <h3>Not yet? Pick when.</h3>
+        <p>Every park asks when the loop should come back: tonight, tomorrow morning, this weekend, next week or a day you pick. When its time comes, it wakes back into Up next.</p>
+        <span class="says">When should it come back?</span>
+      </div>
+      <div class="tidy-card">
+        <h3>The daily sweep</h3>
+        <p>When loops wake up or go stale, a short sweep shows them one at a time: make it Now, Up next, park it again or let it go. About thirty seconds.</p>
+        <span class="says">3 loops to sweep</span>
+      </div>
+      <div class="tidy-card">
+        <h3>Still yours?</h3>
+        <p>A loop nobody touches for 10 days goes matte. After 21 it cracks and asks whether it's still yours. Keep it, park it, or let it go.</p>
+        <span class="says">Still yours?</span>
+      </div>
+      <div class="tidy-card">
+        <h3>Nudges, if you want them</h3>
+        <p>Optional notifications when a loop wakes up, with Done and Tomorrow right on them, and at most one check-in a day. No streaks.</p>
+        <span class="says">Knock knock. "Call the bank" just woke up.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="head">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Your head</span>
+      <h2>See what you've let go of</h2>
+      <p>A look back, built only from loops you've already closed.</p>
+    </div>
+    <div class="how-grid">
+      <div class="tidy-card">
+        <h3>Your shelf</h3>
+        <div class="shelf" aria-hidden="true"><span class="ring" style="--c: var(--pink)"></span><span class="ring" style="--c: var(--ochre)"></span><span class="ring" style="--c: var(--teal)"></span><span class="pebble"></span><span class="ring" style="--c: var(--lavender)"></span><span class="ring" style="--c: var(--teal)"></span><span class="pebble"></span></div>
+        <p>A ring for every loop you closed this week, in its kind's color, and a pebble for each one you let go of.</p>
+      </div>
+      <div class="tidy-card">
+        <h3>How long things take</h3>
+        <p>How long each kind usually stays open, the longest-held loop you finally closed, and every decision you made.</p>
+      </div>
+      <div class="tidy-card">
+        <h3>Share your month</h3>
+        <p>A card of your month to share or save. It shows counts and colors only, never what your loops say.</p>
       </div>
     </div>
   </div>
@@ -638,7 +733,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
     <div class="cta-band">
       <div>
         <h2>Your head will thank you.</h2>
-        <p>Sign in once, then capture, clarify, and sync your loops across devices with a calmer visual rhythm.</p>
+        <p>Sign in with your email, no password, and your loops follow you to every device. It works offline and installs like an app.</p>
         <a href="./open-loops.html" class="btn btn-primary btn-lg">
           Open the app
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -667,7 +762,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
       <span class="brand-name">Open Loops</span>
     </a>
     <div class="footer-right">
-      <span class="footer-note">Auth-first, cross-device, and intentionally calm.</span>
+      <span class="footer-note">Syncs across your devices. Works offline. Calm by design.</span>
       <a class="aux-credit" href="https://auxila.cc"><span class="aux-bc" aria-hidden="true"><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:1px"></i><i style="width:3px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:3px"></i><i style="width:1px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i></span><span class="aux-cat-s">AUX 001</span><span>Powered by</span><span class="aux-word">auxila<i>.cc</i></span></a>
     </div>
   </div>
