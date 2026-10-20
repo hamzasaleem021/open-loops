@@ -3258,6 +3258,16 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   .mascot-sealing .mascot-seal { animation: none; stroke-dashoffset: 0; }
 }
 
+/* ── Tell a friend, at a high point ── */
+.share-nudge { margin-top: 20px; display: grid; gap: 10px; justify-items: center; font-size: 14px; font-weight: 500; color: var(--text-2); }
+.share-nudge-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.settings-credit .settings-helper a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── Press feedback on the controls that didn't have it ── */
+.icon-btn, .tab, .bottom-nav-btn, .seg-row button, .show-more, .inline-link { transition: transform .12s ease, background-color .15s ease, color .15s ease; }
+.icon-btn:active, .bottom-nav-btn:active, .seg-row button:active { transform: scale(.94); }
+.tab:active, .show-more:active { transform: scale(.97); }
+
 /* ── Auxila credit: the parent brand, kept small ── */
 .aux-credit { display: inline-flex; align-items: baseline; gap: 6px; color: var(--text-2); font-family: var(--sans); font-size: 13px; text-decoration: none; white-space: nowrap; }
 .aux-credit .aux-word { font-family: 'Mona Sans', var(--sans); font-stretch: 125%; font-weight: 900; letter-spacing: -0.03em; font-size: 14px; color: var(--text); }
@@ -3356,7 +3366,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 25, date: '20 Oct 2026' };
+  const APP_VERSION = { number: 26, date: '20 Oct 2026' };
   let swRegistration = null;
   let swState = 'pending';   // 'ready' once the service worker registers, 'failed' if it can't
 
@@ -4043,6 +4053,26 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       : body;
     if (nudge) return who ? `Hi ${who}, just checking in on this: ${soft}` : `Just checking in on this: ${soft}`;
     return who ? `Hi ${who}, ${soft}` : body;
+  }
+
+  // Telling a friend. Asked once, when Active has just been cleared and only
+  // after ten closes; either answer retires the question. Settings keeps a
+  // quiet way to do it any time.
+  const APP_LINK = 'https://openloops.auxila.cc';
+  const SHARE_PROMPT_KEY = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_share_prompt' : 'open_loops_share_prompt';
+  function sharePromptHtml() {
+    try { if (localStorage.getItem(SHARE_PROMPT_KEY)) return ''; } catch (_) { return ''; }
+    if (data.loops.filter(l => l.status === 'released').length < 10) return '';
+    return `<div class="share-nudge"><span>Know someone with a crowded head?</span><div class="share-nudge-row"><button type="button" class="btn btn-primary" data-action="share-app">Send them Open Loops</button><button type="button" class="btn btn-ghost" data-action="share-app-later">Not now</button></div></div>`;
+  }
+  async function shareApp() {
+    const text = 'Open Loops: a calm place for unfinished things. It keeps only a few things in focus.';
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Open Loops', text, url: APP_LINK }); return 'shared'; }
+      catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+    }
+    try { await navigator.clipboard.writeText(`${text} ${APP_LINK}`); return 'copied'; }
+    catch (_) { return 'failed'; }
   }
 
   // Native share sheet where there is one; otherwise copy the text.
@@ -4852,6 +4882,10 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       g.fillStyle = '#0a0a0a'; g.font = font(600, 56); g.fillText(big, x + 30, ty + 86);
       g.fillStyle = '#3a3a3a'; g.font = font(500, 30); g.fillText(small, x + 30, ty + 132);
     });
+    // Where it's from, small, so a shared card can bring someone back
+    g.fillStyle = '#6b665b'; g.font = font(500, 26); g.textAlign = 'right';
+    g.fillText('openloops.auxila.cc', W - P, H - 40);
+    g.textAlign = 'left';
     return canvas;
   }
   function canShareFiles() {
@@ -5695,7 +5729,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         }
       } else if (Combo.count() >= 2) {
         const n = Combo.count();
-        html += `<div class="empty-state cleared">${mascotSvg('proud', { width: 210, className: Combo.fresh() ? 'mascot-sealing' : '', label: 'The mascot, proud, closed into a ring' })}<strong>Active is clear.</strong>${n} closes, one full chord. Enjoy the quiet.</div>`;
+        html += `<div class="empty-state cleared">${mascotSvg('proud', { width: 210, className: Combo.fresh() ? 'mascot-sealing' : '', label: 'The mascot, proud, closed into a ring' })}<strong>Active is clear.</strong>${n} closes, one full chord. Enjoy the quiet.${sharePromptHtml()}</div>`;
       } else {
         html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Your head is clear.</strong>Capture a loop, then define it when you're ready.</div>`;
       }
@@ -6507,7 +6541,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
 
         <section class="settings-section">
           <div class="settings-label">Sounds</div>
-          <p class="settings-helper">Soft sounds when loops move. Closing a loop plays the full chord.</p>
+          <p class="settings-helper">Soft sounds when loops move, and a light tap on phones that can. Closing a loop plays the full chord.</p>
           <div class="seg-row" role="group" aria-label="Sounds">
             <button type="button" data-action="set-sound" data-sound="on" class="${Sound.enabled ? 'active' : ''}" aria-pressed="${Sound.enabled}">On</button>
             <button type="button" data-action="set-sound" data-sound="off" class="${!Sound.enabled ? 'active' : ''}" aria-pressed="${!Sound.enabled}">Off</button>
@@ -6552,12 +6586,18 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         </section>
 
         <section class="settings-section">
+          <div class="settings-label">Tell a friend</div>
+          <p class="settings-helper">Know someone with a crowded head? Send them Open Loops.</p>
+          <button class="btn btn-ghost" data-action="share-app">Share Open Loops</button>
+        </section>
+
+        <section class="settings-section">
           <div class="settings-label">App version</div>
           <p class="settings-helper" id="app-version">Version ${APP_VERSION.number} · ${esc(APP_VERSION.date)}. New versions install on their own when you open the app.</p>
           ${swRegistration ? `<button class="btn btn-ghost" data-action="check-update">Check for update</button>` : ''}
         </section>
 
-        <div class="settings-credit"><a class="aux-credit" href="https://auxila.cc" target="_blank" rel="noopener">Powered by <span class="aux-word">auxila<i>.cc</i></span></a></div>
+        <div class="settings-credit"><p class="settings-helper">Also from Auxila: <a href="https://morningbrief.auxila.cc" target="_blank" rel="noopener">Morning Brief</a>, a calm reader for the sites you follow.</p><a class="aux-credit" href="https://auxila.cc" target="_blank" rel="noopener">Powered by <span class="aux-word">auxila<i>.cc</i></span></a></div>
 
         <div class="overlay-actions">
           <button class="btn btn-ghost" data-action="close-overlay">Done</button>
@@ -7259,6 +7299,15 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       setTimeout(show, 1700);
     }
 
+    // A light tap on phones that support it, on the same moments as the
+    // sounds. Follows the Sounds setting.
+    const TAPS = { capture: 8, up: 5, down: 5, wake: 8, seal: 10, land: [8, 40, 14], quickLand: [8, 30, 10], softLand: 6, reopen: 5, release: 6, ask: 4, cleared: [10, 50, 10, 50, 20], sweepNote: 5, sweepDone: [10, 50, 18], fresh: 8 };
+    function tap(name) {
+      const p = TAPS[name];
+      if (!p || typeof navigator.vibrate !== 'function') return;
+      try { navigator.vibrate(p); } catch (_) {}
+    }
+
     return {
       get enabled() { return enabled; },
       set(on) {
@@ -7272,6 +7321,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       unlock,
       play(name, arg) {
         if (!enabled) return;
+        tap(name);
         const fn = cues[name];
         if (!fn) return;
         try { fn(arg); } catch (_) {}
@@ -7457,7 +7507,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         });
       });
       const label = main.querySelector('.up-next-label');
-      return { tab: lastTab, statuses: lastStatuses, cards, labelRect: label ? label.getBoundingClientRect() : null };
+      return { tab: lastTab, statuses: lastStatuses, cards, labelRect: label ? label.getBoundingClientRect() : null, dots: main.querySelectorAll('.cap-meter-dot.on').length };
     }
 
     // Focus card promotion: the kind color floods in.
@@ -7811,6 +7861,19 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       if (label && snap.labelRect && !tabChanged && !calm) {
         const ly = snap.labelRect.top - label.getBoundingClientRect().top;
         if (Math.abs(ly) > 0.5) label.animate([{ transform: `translateY(${ly}px)` }, { transform: 'none' }], { duration: 420, delay: cue && cue.to === 'released' ? (performance.now() - lastCloseAt < 3000 ? 300 : 650) : 0, easing: EASE, fill: 'backwards' });
+      }
+
+      // The focus meter fills or empties a slot with the move, instead of snapping.
+      const dots = main.querySelectorAll('.cap-meter-dot');
+      const dotsOn = main.querySelectorAll('.cap-meter-dot.on').length;
+      if (dots.length && !tabChanged && !calm && dotsOn !== snap.dots) {
+        const ink = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+        const wait = cue && cue.to === 'released' ? (performance.now() - lastCloseAt < 3000 ? 300 : 650) : 140;
+        for (let i = Math.min(dotsOn, snap.dots); i < Math.max(dotsOn, snap.dots) && i < dots.length; i++) {
+          const d = dots[i];
+          if (dotsOn > snap.dots) d.animate([{ transform: 'scale(.3)' }, { transform: 'scale(1.3)', offset: 0.6 }, { transform: 'none' }], { duration: 380, delay: wait, easing: 'ease-out', fill: 'backwards' });
+          else d.animate([{ backgroundColor: ink, transform: 'none' }, { transform: 'scale(.7)', offset: 0.5 }, { backgroundColor: getComputedStyle(d).backgroundColor, transform: 'none' }], { duration: 420, delay: wait, easing: 'ease-out', fill: 'backwards' });
+        }
       }
 
       // Cards that left this view: follow them to where they went.
@@ -8935,6 +8998,16 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       renderOverlay();
       return;
     }
+    if (action === 'share-app' || action === 'share-app-later') {
+      try { localStorage.setItem(SHARE_PROMPT_KEY, '1'); } catch (_) {}
+      if (action === 'share-app') {
+        const r = await shareApp();
+        if (r === 'copied') toast('Link copied. Paste it wherever you like.');
+        else if (r === 'failed') toast(`Share this link: ${APP_LINK}`);
+      }
+      if (!view.overlay) renderMain();
+      return;
+    }
     if (action === 'open-share') {
       const month = new Date().toLocaleDateString(undefined, { month: 'long' });
       shareBlob = null;
@@ -8961,7 +9034,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         const file = new File([shareBlob], name, { type: 'image/png' });
         try {
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'My month in Open Loops' });
+            await navigator.share({ files: [file], title: 'My month in Open Loops', text: 'My month in Open Loops · openloops.auxila.cc' });
             return;
           }
         } catch (err) {
