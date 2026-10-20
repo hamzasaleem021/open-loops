@@ -1,5 +1,5 @@
 // Bump on every release, together with APP_VERSION in open-loops.html.
-const CACHE = 'open-loops-v25-plain-words';
+const CACHE = 'open-loops-v26-delight';
 
 const NETWORK_FIRST = [
   './open-loops.html',

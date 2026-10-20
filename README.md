@@ -36,7 +36,7 @@ Open Loops is built around one personal workflow:
 - **Active focus cap** - Show 3, 5, or 7 active loops before "Show more". Configure this in Settings. The Active view shows how many focus slots are in use.
 - **Now card** - The top Active loop is shown as a large card in its kind's color, with the rest listed under "Up next".
 - **Up next, not Now** - Loops entering Active (defined, reopened, or brought back from Parked) land in Up next. Only you promote a loop to Now, by reordering.
-- **Motion and sound** - Every move shows where the loop went. Closing seals the loop into a ring that lands in the Closed archive in the header. Sounds can be turned off in Settings.
+- **Motion and sound** - Every move shows where the loop went. Closing seals the loop into a ring that lands in the Closed archive in the header, and the focus meter fills or empties a slot with the move. On phones that support it, a light tap goes with each sound. Sounds (and taps) can be turned off in Settings.
 - **Closed shelf** - The Closed view shows one ring per loop closed this week (a pebble for each loop you let go of); the archive button shows the weekly count.
 - **Why Open Loops** - Tap the logo (or Settings → Why Open Loops) for a five-scene animated story: why unfinished things nag, the research behind next steps, how the app works, and who it's for. The landing page plays the same story. Music follows the Sounds setting; the voice-over is opt-in (Voice button in the sheet). On the landing page both start muted behind a Sound button.
 - **Quiet feedback** - Moves that animate don't also show a toast. Screen readers still hear each change. Toasts remain for Undo, errors and sync.
@@ -60,6 +60,7 @@ Open Loops is built around one personal workflow:
 - **A date in a new loop becomes an offer** - Type "call the bank friday" and Capture offers "Wake it Fri 9:00 AM?". Accept it and the loop goes to Parked until then instead of Inbox. Nothing changes unless you tap it. (A Schedule loop doesn't get the offer: its time is when it happens, which Define asks for.)
 - **Your head** - Your profile, opened from the one account button in the header (your initial, with the sync status as a small dot: green synced, amber syncing, red stuck), the Closed shelf, or Settings. At the top: your email, sync status (Retry when it's stuck) and Sign out. Below it, a look back built from loops you've already closed: your shelf of rings and pebbles, the longest-held loop you finally closed, how long each kind typically takes, and the decisions you made.
 - **Share card** - "Share your October" draws a 1080×1350 card of your month: counts and colours only, never what your loops say. Share it through the phone's share sheet or save the image.
+- **Tell a friend** - Asked once, at a high point: after ten closes, clearing Active shows "Know someone with a crowded head?" with **Send them Open Loops** and **Not now**. Either answer retires it for good. Settings → Tell a friend shares the link any time, and Settings mentions Morning Brief, the other Auxila app. The share card carries `openloops.auxila.cc` small in a corner.
 - **Nudges** - Optional web push, in one cheeky voice with copy that doesn't repeat and never streaks:
   - **When a loop wakes up**, right on time (within a minute): "Knock knock. “Call the bank” just woke up." with **Done** and **Tomorrow** buttons, or "Did Bilal reply?" for an Ask you're waiting on. Loops that wake together share one nudge.
   - **A check-in** at a time you pick (any minute of the day, kept exactly), only when there's something to say: the Sunday recap or a weekly "Still yours?". At most one a day; a time that has already passed today starts tomorrow, and Settings says when the next one comes.
@@ -224,7 +225,7 @@ open-loops-icon-512-v3.png
 The service worker cache is currently:
 
 ```js
-open-loops-v23-nudge-switch
+open-loops-v26-delight
 ```
 
 **On every release, bump both** `CACHE` in `open-loops-sw.js` and `APP_VERSION` in `open-loops.html` (number and date). The new cache name is what tells installed apps there's a new version; `APP_VERSION` is what Settings → App version shows, so you can see which version a phone is running.
