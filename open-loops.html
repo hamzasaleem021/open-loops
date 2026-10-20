@@ -16,6 +16,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Only the letters of the Auxila wordmark -->
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@100..125,500..900&text=auxilc.&display=swap" rel="stylesheet">
 <script src="./open-loops-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.103.3/dist/umd/supabase.js"
   integrity="sha384-hCWGwlkWlatZlBB+xRL7caQ0wei4AIvA80dQT3CEhafaMinAJQdfdb99y48Oai+Q"
@@ -3255,6 +3257,14 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   .mascot-bob .mascot-body, .mascot-eyes, .sweep-loop, .rise, .sweep-banner, .when-chip, .nudge-master.busy .switch::after { animation: none !important; }
   .mascot-sealing .mascot-seal { animation: none; stroke-dashoffset: 0; }
 }
+
+/* ── Auxila credit: the parent brand, kept small ── */
+.aux-credit { display: inline-flex; align-items: baseline; gap: 6px; color: var(--text-2); font-family: var(--sans); font-size: 13px; text-decoration: none; white-space: nowrap; }
+.aux-credit .aux-word { font-family: 'Mona Sans', var(--sans); font-stretch: 125%; font-weight: 900; letter-spacing: -0.03em; font-size: 14px; color: var(--text); }
+.aux-credit .aux-word i { font-style: normal; font-weight: 500; font-stretch: 100%; letter-spacing: 0; color: var(--text-2); }
+.aux-credit:hover .aux-word { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.auth-gate-card .aux-credit { margin-top: 28px; align-self: flex-start; }
+.settings-credit { padding: 14px 0 4px; border-top: 1px solid var(--border-soft); }
 </style>
 </head>
 <body>
@@ -3346,7 +3356,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 23, date: '19 Oct 2026' };
+  const APP_VERSION = { number: 24, date: '20 Oct 2026' };
   let swRegistration = null;
   let swState = 'pending';   // 'ready' once the service worker registers, 'failed' if it can't
 
@@ -6530,6 +6540,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
           ${swRegistration ? `<button class="btn btn-ghost" data-action="check-update">Check for update</button>` : ''}
         </section>
 
+        <div class="settings-credit"><a class="aux-credit" href="https://auxila.cc" target="_blank" rel="noopener">Powered by <span class="aux-word">auxila<i>.cc</i></span></a></div>
+
         <div class="overlay-actions">
           <button class="btn btn-ghost" data-action="close-overlay">Done</button>
         </div>
@@ -6575,6 +6587,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             <div class="auth-gate-hint" style="margin-top:24px">
               Wrong email? <button type="button" class="inline-link" data-action="auth-gate-reset">Try again</button>
             </div>
+            <a class="aux-credit" href="https://auxila.cc" target="_blank" rel="noopener">Powered by <span class="aux-word">auxila<i>.cc</i></span></a>
           </div>
         </div>`;
       return;
@@ -6595,6 +6608,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             <button class="auth-gate-btn" id="auth-gate-btn" data-action="auth-gate-send">Send link</button>
           </div>
           <p class="auth-gate-hint">We'll email you a sign-in link. No password.</p>
+          <a class="aux-credit" href="https://auxila.cc" target="_blank" rel="noopener">Powered by <span class="aux-word">auxila<i>.cc</i></span></a>
         </div>
       </div>`;
 
