@@ -3356,7 +3356,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 24, date: '20 Oct 2026' };
+  const APP_VERSION = { number: 25, date: '20 Oct 2026' };
   let swRegistration = null;
   let swState = 'pending';   // 'ready' once the service worker registers, 'failed' if it can't
 
@@ -3404,9 +3404,26 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     return !supabaseConfigIssue();
   }
 
+  // A sign-in email that didn't go out, in plain words. The raw error goes
+  // to the console.
+  function linkErrorText(e) {
+    console.warn('[open-loops] Sign-in link failed:', e);
+    const raw = String((e && (e.message || e.code)) || '').toLowerCase();
+    if (!navigator.onLine || /fetch|network/.test(raw)) return 'Couldn’t send the link. Check your internet connection and try again.';
+    if (/rate|too many|seconds/.test(raw)) return 'Too many sign-in emails in a row. Wait a minute, then try again.';
+    if (/valid|invalid|email/.test(raw) && !/sign-in/.test(raw)) return 'That email address doesn’t look right. Check it and try again.';
+    if (/sign-in isn’t|couldn’t connect/i.test(String(e && e.message))) return e.message;
+    return 'Couldn’t send the link. Try again in a minute.';
+  }
+
+  // What people see when sign-in can't start. The technical reason goes to
+  // the console for whoever runs this copy of the app.
   function supabaseClientIssue() {
-    if (!hasSupabaseCfg()) return supabaseConfigIssue();
-    if (!window.supabase) return 'The Supabase sign-in library could not load. Check your connection and reload.';
+    if (!hasSupabaseCfg()) {
+      console.warn('[open-loops] Sign-in is not configured:', supabaseConfigIssue());
+      return 'Sign-in isn’t available right now. Try again a little later.';
+    }
+    if (!window.supabase) return 'Open Loops couldn’t connect. Check your internet connection, then reload the page.';
     return null;
   }
 
@@ -5220,10 +5237,10 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         ? 'Brave has push messaging switched off. Turn on <b>Settings → Privacy and security → Use Google services for push messaging</b>, then try again.'
         : 'This browser’s push service isn’t available right now, so nudges can’t reach it. Try again later, or use another browser.',
       'push-denied': `Your ${device} isn’t letting ${esc(browserWord())} show notifications. Allow them in your ${device}’s settings, then try again.`,
-      'server-missing': 'Nudges aren’t set up on the server yet. Everything else still syncs.',
+      'server-missing': 'Nudges aren’t available yet. Everything else works as usual.',
       auth: 'Your sign-in has expired. Sign out and back in, then try again.',
       server: 'Something went wrong on our side. Try again in a minute.',
-      'push-rejected': 'The push service didn’t take the test. Try again in a minute.'
+      'push-rejected': 'The test nudge didn’t go through. Try again in a minute.'
     };
     const RETRY = { offline: 1, network: 1, 'not-ready': 1, 'push-service': 1, 'push-denied': 1, server: 1, 'push-rejected': 1 };
     if (!T[reason]) return { kind: 'error', text: T.server, retry };
@@ -5366,7 +5383,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     const r = await Push.save(change);
     if (!r.ok) {
       if (r.reason === 'blocked') { refreshNudgeSettings(); return false; }
-      showNudgeNote({ kind: 'info', text: 'Saved on this device. It reaches the server next time Open Loops can connect.' });
+      showNudgeNote({ kind: 'info', text: 'Saved. It takes effect as soon as you’re back online.' });
       return false;
     }
     nudgeUi.note = null;
@@ -6107,18 +6124,18 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     return `
       <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="sync-title">
         <div class="overlay-header">
-          <div class="overlay-meta"><div class="overlay-eyebrow">Sync</div><div class="overlay-step">Cross-device</div></div>
+          <div class="overlay-meta"><div class="overlay-eyebrow">Your devices</div></div>
           <button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
         <h2 class="overlay-title" id="sync-title">Keep loops everywhere.</h2>
         <p class="overlay-subtitle">Sign in with your email. Your loops will sync automatically across devices.</p>
         ${clientIssue ? `
-          <div class="sync-info">Sign-in is required before using Open Loops. ${esc(clientIssue)} Check <code>open-loops-config.js</code> and run <code>open-loops-supabase.sql</code> in Supabase.</div>
+          <div class="sync-info">${esc(clientIssue)}</div>
         ` : loggedIn ? `
           ${hasError ? `
-            <div class="sync-info" style="color:#f88;border-color:rgba(255,68,119,0.15);background:rgba(255,68,119,0.06)">Last sync didn't go through. Your changes are safe on this device.</div>
+            <div class="sync-info" style="color:#f88;border-color:rgba(255,68,119,0.15);background:rgba(255,68,119,0.06)">Your latest changes haven’t reached your other devices yet. They’re safe on this one.</div>
             <div class="overlay-actions" style="margin-top:0;margin-bottom:12px">
-              <button class="btn btn-primary" data-action="sync-retry" ${isSyncing ? 'disabled' : ''}>${isSyncing ? 'Retrying…' : 'Retry sync'}</button>
+              <button class="btn btn-primary" data-action="sync-retry" ${isSyncing ? 'disabled' : ''}>${isSyncing ? 'Trying again…' : 'Try again'}</button>
             </div>
           ` : `
             <div class="sync-info" style="color:var(--do)">Connected. Your loops sync automatically across devices.</div>
@@ -6563,9 +6580,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
               <div class="auth-gate-logo-mark">${mascotSvg('awake', { mark: true, width: 30 })}</div>
               <span class="auth-gate-logo-name">Open Loops</span>
             </div>
-            <h1 class="auth-gate-headline">Sign-in setup needed.</h1>
-            <p class="auth-gate-sub">${esc(clientIssue)} Open Loops requires sign-in so your loops stay the same across devices.</p>
-            <p class="auth-gate-hint">Edit <code>open-loops-config.js</code>, run <code>open-loops-supabase.sql</code> in Supabase, then reload.</p>
+            <h1 class="auth-gate-headline">Can’t sign in right now.</h1>
+            <p class="auth-gate-sub">${esc(clientIssue)}</p>
           </div>
         </div>`;
       return;
@@ -6602,7 +6618,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
           </div>
           ${mascotSvg('awake', { width: 220, className: 'clay-art mascot-bob', label: 'The Open Loops mascot' })}
           <h1 class="auth-gate-headline">Clear your head everywhere.</h1>
-          <p class="auth-gate-sub">Sign in first. Your loops live in Supabase so every device sees the same state.</p>
+          <p class="auth-gate-sub">Sign in with your email and your loops follow you to every phone and computer you use.</p>
           <div class="auth-gate-email-row">
             <input type="email" class="auth-gate-input" id="auth-gate-email" placeholder="your@email.com" autocomplete="email" value="${esc(view.authGateEmail)}">
             <button class="auth-gate-btn" id="auth-gate-btn" data-action="auth-gate-send">Send link</button>
@@ -8078,7 +8094,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         // Keep label consistent with initial state ("Send link") so repeated
         // attempts don't look like a different button.
         if (btn) { btn.disabled = false; btn.textContent = 'Send link'; }
-        toast(err.message || 'Could not send link. Try again.');
+        toast(linkErrorText(err));
       }
       return;
     }
@@ -8720,10 +8736,10 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         await Sync.sendMagicLink(email);
         lastMagicLinkAt = Date.now();
         setSyncStatus('idle', 'Check email');
-        toast('Magic link sent — check your email.');
+        toast('Sign-in link sent. Check your email.');
       } catch(e) {
         setSyncStatus('error', 'Error');
-        toast(e.message || 'Could not send link.');
+        toast(linkErrorText(e));
       }
       return;
     }
@@ -8738,8 +8754,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       const fromBanner = !!el.closest('.sync-error-banner');
       if (!fromBanner) renderOverlay();
       const result = await Sync.retry();
-      if (result?.ok) toast('Sync restored.');
-      else toast('Still having trouble syncing.');
+      if (result?.ok) toast('Back in sync.');
+      else toast('Still can’t reach your other devices. Your changes are safe here.');
       if (!fromBanner && (view.overlay?.type === 'sync' || view.overlay?.type === 'profile')) renderOverlay();
       return;
     }
@@ -8971,7 +8987,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         announce('Nudges are off for this device.');
         const r = await done;
         if (nudgeUi.disabling === done) nudgeUi.disabling = null;
-        if (r && r.serverOk === false) showNudgeNote({ kind: 'info', text: 'Off for this device. Open Loops finishes tidying up when it can reach the server.' });
+        if (r && r.serverOk === false) showNudgeNote({ kind: 'info', text: 'Nudges are off on this device.' });
         return;
       }
       if (state === 'blocked') { nudgeRecheck(); return; }
@@ -9381,7 +9397,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         processQueue:  async () => ({ ok: true, pending: true }),
         retry:         async () => ({ ok: true, pending: true }),
         ensureRealtime: () => {},
-        sendMagicLink: async () => { throw new Error(supabaseClientIssue() || 'Supabase sign-in is not ready.'); },
+        sendMagicLink: async () => { throw new Error(supabaseClientIssue() || 'Sign-in isn’t ready yet. Try again in a moment.'); },
         signOut:       async () => {},
         savePush:      async () => { throw new Error('Sign in first.'); },
         deletePush:    async () => {},
@@ -10048,7 +10064,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
           startOnboarding();
         }
         renderAll();
-        if (foundLegacy) toast('Older local data was kept aside for safety.');
+        if (foundLegacy) toast('We kept an older copy of your loops on this device, just in case.');
         else wakeDueLoops();
       } else if (event === 'TOKEN_REFRESHED' && session) {
         // Fix 4: the JWT was refreshed. Realtime uses this token — if we
@@ -10106,7 +10122,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             if (loadQueue().length) await processQueue();
             await pullAll();
             setupRealtime({ skipInitialPull: true });
-            if (foundLegacy) toast('Older local data was kept aside for safety.');
+            if (foundLegacy) toast('We kept an older copy of your loops on this device, just in case.');
             else wakeDueLoops({ quiet: /[?&](sweep|loop)=/.test(location.search) });
             resyncNudges();
           }
