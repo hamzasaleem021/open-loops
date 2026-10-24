@@ -3554,6 +3554,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   // details: small, known facts about how a loop is moving or how it ended.
   //   sentAt   — an Ask was sent; it now waits on someone else
+  //   sentText — the message as it was sent (follow-ups refer back to it)
   //   nudges   — follow-ups sent for that Ask
   //   steps    — next steps finished on a Do
   //   decision — what a Decide loop settled on
@@ -3566,6 +3567,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const out = {};
     const sentAt = validIso(src.sentAt);
     if (sentAt) out.sentAt = sentAt;
+    if (sentAt && typeof src.sentText === 'string' && src.sentText.trim()) out.sentText = src.sentText.trim().slice(0, MAX_LOOP_TEXT_LEN);
     const nudges = parseInt(src.nudges, 10);
     if (nudges > 0) out.nudges = Math.min(nudges, 99);
     const steps = parseInt(src.steps, 10);
@@ -4166,20 +4168,64 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // Reads a day and a time out of a note like "Saturday 10am" or
   // "Oct 24, 4:30pm". Returns { date, text } or null when it finds neither.
   // Numeric dates (10/24) are skipped on purpose: day/month vs month/day
-  // is a coin flip, and a wrong guess is worse than no guess.
+  // is a coin flip, and a wrong guess is worse than no guess. A wrong guess
+  // is also why ordinary words are left alone: "2 decks" isn't December 2,
+  // "sun cream" isn't Sunday, "$15.00" isn't 3 PM.
   const WEEKDAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const MONTH_NAMES = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  // Every spelling of each weekday, full name first. The short ones that are
+  // also ordinary words count only when the note clearly means the day.
+  const WEEKDAY_SPELLINGS = [
+    ['sunday', 'sun'], ['monday', 'mon'], ['tuesday', 'tues', 'tue'], ['wednesday', 'weds', 'wed'],
+    ['thursday', 'thurs', 'thur', 'thu'], ['friday', 'fri'], ['saturday', 'sat']
+  ];
+  const AMBIGUOUS_DAYS = new Set(['sun', 'sat', 'wed']);
+  // How much of a note to read for a time: a date buried deep in a long
+  // note is usually part of the story, not when to come back.
+  const WHEN_READ_CHARS = 120;
+  function findWeekday(t, i) {
+    const re = new RegExp(`\\b(next\\s+)?(${WEEKDAY_SPELLINGS[i].join('|')})\\b`, 'g');
+    let x;
+    while ((x = re.exec(t))) {
+      const word = x[2];
+      const before = t.slice(0, x.index);
+      if (/['’]$/.test(before)) continue;                     // c'mon
+      if (AMBIGUOUS_DAYS.has(word) && !x[1]) {
+        const after = t.slice(x.index + x[0].length);
+        const clear = /\b(on|by|this|until|till|before|from|every|due|for)\s+$/.test(before) ||
+          /^\s*(\d|noon\b|morning\b|afternoon\b|evening\b|night\b|at\b)/.test(after) ||
+          /^[\s.!?]*$/.test(after);
+        if (!clear) continue;
+      }
+      return x;
+    }
+    return null;
+  }
+  // "9.30" and "14:00" are times; "$15.00", "12.50%" and "2.10/mo" are not.
+  function findClockTime(t) {
+    const re = /\b([01]?\d|2[0-3])[:.]([0-5]\d)\b/g;
+    let x;
+    while ((x = re.exec(t))) {
+      const before = t.slice(Math.max(0, x.index - 4), x.index);
+      const after = t.slice(x.index + x[0].length, x.index + x[0].length + 2);
+      if (/[$£€¥₹]\s*$|\b(rs|pkr|usd|eur|gbp)\.?\s*$|[\d.,]$/.test(before)) continue;
+      if (/^\s*[%/]|^[.,]\d/.test(after)) continue;
+      return x;
+    }
+    return null;
+  }
   function parseWhen(text, now = new Date()) {
-    const src = String(text || '');
+    const src = String(text || '').slice(0, WHEN_READ_CHARS);
     const t = src.toLowerCase();
-    const MON = '(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?';
+    // A month only as a whole word: "dec", "dec.", "december", never "decks".
+    const MON = '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?(?![a-z])';
     let day = null, dayHit = null, kind = null, evening = false, m;
 
     let monthIdx = -1, dom = 0;
     if ((m = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+${MON}`).exec(t))) {
-      dom = +m[1]; monthIdx = MONTH_NAMES.indexOf(m[2]); dayHit = m;
+      dom = +m[1]; monthIdx = MONTH_NAMES.indexOf(m[2].slice(0, 3)); dayHit = m;
     } else if ((m = new RegExp(`\\b${MON}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`).exec(t))) {
-      dom = +m[2]; monthIdx = MONTH_NAMES.indexOf(m[1]); dayHit = m;
+      dom = +m[2]; monthIdx = MONTH_NAMES.indexOf(m[1].slice(0, 3)); dayHit = m;
     }
     if (dayHit) {
       const candidate = new Date(now.getFullYear(), monthIdx, dom);
@@ -4200,7 +4246,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         }
       }
       WEEKDAY_NAMES.forEach((name, i) => {
-        const x = new RegExp(`\\b(next\\s+)?(?:${name}|${name.slice(0, 3)})\\b`).exec(t);
+        const x = findWeekday(t, i);
         if (x && (!dayHit || x.index < dayHit.index)) {
           let n = (i - now.getDay() + 7) % 7;
           if (x[1] && n === 0) n = 7; // "next Monday", said on a Monday
@@ -4214,7 +4260,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const h = +m[1];
       hour = h > 12 ? Math.min(h, 23) : (h % 12) + (m[3][0] === 'p' ? 12 : 0);
       minute = m[2] ? Math.min(+m[2], 59) : 0; timeHit = m;
-    } else if ((m = /\b([01]?\d|2[0-3])[:.]([0-5]\d)\b/.exec(t))) {
+    } else if ((m = findClockTime(t))) {
       hour = +m[1]; minute = +m[2]; timeHit = m;
     } else if ((m = /\bnoon\b/.exec(t))) { hour = 12; timeHit = m; }
     else if ((m = /\bmorning\b/.exec(t))) { hour = 9; timeHit = m; }
@@ -4238,32 +4284,93 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   }
 
   // ── ASKS ──
-  // "Bilal: can he start before the 15th?" → { who: 'Bilal', ask: '…' }
-  function parseAsk(text) {
+  // Who an Ask is for, and what it asks, read from the note the way people
+  // write it:
+  //   "Bilal: can he start before the 15th?" · "Bilal - can he start…"
+  //   "Priya, can she intro us to Sana?"     · "Ask Sam if he can review my PR"
+  //   "Ask Sam to review my PR"              · "Ask mom for the recipe"
+  //   "Bilal" (just the name; the loop's own text says what for)
+  // ask is written about them ("can he…"); askDraft turns it toward them.
+  const ASK_OPENERS = /^(can|could|would|will|should|might|did|does|do|is|are|was|were|has|have|had|please|when|what|where|who|how|any|just|quick)\b/i;
+  function parseAsk(text, nameAlone = true) {
     const s = String(text || '').trim();
-    const m = /^([^:\n]{1,40}?)\s*(?::|\s[\u2014\u2013-]\s)\s*([\s\S]+)$/.exec(s);
+    let m = /^([^:\n]{1,40}?)\s*(?::|\s[—–-]\s)\s*([\s\S]+)$/.exec(s);
     if (m && m[2].trim() && m[1].trim().split(/\s+/).length <= 4) return { who: m[1].trim(), ask: m[2].trim() };
+    m = /^([^\s,:\d][^,:\n\d]{0,30}?),\s+([\s\S]+)$/.exec(s);
+    if (m && m[1].trim().split(/\s+/).length <= 3 && ASK_OPENERS.test(m[2])) return { who: m[1].trim(), ask: m[2].trim() };
+    m = /^(?:ask|check with|ping|text|email|message)\s+(\S+(?:\s+[A-Z]\S*)?)\s+(if|whether|to|for|about)\s+([\s\S]+)$/i.exec(s);
+    if (m) {
+      const who = m[1].replace(/[,.]$/, '');
+      const rest = m[3].trim().replace(/[.?!]+$/, '');
+      const how = m[2].toLowerCase();
+      if (how === 'to') return { who, ask: `could you ${rest}?`, direct: true };
+      if (how === 'for') return { who, ask: `could you send me ${rest}?`, direct: true };
+      if (how === 'about') return { who, ask: `any news on ${rest}?`, direct: true };
+      const q = /^(he|she|they)\s+(can|could|will|would|should|is|are|was|were|has|have|had|did|does|do)\b\s*([\s\S]*)$/i.exec(rest);
+      return { who, ask: q ? `${q[2]} ${q[1]} ${q[3]}?`.replace(/\s+\?$/, '?') : `${rest}?` };
+    }
+    // Just a name: one word, or two or three capitalised ones. Only a note
+    // can be just a name; a one-word loop ("Groceries") is not a person.
+    const words = s.split(/\s+/);
+    if (nameAlone && s && /^[\p{L}'’.-]+(?:\s+[\p{L}'’.-]+){0,2}$/u.test(s) &&
+        (words.length === 1 || words.every(w => /^\p{Lu}/u.test(w)))) return { who: s, ask: '' };
     return { who: '', ask: s };
   }
+  // The person and the ask for a loop: the note first, then the loop's own
+  // text ("Ask Bilal for the contract").
+  function askOf(loop) {
+    const note = parseAsk(loop && loop.promptAnswer);
+    if (note.who && note.ask) return note;
+    const raw = parseAsk(loop && loop.rawText, false);
+    if (!note.who) return raw.who ? raw : { who: '', ask: note.ask || '' };
+    if (raw.who && raw.who.toLowerCase() === note.who.toLowerCase()) return { ...raw, who: note.who };
+    return { who: note.who, ask: '' };
+  }
 
-  // Notes are written about the person ("can he start…"); the message is
-  // written to them ("can you start…"). Only the opening is rewritten.
+  // Notes are written about the person ("can she intro us to her fund?");
+  // the message is written to them ("can you intro us to your fund?"). Once
+  // the opening names them, the rest of the sentence follows.
+  const OBJECT_FOLLOWERS = /^(to|for|about|at|on|in|with|by|from|and|or|if|when|that|a|an|the|this|these|those|back|know|up|out|again|now|today|tomorrow|soon|a\s+call|[.,!?;:]|$)/i;
   function toSecondPerson(text) {
-    return text.replace(/^(can|could|would|will|should|might|did)\s+(he|she|they)\b/i, (m, aux) => `${aux} you`)
-      .replace(/^(is|are)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Are' : 'are'} you`)
-      .replace(/^(was|were)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Were' : 'were'} you`)
-      .replace(/^(does|do)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Do' : 'do'} you`)
-      .replace(/^(has|have)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Have' : 'have'} you`);
+    const opening = /^(can|could|would|will|should|might|did|is|are|was|were|does|do|has|have)\s+(he|she|they)\b/i.exec(text);
+    if (!opening) return text;
+    const aux = opening[1], pron = opening[2].toLowerCase();
+    const cap = w => aux[0] === aux[0].toUpperCase() ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+    const AGREE = { is: 'are', was: 'were', does: 'do', has: 'have' };
+    let out = cap(AGREE[aux.toLowerCase()] || aux.toLowerCase()) + ' you' + text.slice(opening[0].length);
+    const forms = pron === 'she' ? { obj: 'her', poss: 'her', own: 'hers', self: 'herself' }
+      : pron === 'he' ? { obj: 'him', poss: 'his', own: 'his', self: 'himself' }
+      : { obj: 'them', poss: 'their', own: 'theirs', self: 'themselves' };
+    out = out.replace(new RegExp(`\\b${pron}\\s+(is|was|has|does)\\b`, 'gi'), (m, v) => `you ${AGREE[v.toLowerCase()]}`)
+      .replace(new RegExp(`\\b${pron}\\b`, 'gi'), 'you')
+      .replace(new RegExp(`\\b${forms.self}\\b`, 'gi'), 'yourself');
+    if (forms.own !== forms.poss) out = out.replace(new RegExp(`\\b${forms.own}\\b`, 'gi'), 'yours');
+    out = out.replace(new RegExp(`\\b(${forms.poss}|${forms.obj})\\b(\\s*)`, 'gi'), (m, w, sp, at, all) => {
+      const next = all.slice(at + m.length);
+      if (w.toLowerCase() === forms.obj && forms.obj !== forms.poss) return 'you' + sp;
+      return (OBJECT_FOLLOWERS.test(next) ? 'you' : 'your') + sp;
+    });
+    return out;
   }
 
   function askDraft(loop, nudge) {
-    const { who, ask } = parseAsk(loop.promptAnswer || '');
-    const body = who ? toSecondPerson((ask || '').trim()) : (ask || loop.rawText || '').trim();
-    // Lowercase the first word only when it's an ordinary question word, so
+    const { who, ask, direct } = askOf(loop);
+    const d = (loop && loop.details) || {};
+    if (nudge && who && d.sentText) {
+      const when = d.sentAt && isSameDay(new Date(d.sentAt), new Date()) ? 'earlier today' : relativeDay(d.sentAt);
+      return `Hi ${who}, just following up on my message ${when}.`;
+    }
+    let body = (ask || '').trim();
+    if (who && body && !direct) body = toSecondPerson(body);
+    if (!body) {
+      // Only the name is known: the loop's own text says what it's about.
+      body = String((loop && loop.rawText) || '').trim();
+      const first = body.split(/\s+/)[0] || '';
+      if (who && /^\p{Lu}\p{Ll}+$/u.test(first) && first.toLowerCase() !== who.split(/\s+/)[0].toLowerCase()) body = body.charAt(0).toLowerCase() + body.slice(1);
+    }
+    // Lowercase the first word only when it's an ordinary word, so
     // "Can he start…" reads "Hi Bilal, can he start…" but names stay intact.
-    const soft = /^(can|could|would|will|is|are|do|does|did|when|what|where|who|how|please|any|have|has|just|quick)\b/i.test(body)
-      ? body.charAt(0).toLowerCase() + body.slice(1)
-      : body;
+    const soft = ASK_OPENERS.test(body) || /^(could|any)\b/i.test(body) ? body.charAt(0).toLowerCase() + body.slice(1) : body;
     if (nudge) return who ? `Hi ${who}, just checking in on this: ${soft}` : `Just checking in on this: ${soft}`;
     return who ? `Hi ${who}, ${soft}` : body;
   }
@@ -4300,13 +4407,20 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   // ── DECISIONS ──
   // "Air 15 or X1, decide by Friday" → ['Air 15', 'X1']
+  // "Stripe/Paddle" → ['Stripe', 'Paddle'], but "$19 or $29/mo" → ['$19', '$29/mo']:
+  // a slash only separates choices when no "or" does, and never before a unit.
+  const PER_UNIT = /^(mo|month|yr|year|wk|week|day|hr|hour|h|user|seat|person|head|unit|each|pp|night)\b/i;
   function decisionOptions(text) {
-    const first = String(text || '').split(/[,.;\n]|\b(?:decide|by|before)\s+(?:mon|tue|wed|thu|fri|sat|sun|tomorrow|today|next)/i)[0] || '';
-    const parts = first
-      .replace(/^(?:should i|do i|whether to|whether i|between|either)\s+/i, '')
-      .split(/\s+(?:or|vs\.?|versus)\s+|\s*\/\s*/i)
-      .map(s => s.trim().replace(/[?!]+$/, ''))
-      .filter(Boolean);
+    const first = String(text || '').split(/[,;\n]|\.(?!\d)|\b(?:decide|by|before)\s+(?:mon|tue|wed|thu|fri|sat|sun|tomorrow|today|next)/i)[0] || '';
+    const stripped = first.replace(/^[^:]{1,40}:\s*/, '').replace(/^(?:should i|do i|whether to|whether i|between|either)\s+/i, '');
+    const byWord = /\s+(?:or|vs\.?|versus)\s+/i;
+    let parts;
+    if (byWord.test(stripped)) parts = stripped.split(byWord);
+    else {
+      parts = stripped.split(/\s*\/\s*/);
+      if (parts.slice(1).some(p => PER_UNIT.test(p.trim()))) return [];
+    }
+    parts = parts.map(s => s.trim().replace(/[?!]+$/, '')).filter(Boolean);
     if (parts.length < 2 || parts.length > 4 || parts.some(p => p.length > 40)) return [];
     return parts;
   }
@@ -4511,7 +4625,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
     if (loop.status === 'waiting') {
       if (isSentAsk) {
-        const who = parseAsk(loop.promptAnswer).who || 'them';
+        const who = askOf(loop).who || 'them';
         return { icon: 'person', text: wake ? `Waiting on ${who} · back ${formatWake(loop.wakeAt)}` : `Waiting on ${who}` };
       }
       if (wake) return { icon: 'sun', text: `Wakes ${formatWake(loop.wakeAt)}` };
@@ -4810,7 +4924,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const d = loop.details || {};
       const schedAt = scheduleAt(loop);
       reason = loop.kind === 'ask' && d.sentAt
-        ? { icon: 'person', text: `Checking back on ${parseAsk(loop.promptAnswer).who || 'them'}` }
+        ? { icon: 'person', text: `Checking back on ${askOf(loop).who || 'them'}` }
         : schedAt !== null
           ? { icon: 'cal', text: `${schedAt > Date.now() ? 'Starts' : Date.now() - schedAt < 15 * 60000 ? 'It’s time:' : 'Was'} ${formatEvent(new Date(schedAt).toISOString())}` }
           : { icon: 'sun', text: `You parked it until ${formatWake(loop.wakeAt)}` };
@@ -5781,7 +5895,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       return scheduleAt(loop) !== null ? 'Change the time' : 'Set the time';
     }
     if (loop.kind === 'ask' && loop.details && loop.details.sentAt) {
-      const who = parseAsk(loop.promptAnswer).who;
+      const who = askOf(loop).who;
       return who ? `Did ${who} reply?` : 'Did they reply?';
     }
     return (kindMeta[loop.kind] || kindMeta.inbox).action;
@@ -7215,12 +7329,12 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           </div>${editLink}`;
       }
     } else if (kind === 'ask') {
-      const { who, ask } = parseAsk(loop.promptAnswer);
+      const { who, ask } = askOf(loop);
       const them = who || 'them';
       if (step === 'reply') {
         title = who ? `Did ${who} reply?` : 'Did they reply?';
         sub = `You asked ${relativeDay(d.sentAt)}${d.nudges ? ` and nudged ${d.nudges === 1 ? 'once' : d.nudges + ' times'}` : ''}.`;
-        body = actLoopBox(loop.rawText, ask) + `
+        body = actLoopBox(loop.rawText, d.sentText ? `You sent: ${d.sentText}` : ask) + `
           <div class="act-list">
             ${actBtn({ action: 'complete-done', label: 'Got it, close it', primary: true, loopId: id, icon: ACT_ICON.ring })}
             ${actBtn({ action: 'ask-nudge', label: `Nudge ${them}`, sub: 'A short follow-up, ready to send', loopId: id, icon: ACT_ICON.send })}
@@ -8700,7 +8814,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const prevLoop = getLoop(ov.loopId);
       // A new note means a new ask: forget that the old one was sent.
       const details = { ...((prevLoop && prevLoop.details) || {}) };
-      if (prevLoop && ans !== (prevLoop.promptAnswer || '')) { delete details.sentAt; delete details.nudges; }
+      if (prevLoop && ans !== (prevLoop.promptAnswer || '')) { delete details.sentAt; delete details.nudges; delete details.sentText; }
       // A Schedule loop's time decides where it waits and when it comes back,
       // so it never goes through the "when should it come back?" presets:
       // schedulePatch() works it out. Every other kind drops the Schedule
@@ -8893,6 +9007,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (result === 'failed') { toast("Couldn't open sharing here. Copy the text and send it yourself."); return; }
       if (result === 'copied') toast('Copied. Paste it wherever you talk to them.');
       if (view.overlay !== ov) return;
+      if (!ov.nudge) ov.sentText = msg;
       ov.step = 'sent';
       ov.waitOnly = false;
       renderActStep();
@@ -8917,12 +9032,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       // sentAt is the first time it was sent; nudges count the follow-ups.
       if (!details.sentAt) details.sentAt = nowIso();
       if (ov.nudge) details.nudges = (details.nudges || 0) + 1;
+      else if (ov.sentText) details.sentText = ov.sentText;
       const patch = { status: 'waiting', wakeAt, details: cleanDetails(details) };
       updateLoop(target.id, patch);
       closeOverlay();
       await persistAndRender();
       Sync.updateLoop(target.id, patch);
-      const who = parseAsk(target.promptAnswer).who || 'them';
+      const who = askOf(target).who || 'them';
       announce(`Parked. Checking back with ${who} ${formatWake(wakeAt)}.`);
       return;
     }

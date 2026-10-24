@@ -101,11 +101,26 @@ export function pickLine(lines: Line[], recent: string[], seed: number): Line {
   return pool[Math.abs(seed) % pool.length];
 }
 
-// "Bilal: can he start before the 15th?" → "Bilal" (same rule as the app).
-export function askWho(note: string | null | undefined): string {
-  const s = String(note || '').trim();
-  const m = /^([^:\n]{1,40}?)\s*(?::|\s[—–-]\s)\s*([\s\S]+)$/.exec(s);
-  return m && m[2].trim() && m[1].trim().split(/\s+/).length <= 4 ? m[1].trim() : '';
+// Who an Ask is for, by the same rules as the app's parseAsk()/askOf():
+// "Bilal: can he…", "Bilal - can he…", "Priya, can she…", "Ask Sam if…",
+// "Ask Sam to…/for…/about…", or a note that is just the name. The note
+// first, then the loop's own text ("Ask Bilal for the contract").
+const ASK_OPENERS = /^(can|could|would|will|should|might|did|does|do|is|are|was|were|has|have|had|please|when|what|where|who|how|any|just|quick)\b/i;
+function whoIn(text: string | null | undefined, nameAlone: boolean): string {
+  const s = String(text || '').trim();
+  let m = /^([^:\n]{1,40}?)\s*(?::|\s[—–-]\s)\s*([\s\S]+)$/.exec(s);
+  if (m && m[2].trim() && m[1].trim().split(/\s+/).length <= 4) return m[1].trim();
+  m = /^([^\s,:\d][^,:\n\d]{0,30}?),\s+([\s\S]+)$/.exec(s);
+  if (m && m[1].trim().split(/\s+/).length <= 3 && ASK_OPENERS.test(m[2])) return m[1].trim();
+  m = /^(?:ask|check with|ping|text|email|message)\s+(\S+(?:\s+[A-Z]\S*)?)\s+(?:if|whether|to|for|about)\s+/i.exec(s);
+  if (m) return m[1].replace(/[,.]$/, '');
+  const words = s.split(/\s+/);
+  if (nameAlone && s && /^[\p{L}'’.-]+(?:\s+[\p{L}'’.-]+){0,2}$/u.test(s) &&
+      (words.length === 1 || words.every(w => /^\p{Lu}/u.test(w)))) return s;
+  return '';
+}
+export function askWho(note: string | null | undefined, rawText?: string | null): string {
+  return whoIn(note, true) || whoIn(rawText, false);
 }
 
 // The app sets a Schedule loop's wake time to its time (details.at). Only that
@@ -178,7 +193,7 @@ export function composeWake(sub: { recent_lines: string[] | null }, woke: Loop[]
     const d = l.details && typeof l.details === 'object' ? l.details : {};
     const t = short(l.raw_text);
     const waitingOnSomeone = l.kind === 'ask' && !!d.sentAt;
-    const who = waitingOnSomeone ? askWho(l.prompt_answer) : '';
+    const who = waitingOnSomeone ? askWho(l.prompt_answer, l.raw_text) : '';
     const line = waitingOnSomeone
       ? fill(pickLine(LINES.wakeAsk, recent, seed), { t, whoS: who || 'they', whoO: who || 'them' })
       : fill(pickLine(LINES.wakeOne, recent, seed), { t });
