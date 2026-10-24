@@ -3714,8 +3714,14 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   }
   // The one place a Schedule loop’s time is set. Returns the patch: the time,
   // the nudge (wake) time that follows from it, and where the loop waits.
-  //   opts.status — a route the person chose (Define’s Up next / Park);
+  //   opts.status — a route the person chose (Sort’s Up next / Park);
   //   otherwise: Parked until its time.
+  //   opts.repeat — the picker’s Repeats choice ('' = doesn’t repeat; left
+  //   out = keep what it has). Turning it on, or changing it, starts the
+  //   series at this time.
+  //   opts.scope — for a loop that already repeats the same way: 'this'
+  //   moves just this one (the rest keep their days, as in a calendar);
+  //   'all' moves the series to this time from now on.
   function schedulePatch(loop, atIso, opts = {}) {
     const details = { ...((loop && loop.details) || {}) };
     if (atIso) {
@@ -3724,6 +3730,15 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     } else {
       delete details.at;
       delete details.calAt;
+    }
+    if ('repeat' in opts) {
+      if (atIso && REPEATS[opts.repeat]) {
+        if (details.repeat !== opts.repeat || !details.repeatFrom || opts.scope === 'all') details.repeatFrom = atIso;
+        details.repeat = opts.repeat;
+        details.series = details.series || (loop && loop.id) || undefined;
+      } else if (!opts.repeat) {
+        delete details.repeat; delete details.repeatFrom; delete details.series;
+      }
     }
     delete details.outcome;
     const wakeAt = atIso ? scheduleNudgeFor(new Date(atIso).getTime()) : null;
@@ -3736,6 +3751,40 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || '') || !/^\d{1,2}:\d{2}/.test(timeStr || '')) return null;
     return fromLocalInputs(dateStr, timeStr);
   }
+  // The Repeats choice under a Schedule picker; undefined when there isn't one.
+  function readScheduleRepeat(prefix) {
+    const el = document.getElementById(`${prefix}-repeat`);
+    return el ? (REPEATS[el.value] ? el.value : '') : undefined;
+  }
+  // For a loop that already repeats: move just this one, or the series.
+  function readScheduleScope(prefix) {
+    const el = document.getElementById(`${prefix}-scope`);
+    return el && !el.closest('[hidden]') && el.value === 'all' ? 'all' : 'this';
+  }
+  // The opts a picker's choices add up to, for schedulePatch().
+  function schedulePickOpts(prefix) {
+    const repeat = readScheduleRepeat(prefix);
+    return repeat === undefined ? {} : { repeat: repeat || '', scope: readScheduleScope(prefix) };
+  }
+  // "weekly", "every Tuesday", "every day", "monthly" in a note.
+  function parseRepeat(text) {
+    const t = String(text || '').toLowerCase().slice(0, WHEN_READ_CHARS);
+    if (/\b(daily|every\s+day|each\s+day|every\s+(morning|evening|night))\b/.test(t)) return 'day';
+    if (/\b(weekly|every\s+week|each\s+week|every\s+(mon|tue|wed|thu|fri|sat|sun)[a-z]*)\b/.test(t)) return 'week';
+    if (/\b(monthly|every\s+month|each\s+month)\b/.test(t)) return 'month';
+    return '';
+  }
+  function ordinal(n) {
+    const v = n % 100;
+    return n + (v >= 11 && v <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' })[n % 10] || 'th');
+  }
+  function repeatPhrase(unit, at) {
+    const clock = clockText(at);
+    if (unit === 'day') return `every day at ${clock}`;
+    if (unit === 'week') return `every ${at.toLocaleDateString(undefined, { weekday: 'long' })} at ${clock}`;
+    if (unit === 'month') return `on the ${ordinal(at.getDate())} of every month at ${clock}`;
+    return '';
+  }
   function readSchedulePick(prefix) {
     const d = fromScheduleInputs(document.getElementById(`${prefix}-date`)?.value, document.getElementById(`${prefix}-time`)?.value);
     if (!d) { toast('Pick a day and a time.'); return null; }
@@ -3743,34 +3792,56 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return d.toISOString();
   }
   // The honest line under every Schedule picker: what will actually happen.
-  function scheduleNoteText(atMs) {
+  // series: { unit, from } when the loop already repeats; scope 'this' keeps
+  // the series where it was.
+  function scheduleNoteText(atMs, repeat = '', series = null, scope = 'this') {
     if (atMs === null || !Number.isFinite(atMs)) return 'Pick a day and a time. The nudge comes right then.';
     if (atMs <= Date.now()) return 'That time has already passed. Pick one that is still ahead.';
     const when = formatWake(new Date(atMs).toISOString());
+    const keepsSeries = series && series.unit === repeat && scope !== 'all';
+    const then = !REPEATS[repeat] ? ''
+      : keepsSeries ? ` The rest stay ${repeatPhrase(repeat, new Date(series.from))}.`
+      : ` Then ${repeatPhrase(repeat, new Date(atMs))}.`;
     let nudges = false;
     try { nudges = nudgeState() === 'on' && Push.prefs().wakeups !== false; } catch (_) {}
     return nudges
-      ? `The nudge comes right then: ${when}.`
-      : `It comes back to Up next ${when}. Nudges are off on this phone, so turn them on in Settings to get a ping too.`;
+      ? `The nudge comes right then: ${when}.${then}`
+      : `It comes back to Up next ${when}.${then} Nudges are off on this phone, so turn them on in Settings to get a ping too.`;
   }
   // Day + time fields for a Schedule picker. Empty unless there’s a real
   // time to start from (one already set, or read from the note).
-  function scheduleFieldsHtml(prefix, start, autofocus = false) {
+  // The series a picker's loop already belongs to, if any.
+  function seriesOf(loop) {
+    const d = (loop && loop.details) || {};
+    return REPEATS[d.repeat] && validIso(d.repeatFrom) ? { unit: d.repeat, from: d.repeatFrom } : null;
+  }
+  function scheduleFieldsHtml(prefix, start, autofocus = false, repeat = '', series = null) {
     const af = autofocus ? '' : ' no-autofocus';
     const atMs = start ? start.getTime() : null;
+    const options = [['', 'Doesn’t repeat']].concat(Object.keys(REPEATS).map(k => [k, REPEATS[k]]))
+      .map(([k, label]) => `<option value="${k}"${k === (repeat || '') ? ' selected' : ''}>${label}</option>`).join('');
+    const seriesAttrs = series ? ` data-series-unit="${series.unit}" data-series-from="${esc(series.from)}"` : '';
+    const scopeField = series ? `<div class="sched-scope"${series.unit === repeat ? '' : ' hidden'}>${actField(`${prefix}-scope`, 'Change', `<select class="big-input act-input sched-input no-autofocus" id="${prefix}-scope" data-sched="${prefix}"><option value="this">Just this one</option><option value="all">This one and the ones after</option></select>`)}</div>` : '';
     return `
       <div class="act-row">
         ${actField(`${prefix}-date`, 'Day', `<input class="big-input act-input sched-input${af}" id="${prefix}-date" type="date" value="${start ? localDateValue(start) : ''}" min="${localDateValue(new Date())}" data-sched="${prefix}">`)}
         ${actField(`${prefix}-time`, 'Time', `<input class="big-input act-input sched-input no-autofocus" id="${prefix}-time" type="time" value="${start ? localTimeValue(start) : ''}" data-sched="${prefix}">`)}
       </div>
-      <p class="input-hint sched-note" id="${prefix}-note" aria-live="polite">${esc(scheduleNoteText(atMs))}</p>`;
+      ${actField(`${prefix}-repeat`, 'Repeats', `<select class="big-input act-input sched-input sched-repeat no-autofocus" id="${prefix}-repeat" data-sched="${prefix}"${seriesAttrs}>${options}</select>`)}
+      ${scopeField}
+      <p class="input-hint sched-note" id="${prefix}-note" aria-live="polite">${esc(scheduleNoteText(atMs, repeat, series))}</p>`;
   }
   function refreshScheduleNote(input) {
     const prefix = input && input.dataset.sched;
     if (!prefix) return;
     const d = fromScheduleInputs(document.getElementById(`${prefix}-date`)?.value, document.getElementById(`${prefix}-time`)?.value);
     const note = document.getElementById(`${prefix}-note`);
-    if (note) note.textContent = scheduleNoteText(d ? d.getTime() : null);
+    const sel = document.getElementById(`${prefix}-repeat`);
+    const series = sel && sel.dataset.seriesUnit ? { unit: sel.dataset.seriesUnit, from: sel.dataset.seriesFrom } : null;
+    const repeat = readScheduleRepeat(prefix) || '';
+    const scopeBox = document.getElementById(`${prefix}-scope`)?.closest('.sched-scope');
+    if (scopeBox) scopeBox.hidden = !(series && series.unit === repeat);
+    if (note) note.textContent = scheduleNoteText(d ? d.getTime() : null, repeat, series, readScheduleScope(prefix));
   }
 
   // ── STATE ──
@@ -5010,7 +5081,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       return sheet(`
         ${progress}
         <h2 class="sweep-h small" id="sweep-title">When is “${esc(shortText(loop.rawText, 40))}” now?</h2>
-        ${scheduleFieldsHtml('sweep-sched', at !== null && at > Date.now() ? new Date(at) : null)}
+        ${scheduleFieldsHtml('sweep-sched', at !== null && at > Date.now() ? new Date(at) : null, false, (loop.details && loop.details.repeat) || '', seriesOf(loop))}
         <div class="act-list">
           ${actBtn({ action: 'sweep-park', label: 'Save the time', primary: true, loopId: loop.id, attrs: 'data-when="schedule"', icon: ACT_ICON.clock })}
           ${actBtn({ action: 'sweep-park', label: 'Not sure yet', sub: 'It waits in Parked until you bring it back', loopId: loop.id, attrs: 'data-when=""', icon: ACT_ICON.next })}
@@ -5078,7 +5149,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }, 900);
   }
   // One card’s choice, applied to the loop. Returns what to sync.
-  function sweepApply(loop, pick, wakeAt, schedIso) {
+  function sweepApply(loop, pick, wakeAt, schedIso, schedRepeat) {
     const top = byStatus('active')[0];
     const isNow = !!(top && top.id === loop.id);
     let patch;
@@ -5090,7 +5161,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       else { const up = upNextPosition(loop.id); patch = { status: 'active', position: up.position }; rebalance = up.rebalance; }
     } else if (pick === 'park' && loop.kind === 'schedule') {
       // Moved to a new time (or no time yet): where it waits follows from it.
-      patch = schedulePatch(loop, schedIso || null, schedIso ? {} : { status: 'waiting' });
+      patch = schedulePatch(loop, schedIso || null, schedIso ? (schedRepeat || {}) : { status: 'waiting' });
       if (patch.status === 'active') { const up = upNextPosition(loop.id); patch.position = up.position; rebalance = up.rebalance; }
     } else if (pick === 'park') {
       patch = { status: 'waiting', wakeAt: wakeAt || null };
@@ -6533,7 +6604,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         <div class="step-kind">${kindChip}</div>
         <h3 class="step-q" id="define-when-q">When is it?</h3>
         <div class="define-when" role="group" aria-labelledby="define-when-q">
-          ${scheduleFieldsHtml('define', when.date, true)}
+          ${scheduleFieldsHtml('define', when.date, true, ov.repeat !== undefined ? ov.repeat : ((loop.details && loop.details.repeat) || parseRepeat(rawText) || parseRepeat(loop.promptAnswer)))}
         </div>
         ${when.readFrom ? `<p class="input-hint">Read from your note: “${esc(when.readFrom)}”. Change it if that’s wrong.</p>` : ''}
         <div class="overlay-actions">
@@ -7603,7 +7674,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         const typed = fromScheduleInputs(ov.schedDate, ov.schedTime);
         const pickStart = typed || (upcoming ? new Date(atMs) : null);
         title = upcoming ? 'Change the time' : 'When is it?';
-        body = actLoopBox(loop.rawText, loop.promptAnswer) + scheduleFieldsHtml('sched', pickStart) + `
+        body = actLoopBox(loop.rawText, loop.promptAnswer) + scheduleFieldsHtml('sched', pickStart, false, ov.schedRepeat !== undefined ? ov.schedRepeat : (d.repeat || ''), seriesOf(loop)) + `
           <div class="act-list">
             ${actBtn({ action: 'sched-save', label: 'Save the time', primary: true, loopId: id, icon: ACT_ICON.clock })}
             ${upcoming ? actBtn({ action: 'act-step', label: 'Put it on my calendar too', sub: 'Google, Apple, Outlook or other', loopId: id, attrs: 'data-step="cal"', icon: ACT_ICON.cal }) : ''}
@@ -7714,7 +7785,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const start = at !== null && at > Date.now() ? new Date(at) : null;
     const body = actLoopBox(loop.rawText, at !== null ? `${at > Date.now() ? 'Now' : 'Was'} ${formatEvent(new Date(at).toISOString())}` : '') + `
       <div class="act-pick">
-        ${scheduleFieldsHtml('when-sched', start)}
+        ${scheduleFieldsHtml('when-sched', start, false, (loop.details && loop.details.repeat) || '', seriesOf(loop))}
         <button type="button" class="btn btn-primary act-pick-go" data-action="park-until" data-when="schedule" data-loop-id="${esc(loop.id)}">Save the time</button>
       </div>
       <button type="button" class="act-link" data-action="park-until" data-when="schedule-clear" data-loop-id="${esc(loop.id)}">Not sure yet</button>`;
@@ -7728,7 +7799,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // Keep what the person typed when the sheet changes step.
   function readActInputs(ov) {
     const val = id => { const el = document.getElementById(id); return el ? el.value : null; };
-    const map = { 'act-next': 'nextText', 'act-decision': 'decision', 'act-spawn': 'spawnText', 'act-msg': 'message', 'cal-title': 'calTitle', 'cal-date': 'calDate', 'cal-time': 'calTime', 'sched-date': 'schedDate', 'sched-time': 'schedTime' };
+    const map = { 'act-next': 'nextText', 'act-decision': 'decision', 'act-spawn': 'spawnText', 'act-msg': 'message', 'cal-title': 'calTitle', 'cal-date': 'calDate', 'cal-time': 'calTime', 'sched-date': 'schedDate', 'sched-time': 'schedTime', 'sched-repeat': 'schedRepeat', 'sched-scope': 'schedScope' };
     Object.keys(map).forEach(id => { const v = val(id); if (v !== null) ov[map[id]] = v; });
   }
 
@@ -9009,6 +9080,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             if (picked.getTime() <= Date.now()) { toast('Pick a time that is still ahead.'); return; }
             ov.at = picked.toISOString();
             ov.atCleared = false;
+            ov.repeat = readScheduleRepeat('define') || '';
           }
         } else {
           const d = document.getElementById('define-detail-input');
@@ -9053,7 +9125,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           if (atIso) { if (details.at !== atIso) delete details.calAt; details.at = atIso; }
           else { delete details.at; delete details.calAt; }
         } else {
-          sched = schedulePatch({ ...(prevLoop || {}), kind: 'schedule', details }, atIso, { status });
+          sched = schedulePatch({ ...(prevLoop || {}), kind: 'schedule', details }, atIso, ov.repeat !== undefined ? { status, repeat: ov.repeat } : { status });
         }
       } else {
         delete details.at;
@@ -9275,7 +9347,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (!target) { closeOverlay(); return; }
       const atIso = readSchedulePick('sched');
       if (!atIso) return;
-      await saveScheduleTime(target, atIso);
+      await saveScheduleTime(target, atIso, schedulePickOpts('sched'));
       return;
     }
     if (action === 'cal-google' || action === 'cal-ics') {
@@ -9340,7 +9412,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         const atIso = el.dataset.when === 'schedule' ? readSchedulePick('when-sched') : null;
         if (el.dataset.when === 'schedule' && !atIso) return;
         const extra = ov.define ? { rawText: ov.define.rawText, kind: ov.define.kind, promptAnswer: ov.define.promptAnswer } : null;
-        await saveScheduleTime(target, atIso, atIso ? {} : { status: 'waiting' }, extra);
+        await saveScheduleTime(target, atIso, atIso ? schedulePickOpts('when-sched') : { status: 'waiting' }, extra);
         return;
       }
       let wakeAt = null;
@@ -9470,7 +9542,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (!target) { closeOverlay(); return; }
       const unit = REPEATS[el.dataset.repeat] ? el.dataset.repeat : '';
       const details = { ...target.details };
-      if (unit) { details.repeat = unit; details.repeatFrom = repeatAnchor(target); details.series = details.series || target.id; }
+      // Choosing it here starts the series from this loop's own time.
+      if (unit) { details.repeat = unit; details.repeatFrom = validIso(details.at) || target.wakeAt || repeatAnchor(target); details.series = details.series || target.id; }
       else { delete details.repeat; delete details.repeatFrom; delete details.series; }
       const patch = { details: cleanDetails(details) };
       updateLoop(target.id, patch);
@@ -9772,14 +9845,16 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const pick = action === 'sweep-park' ? 'park' : el.dataset.pick;
       if (loop && action === 'sweep-pick' && pick === 'park') { ov.step = 'park'; renderOverlay(); return; }
       let schedIso = null;
+      let schedRepeat;
       if (loop && action === 'sweep-park' && loop.kind === 'schedule' && el.dataset.when === 'schedule') {
         schedIso = readSchedulePick('sweep-sched');
         if (!schedIso) return;
+        schedRepeat = schedulePickOpts('sweep-sched');
       }
       let result = null;
       if (loop && sweepable(it)) {
         const wakeAt = action === 'sweep-park' && el.dataset.when && el.dataset.when !== 'schedule' ? validIso(el.dataset.when) : null;
-        result = sweepApply(loop, pick, wakeAt, schedIso);
+        result = sweepApply(loop, pick, wakeAt, schedIso, schedRepeat);
         if (pick === 'now') ov.nowId = loop.id;
       }
       ov.picks.push(pick);

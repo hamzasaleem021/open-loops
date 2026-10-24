@@ -166,7 +166,11 @@ Version 27 nudged 30 minutes early (`wake_at` = time − 30 min). The version-28
 
 ## 6b. Repeating loops (v29)
 
-A Do or Schedule loop can repeat every day, week or month: ⋯ → Repeat. The card says "Repeats every week".
+A Do or Schedule loop can repeat every day, week or month. The card says "Repeats every week".
+
+- **Schedule: in the time picker.** Every "When is it?" (sorting, Change time, the card's sheet, the sweep) has **Repeats** under Day and Time, saved by `schedulePatch()` with the time. A note that says "every tuesday", "weekly", "daily" or "monthly" pre-selects it (`parseRepeat()`). The line under the picker says what follows ("Then every Tuesday at 3:00 PM.").
+- **Changing the time of a loop that already repeats** asks **Just this one** (the series keeps `repeatFrom`; the next one is back on its usual day) or **This one and the ones after** (`repeatFrom` moves to the new time). Changing the Repeats choice itself always starts the series at the new time.
+- **Do: ⋯ → Repeat.** It starts the series from the loop's own time (its wake time, or 9:00 this morning).
 
 - **Closing it as done** sets up the next one, parked until its time (`ensureRepeats()`). Letting it go ends the series. Deleting it does too.
 - **Every time counts from the series' first time** (`repeatFrom`), never from the last one, so a series on the 31st lands on the last day of short months and comes back to the 31st. Times keep their clock time across daylight saving.
@@ -260,7 +264,7 @@ Every change is saved on the phone first, queued, and sent to Supabase. A full p
 | Reading a time from a note | `parseWhen()`, `findWeekday()`, `findClockTime()` |
 | Who an Ask is for, and its draft | `parseAsk()`, `askOf()`, `toSecondPerson()`, `askDraft()`; the sender's copy in `askWho()` (`compose.ts`) |
 | Decision choices | `decisionOptions()` |
-| Repeating loops | `nextOccurrence()`, `ensureRepeats()`; `loop_next_occurrence()`, `push_apply_action` in the SQL |
+| Repeating loops | `schedulePatch()` (`opts.repeat`, `opts.scope`), `parseRepeat()`, `nextOccurrence()`, `ensureRepeats()`; `loop_next_occurrence()`, `push_apply_action` in the SQL |
 | Schedule time, nudge and route | `schedulePatch()`, `scheduleNudgeFor()`, `wakeIsScheduleNudge()` |
 | Schedule pickers and their honest note | `scheduleFieldsHtml()`, `scheduleNoteText()` |
 | A parked loop waking in the app | `wakeDueLoops()` |
