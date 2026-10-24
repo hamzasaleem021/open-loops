@@ -1,5 +1,5 @@
 // Bump on every release, together with APP_VERSION in open-loops.html.
-const CACHE = 'open-loops-v29-review-fixes';
+const CACHE = 'open-loops-v30-shape-and-motion';
 
 const NETWORK_FIRST = [
   './open-loops.html',
