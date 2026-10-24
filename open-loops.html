@@ -73,7 +73,8 @@
 
   --success: #22c55e;
   --warning: #f59e0b;
-  --error: #ef4444;
+  --error: #dc2626;      /* 4.6:1 or better as text or under white */
+  --error-ink: #ffffff;
 
   --r-xs: 6px;
   --r-sm: 8px;
@@ -100,6 +101,8 @@
   --text: #fffaf0;
   --text-2: rgba(255,250,240,0.72);
   --text-3: rgba(255,250,240,0.58);  /* 4.5:1 or better on every dark surface */
+  --error: #f87171;
+  --error-ink: #0a0a0a;
   --accent: #fffaf0;
   --accent-hot: #ffffff;
   --accent-ink: #0a0a0a;
@@ -911,6 +914,7 @@ a { color: inherit; text-decoration: none; }
 @media (hover: none) and (pointer: coarse) {
   .reorder-controls, .drag-handle { display: none; }
 }
+.settings-row-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .fab.tucked { transform: translateX(-50%) translateY(calc(100% + 96px)); opacity: 0; pointer-events: none; }
 
 /* ── BOTTOM NAV ── */
@@ -2056,7 +2060,7 @@ body {
 .pill-btn.syncing .dot { background: var(--warning); }
 .pill-btn.offline { color: var(--text); border: none; }
 .pill-btn.offline .dot { background: var(--schedule); }
-.pill-btn.error   { color: #fff; background: var(--error); border: none; }
+.pill-btn.error   { color: var(--error-ink); background: var(--error); border: none; }
 .pill-btn.idle    { color: var(--text-2); border: none; }
 
 /* ── PAGE HEAD (new) ── */
@@ -5376,6 +5380,50 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         </div>
       </div>`;
   }
+  // ── YOUR DATA ──
+  // Everything this account has, as JSON: what each loop says, where it is,
+  // its times and how it ended. On an iPhone, where a page can't download a
+  // file, the share sheet saves it instead.
+  function exportFile() {
+    const loops = data.loops.map(l => ({
+      id: l.id, text: l.rawText, kind: l.kind || null, status: l.status, note: l.promptAnswer || '',
+      createdAt: l.createdAt, closedAt: l.completedAt || null, wakeAt: l.wakeAt || null, details: l.details || {}
+    }));
+    const body = JSON.stringify({ app: 'Open Loops', version: APP_VERSION.number, exportedAt: nowIso(), account: Sync.userEmail(), loops }, null, 2);
+    return new File([body], `open-loops-${localDateValue(new Date())}.json`, { type: 'application/json' });
+  }
+  async function exportLoops() {
+    const file = exportFile();
+    try {
+      if (isIOS() && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'My loops' });
+        return 'shared';
+      }
+    } catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url; a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    return 'saved';
+  }
+  function renderDeleteAccount() {
+    const ov = view.overlay || {};
+    const n = data.loops.length;
+    return `
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+        <div class="overlay-header"><div class="overlay-meta"></div>${SHEET_CLOSE}</div>
+        <h2 class="overlay-title" id="delete-account-title">Delete your account?</h2>
+        <p class="overlay-subtitle">This deletes all ${n} loop${n === 1 ? '' : 's'}, open and closed, on every device, turns off nudges and signs you out. It can’t be undone.</p>
+        <p class="settings-helper">Signed in as <strong>${esc(Sync.userEmail())}</strong>. Want a copy first? Download your loops.</p>
+        ${ov.error ? `<p class="input-hint" role="alert">${esc(ov.error)}</p>` : ''}
+        <div class="overlay-actions">
+          <button class="btn btn-ghost" data-action="export-loops">Download first</button>
+          <button class="btn btn-primary" data-action="confirm-delete-account" style="background:var(--error);color:var(--error-ink)"${ov.busy ? ' disabled aria-busy="true"' : ''}>${ov.busy ? 'Deleting…' : 'Delete everything'}</button>
+        </div>
+      </div>`;
+  }
+
   function saveShareImage(name) {
     if (!shareBlob) return;
     const url = URL.createObjectURL(shareBlob);
@@ -7157,6 +7205,15 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           <button class="btn btn-ghost" data-action="share-app">Share Open Loops</button>
         </section>
 
+        ${Sync.isLoggedIn() ? `<section class="settings-section">
+          <div class="settings-label">Your data</div>
+          <p class="settings-helper">Every loop you have, open and closed, as a file you keep.</p>
+          <div class="settings-row-buttons">
+            <button class="btn btn-ghost" data-action="export-loops">Download your loops</button>
+            <button class="btn btn-ghost" data-action="open-delete-account">Delete account…</button>
+          </div>
+        </section>` : ''}
+
         <section class="settings-section">
           <div class="settings-label">App version</div>
           <p class="settings-helper" id="app-version">Version ${APP_VERSION.number} · ${esc(APP_VERSION.date)}. New versions install on their own when you open the app.</p>
@@ -7728,7 +7785,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         <p style="font-size:13px;color:var(--text-2);margin:0 0 20px;padding:10px 12px;background:var(--surface-2);border-radius:8px;line-height:1.5">${esc(loop.rawText)}</p>
         <div class="overlay-actions">
           <button class="btn btn-ghost" data-action="close-overlay">Cancel</button>
-          <button class="btn btn-primary" data-action="confirm-delete" data-loop-id="${esc(loop.id)}" style="background:var(--error);color:#fff">Delete</button>
+          <button class="btn btn-primary" data-action="confirm-delete" data-loop-id="${esc(loop.id)}" style="background:var(--error);color:var(--error-ink)">Delete</button>
         </div>
       </div>`;
   }
@@ -8595,6 +8652,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     else if (ov.type === 'menu')           inner = renderMenu(getLoop(ov.loopId));
     else if (ov.type === 'change-kind')    inner = renderChangekind(getLoop(ov.loopId));
     else if (ov.type === 'repeat')         inner = renderRepeat(getLoop(ov.loopId));
+    else if (ov.type === 'delete-account') inner = renderDeleteAccount();
     else if (ov.type === 'sync')           inner = renderSync();
     else if (ov.type === 'settings')       inner = renderSettings();
     else if (ov.type === 'why')            inner = renderWhy();
@@ -9528,6 +9586,31 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       }
       return;
     }
+    if (action === 'export-loops') {
+      if (requireLogin()) return;
+      const r = await exportLoops();
+      if (r === 'saved') toast('Saved your loops as a file.');
+      return;
+    }
+    if (action === 'open-delete-account') {
+      if (requireLogin()) return;
+      view.overlay = { type: 'delete-account' };
+      renderOverlay();
+      return;
+    }
+    if (action === 'confirm-delete-account') {
+      if (requireLogin()) return;
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'delete-account' || ov.busy) return;
+      if (navigator.onLine === false) { ov.error = 'You’re offline. Connect, then try again.'; renderOverlay(); return; }
+      ov.busy = true; ov.error = null; renderOverlay();
+      await Push.disable().catch(() => {});
+      const r = await Sync.deleteAccount();
+      if (!r.ok) { ov.busy = false; ov.error = 'Couldn’t delete it just now. Nothing was deleted. Try again in a moment.'; renderOverlay(); return; }
+      closeOverlay();
+      toast('Your account and all your loops are deleted.', { duration: 6000 });
+      return;
+    }
     if (action === 'sign-out') {
       // This phone shouldn’t keep getting nudges for an account that left it.
       await Push.disable().catch(() => {});
@@ -10245,6 +10328,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         ensureRealtime: () => {},
         sendMagicLink: async () => { throw new Error(supabaseClientIssue() || 'Sign-in isn’t ready yet. Try again in a moment.'); },
         signOut:       async () => {},
+        deleteAccount: async () => ({ ok: false }),
         savePush:      async () => { throw new Error('Sign in first.'); },
         deletePush:    async () => {},
         testPush:      async () => { throw new Error('Sign in first.'); },
@@ -11151,6 +11235,20 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       },
 
       async signOut() { await db.auth.signOut(); },
+      // Deletes every loop and nudge row and the sign-in itself (on the
+      // server, delete_my_account), then forgets this account on this device.
+      async deleteAccount() {
+        if (!currentUser) return { ok: false };
+        const { error } = await db.rpc('delete_my_account');
+        if (error) { console.error('Delete account failed:', error); return { ok: false, error }; }
+        const id = currentUser.id;
+        try {
+          Object.keys(localStorage).filter(k => k.endsWith(':' + id)).forEach(k => localStorage.removeItem(k));
+        } catch (_) {}
+        forgetAccount();
+        await db.auth.signOut().catch(() => {});
+        return { ok: true };
+      },
       isLoggedIn() { return !!currentUser; },
       userEmail() { return (currentUser && currentUser.email) || ''; },
 

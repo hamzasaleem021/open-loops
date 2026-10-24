@@ -160,6 +160,28 @@ $$;
 grant execute on function public.batch_upsert_loops(jsonb) to authenticated;
 revoke all   on function public.batch_upsert_loops(jsonb) from anon;
 
+-- ── DELETE MY ACCOUNT (version 29) ───────────────────────────────────────
+-- Settings → Your data → Delete account. Deletes the caller's loops, their
+-- phones' nudge rows and their sign-in. Only ever the caller's own: the user
+-- comes from the session, never from an argument. security definer because
+-- signed-in users can't touch auth.users themselves.
+create or replace function public.delete_my_account()
+returns void
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_user uuid := auth.uid();
+begin
+  if v_user is null then
+    raise exception 'not signed in' using errcode = '42501';
+  end if;
+  delete from public.push_subscriptions where user_id = v_user;
+  delete from public.loops where user_id = v_user;
+  delete from auth.users where id = v_user;
+end;
+$$;
+revoke all on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;
+
 -- ── NUDGES (web push) ────────────────────────────────────────────────────
 -- One row per phone or browser that said yes to nudges. The "push" Edge
 -- Function (supabase/functions/push) reads these, decides what to say, and
