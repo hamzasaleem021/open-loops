@@ -101,10 +101,12 @@ type DueSub = {
   endpoint: string; user_id: string; p256dh: string; auth: string; tz: string;
   stale: boolean; recap: boolean; last_stale_at: string | null;
   recent_lines: string[] | null; local_date: string; local_dow: number;
+  hide_text?: boolean;
 };
 type WakeDue = {
   endpoint: string; user_id: string; p256dh: string; auth: string; tz: string;
   recent_lines: string[] | null; checked_from: string; checked_to: string;
+  hide_text?: boolean;
 };
 
 async function run(req: Request, cfg: Config): Promise<Response> {
@@ -158,11 +160,11 @@ async function run(req: Request, cfg: Config): Promise<Response> {
     for (const l of woke.filter(isScheduleNudge)) {
       if (gone.has(sub.endpoint)) break;
       const ttl = scheduleNudgeTtl(l, now);
-      const nudge = ttl >= 60 ? composeScheduleNudge({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines, tz: sub.tz }, l, now) : null;
+      const nudge = ttl >= 60 ? composeScheduleNudge({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines, tz: sub.tz, hide_text: sub.hide_text }, l, now) : null;
       if (nudge) await send(sub, nudge, { ttl, urgency: 'high' });
     }
     if (gone.has(sub.endpoint)) continue;
-    const nudge = composeWake({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines }, woke.filter(l => !isScheduleNudge(l)), now);
+    const nudge = composeWake({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines, hide_text: sub.hide_text }, woke.filter(l => !isScheduleNudge(l)), now);
     if (nudge) await send(sub, nudge, { ttl: 3 * 3600, urgency: 'high' });
     if (gone.has(sub.endpoint)) continue;
     const patch: Record<string, unknown> = { wake_checked_at: sub.checked_to };

@@ -29,6 +29,7 @@ export type Sub = {
   last_stale_at: string | null;
   recent_lines: string[] | null;
   local_dow: number; // 0 = Sunday, in the phone's time zone
+  hide_text?: boolean; // say nothing a loop says (a lock screen others see)
 };
 
 export type Nudge = {
@@ -79,6 +80,30 @@ const LINES: Record<string, Line[]> = {
     { id: 'rb', title: '{n} ring{s} on the shelf this week.', body: 'Not bad at all. Want a look?' },
   ],
 };
+
+// The same moments for a phone that hides what loops say: nothing from a
+// loop's text or note, not even who an Ask is for.
+const PRIVATE_LINES: Record<string, Line[]> = {
+  wakeOne: [
+    { id: 'pw1', title: 'A loop is back.', body: 'You parked it until now. It’s in Up next.' },
+    { id: 'pw2', title: 'Right on time.', body: 'A loop just woke up. Thirty seconds to sort it?' },
+  ],
+  wakeAsk: [
+    { id: 'pq1', title: 'Time to check back.', body: 'An Ask you sent is back in Up next.' },
+  ],
+  scheduleNow: [
+    { id: 'pn1', title: 'It’s {clock}.', body: 'Something you scheduled is now.' },
+  ],
+  scheduleSoon: [
+    { id: 'ph1', title: 'In {m}.', body: 'Something you scheduled starts at {clock}.' },
+  ],
+  stale: [
+    { id: 'ps1', title: 'A loop has gone quiet.', body: 'Untouched for {d} days. Still yours?' },
+  ],
+};
+function lines(kind: string, hide: boolean | undefined): Line[] {
+  return (hide && PRIVATE_LINES[kind]) || LINES[kind];
+}
 
 const DAY = 86400000;
 const STALE_DAYS = 21;
@@ -167,13 +192,13 @@ function minutesText(m: number): string {
 // One Schedule loop's nudge, said from the real time left: "is now" at its
 // time (and up to NOW_GRACE_MIN late), "in 12 min" for a version-27 early
 // one. Null when it's too late to be useful: the app asks "Did it happen?".
-export function composeScheduleNudge(sub: { recent_lines: string[] | null; tz: string }, l: Loop, now: Date): Nudge | null {
+export function composeScheduleNudge(sub: { recent_lines: string[] | null; tz: string; hide_text?: boolean }, l: Loop, now: Date): Nudge | null {
   const at = eventAt(l);
   if (at === null) return null;
   const m = Math.round((at - now.getTime()) / 60000);
   if (m < 1 && now.getTime() - at > NOW_GRACE_MIN * 60000) return null;
   const vars = { t: short(l.raw_text), m: minutesText(m), clock: clockIn(at, sub.tz) };
-  const line = fill(pickLine(m >= 1 ? LINES.scheduleSoon : LINES.scheduleNow, sub.recent_lines || [], Math.floor(now.getTime() / 60000)), vars);
+  const line = fill(pickLine(lines(m >= 1 ? 'scheduleSoon' : 'scheduleNow', sub.hide_text), sub.recent_lines || [], Math.floor(now.getTime() / 60000)), vars);
   return {
     kind: 'schedule', lineId: line.id, title: line.title, body: line.body,
     query: `loop=${encodeURIComponent(l.id)}`, tag: `open-loops-time-${l.id}`, loopId: l.id,
@@ -184,7 +209,7 @@ export function composeScheduleNudge(sub: { recent_lines: string[] | null; tz: s
 
 // Loops that woke since this phone's last check (already picked by the
 // caller), oldest wake first.
-export function composeWake(sub: { recent_lines: string[] | null }, woke: Loop[], now: Date): Nudge | null {
+export function composeWake(sub: { recent_lines: string[] | null; hide_text?: boolean }, woke: Loop[], now: Date): Nudge | null {
   if (!woke.length) return null;
   const recent = sub.recent_lines || [];
   const seed = Math.floor(now.getTime() / 60000);
@@ -195,8 +220,8 @@ export function composeWake(sub: { recent_lines: string[] | null }, woke: Loop[]
     const waitingOnSomeone = l.kind === 'ask' && !!d.sentAt;
     const who = waitingOnSomeone ? askWho(l.prompt_answer, l.raw_text) : '';
     const line = waitingOnSomeone
-      ? fill(pickLine(LINES.wakeAsk, recent, seed), { t, whoS: who || 'they', whoO: who || 'them' })
-      : fill(pickLine(LINES.wakeOne, recent, seed), { t });
+      ? fill(pickLine(lines('wakeAsk', sub.hide_text), recent, seed), { t, whoS: who || 'they', whoO: who || 'them' })
+      : fill(pickLine(lines('wakeOne', sub.hide_text), recent, seed), { t });
     return {
       kind: 'wake', lineId: line.id, title: line.title, body: line.body, query: 'sweep=1',
       tag: `open-loops-wake-${l.id}`, loopId: l.id, actions: doneTomorrow(),
@@ -230,7 +255,7 @@ export function composeNudge(sub: Sub, loops: Loop[], now: Date): Nudge | null {
     if (stale.length) {
       const l = stale[0];
       const d = Math.floor((t - time(l.updated_at)) / DAY);
-      const line = fill(pickLine(LINES.stale, recent, dayNumber), { t: short(l.raw_text), d });
+      const line = fill(pickLine(lines('stale', sub.hide_text), recent, dayNumber), { t: short(l.raw_text), d });
       return { kind: 'stale', lineId: line.id, title: line.title, body: line.body, query: `loop=${encodeURIComponent(l.id)}`, loopId: l.id, actions: doneTomorrow() };
     }
   }

@@ -3566,6 +3566,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   //   origin   — 'decision' when a Do was born from a decision
   //   at       — when a Schedule loop happens
   //   calAt    — when it was sent to a calendar (it then asks "On your calendar?")
+  //   repeat   — 'day', 'week' or 'month': closing it sets up the next one
+  //   repeatFrom — the first time in the series; every next time counts from it
+  //   series   — the id of the series' first loop (next ids are built from it)
+  //   next     — on a closed repeating loop: the id of the one it set up
   function cleanDetails(d) {
     const src = d && typeof d === 'object' && !Array.isArray(d) ? d : {};
     const out = {};
@@ -3583,6 +3587,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (at) out.at = at;
     const calAt = validIso(src.calAt);
     if (calAt) out.calAt = calAt;
+    if (REPEATS[src.repeat]) {
+      out.repeat = src.repeat;
+      const from = validIso(src.repeatFrom);
+      if (from) out.repeatFrom = from;
+    }
+    if (typeof src.series === 'string' && /^[\w~.-]{1,120}$/.test(src.series)) out.series = src.series;
+    if (typeof src.next === 'string' && /^[\w~.-]{1,160}$/.test(src.next)) out.next = src.next;
     return out;
   }
 
@@ -3609,6 +3620,80 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const t = at ? new Date(at).getTime() : NaN;
     return Number.isFinite(t) ? t : null;
   }
+  // ── REPEATS ──
+  // A Do or Schedule loop can repeat. Closing it (not letting it go) sets up
+  // the next one, parked until its time. Every time counts from the series'
+  // first time, so "the 31st, monthly" stays the last day of short months
+  // instead of drifting. The next loop's id is built from the series and its
+  // time, so two phones (or the server, closing it from a nudge) setting it
+  // up at once make the same loop, not two.
+  const REPEATS = { day: 'Every day', week: 'Every week', month: 'Every month' };
+  const REPEAT_MAX_DAYS = { day: 1, week: 7, month: 31 };
+  function canRepeat(loop) { return !!loop && (loop.kind === 'do' || loop.kind === 'schedule') && loop.status !== 'released'; }
+  function repeatNth(anchor, unit, k) {
+    const a = new Date(anchor);
+    if (unit === 'day') return addDays(a, k);
+    if (unit === 'week') return addDays(a, 7 * k);
+    const y = a.getFullYear(), m = a.getMonth() + k;
+    const last = new Date(y, m + 1, 0).getDate();
+    return new Date(y, m, Math.min(a.getDate(), last), a.getHours(), a.getMinutes(), a.getSeconds(), a.getMilliseconds());
+  }
+  // The first time in the series after both now and this loop's own time.
+  function nextOccurrence(loop, now = new Date()) {
+    const d = loop.details || {};
+    if (!REPEATS[d.repeat]) return null;
+    const anchor = validIso(d.repeatFrom) || validIso(d.at) || loop.wakeAt;
+    if (!anchor) return null;
+    const after = Math.max(now.getTime(), scheduleAt(loop) || 0, loop.wakeAt ? new Date(loop.wakeAt).getTime() : 0);
+    const a = new Date(anchor).getTime();
+    let k = Math.max(1, Math.floor((after - a) / (REPEAT_MAX_DAYS[d.repeat] * 86400000)));
+    for (let i = 0; i < 1000; i++, k++) {
+      const t = repeatNth(anchor, d.repeat, k);
+      if (t.getTime() > after) return t;
+    }
+    return null;
+  }
+  // Where a series starts when you first say it repeats: its time if it has
+  // one, else 9:00 this morning.
+  function repeatAnchor(loop) {
+    const d = loop.details || {};
+    return validIso(d.repeatFrom) || validIso(d.at) || loop.wakeAt || atTime(new Date(), 9).toISOString();
+  }
+  // Closed repeating loops that haven't set up their next one yet: do it now.
+  // Runs after every change made here and whenever the app checks wake-ups,
+  // so a loop closed from a nudge's Done button (or on an older version of
+  // the server) still gets its next one.
+  function ensureRepeats() {
+    if (!Sync.isLoggedIn()) return false;
+    const writes = [];
+    for (const l of data.loops.slice()) {
+      const d = l.details || {};
+      if (l.status !== 'released' || !REPEATS[d.repeat] || d.next || isLetGo(l)) continue;
+      const when = nextOccurrence(l);
+      if (!when) continue;
+      const series = d.series || l.id;
+      const id = `${series}~${when.getTime()}`;
+      const patch = { details: cleanDetails({ ...d, next: id }) };
+      Object.assign(l, patch);
+      writes.push(['update', l.id, patch]);
+      if (!getLoop(id)) {
+        const iso = when.toISOString();
+        const next = sanitize({
+          id, rawText: l.rawText, kind: l.kind, promptAnswer: l.promptAnswer, status: 'waiting', wakeAt: iso,
+          details: { repeat: d.repeat, repeatFrom: d.repeatFrom || repeatAnchor(l), series, ...(l.kind === 'schedule' ? { at: iso } : {}) },
+          position: nowPosition(), createdAt: nowIso(), updatedAt: nowIso()
+        });
+        data.loops.unshift(next);
+        writes.push(['create', next]);
+        toast(`The next “${shortText(l.rawText, 30)}” comes back ${formatWake(iso)}.`);
+      }
+    }
+    if (!writes.length) return false;
+    // Write after this turn, once the close that caused it has been queued.
+    setTimeout(() => writes.forEach(w => w[0] === 'create' ? Sync.createLoop(w[1]) : Sync.updateLoop(w[1], w[2])), 0);
+    return true;
+  }
+
   // When a Schedule loop nudges: at its time, exactly. Null once it’s past.
   function scheduleNudgeFor(atMs, now = Date.now()) {
     return atMs > now ? new Date(atMs).toISOString() : null;
@@ -4506,6 +4591,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // foreground, and once a minute while it’s open.
   function wakeDueLoops(opts = {}) {
     if (!Sync.isLoggedIn()) return [];
+    if (ensureRepeats()) { save(); renderAll(); }
     const now = Date.now();
     // Latest first, so the earliest-due loop ends up right under Now.
     const due = data.loops
@@ -4615,7 +4701,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // Dates only on the Closed shelf, where "when" is the point. Elsewhere a
   // card’s age shows only once it matters ("Untouched 12 days").
   function loopMetaHtml(loop) {
-    if (loop.status !== 'released') return '';
+    const rep = loop.details && REPEATS[loop.details.repeat];
+    if (loop.status !== 'released') return rep ? `<div class="loop-meta"><span>Repeats ${esc(rep.toLowerCase())}</span></div>` : '';
     const captured = formatLoopDate(loop.createdAt);
     const closed = formatLoopDate(loop.completedAt);
     const parts = [];
@@ -5308,7 +5395,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const KEY_BASE = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_push' : 'open_loops_push';
     // on: nudges are on for this device. wanted: the person asked for them but
     // the browser said no, so they turn on by themselves once it says yes.
-    const DEFAULTS = { on: false, wanted: false, time: '09:00', wakeups: true, stale: true, recap: true };
+    // hideText: nudges leave out what a loop says (a lock screen others see).
+    const DEFAULTS = { on: false, wanted: false, time: '09:00', wakeups: true, stale: true, recap: true, hideText: false };
     // How often an open app checks that the server still has this device.
     const VERIFY_MS = 20 * 3600000;
     const key = () => scopedKey(KEY_BASE);
@@ -5711,10 +5799,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const sw = (k, label, sub) => `<button type="button" class="nudge-switch${p[k] ? ' on' : ''}" data-action="push-toggle" data-key="${k}" role="switch" aria-checked="${!!p[k]}"><span class="nudge-switch-text"><span>${label}</span><span class="nudge-switch-sub">${sub}</span></span><span class="switch" aria-hidden="true"></span></button>`;
       const none = !p.wakeups && !p.stale && !p.recap;
       html += `
-          <div class="nudge-switches">${sw('wakeups', 'When a loop wakes up', 'Right on time, with Done and Tomorrow')}${sw('stale', 'Stale loop check-ins', '“Still yours?”, at most once a week')}${sw('recap', 'Sunday recap', 'What you closed this week')}</div>
+          <div class="nudge-switches">${sw('wakeups', 'When a loop wakes up', 'Right on time, with Done and Tomorrow')}${sw('stale', 'Stale loop check-ins', '“Still yours?”, at most once a week')}${sw('recap', 'Sunday recap', 'What you closed this week')}${sw('hideText', 'Hide what loops say', 'Nudges say “A loop is back” instead of its words, for a lock screen others can see')}</div>
           ${p.stale || p.recap ? `<div class="nudge-row"><label for="nudge-time">Check-in time</label><input type="time" id="nudge-time" class="nudge-time" step="60" value="${esc(p.time)}"></div>` : ''}
           ${none ? '<p class="nudge-next" id="nudge-next">Every kind is switched off, so nothing will arrive. Turn one back on, or switch nudges off above.</p>' : nudgeNextHtml(p)}
-          <p class="nudge-sample">Like: Knock knock. “Call the bank” just woke up. Where does it go now?</p>
+          <p class="nudge-sample">${p.hideText ? 'Like: A loop is back. It’s in Up next.' : 'Like: Knock knock. “Call the bank” just woke up. Where does it go now?'}</p>
           <div class="nudge-actions">
             <button type="button" class="btn btn-ghost" data-action="push-test"${nudgeUi.testing ? ' aria-busy="true" aria-disabled="true"' : ''}>${nudgeUi.testing ? 'Sending…' : 'Send a test'}</button>
           </div>`;
@@ -6552,6 +6640,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             Change kind
           </button>` : ''}
           ${activeOrderItems(loop)}
+          ${canRepeat(loop) ? `<button class="menu-item" data-action="open-repeat" data-loop-id="${esc(loop.id)}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M11.5 5.5A4.6 4.6 0 0 0 3 4.6M2.5 8.5A4.6 4.6 0 0 0 11 9.4M3 2v2.6h2.6M11 12V9.4H8.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            ${loop.details && REPEATS[loop.details.repeat] ? `Repeats ${REPEATS[loop.details.repeat].toLowerCase()}` : 'Repeat…'}
+          </button>` : ''}
           ${active ? `<button class="menu-item" data-action="move-waiting" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
             Park until…
@@ -6579,6 +6671,23 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         </div>
         <div class="overlay-actions">
           <button class="btn btn-ghost" data-action="close-overlay">Close</button>
+        </div>
+      </div>`;
+  }
+
+  function renderRepeat(loop) {
+    if (!loop) return '';
+    const cur = (loop.details && loop.details.repeat) || '';
+    const first = new Date(repeatAnchor(loop));
+    const opts = [['', 'Doesn’t repeat', 'Closing it closes it']].concat(Object.keys(REPEATS).map(k => [k, REPEATS[k],
+      k === 'day' ? `At ${clockText(first)}` : k === 'week' ? `${first.toLocaleDateString(undefined, { weekday: 'long' })}s at ${clockText(first)}` : `On day ${first.getDate()} of each month`]));
+    return `
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="repeat-title">
+        <div class="overlay-header"><div class="overlay-meta"></div>${SHEET_CLOSE}</div>
+        <h2 class="overlay-title" id="repeat-title">Repeat “${esc(shortText(loop.rawText, 40))}”</h2>
+        <p class="overlay-subtitle">When you close it, the next one is set up and parked until its time. Letting it go ends the series.</p>
+        <div class="act-list" role="radiogroup" aria-labelledby="repeat-title">
+          ${opts.map(([k, label, sub]) => actBtn({ action: 'set-repeat', label, sub, loopId: loop.id, attrs: `data-repeat="${k}" role="radio" aria-checked="${cur === k}"`, primary: cur === k, icon: ACT_ICON.next })).join('')}
         </div>
       </div>`;
   }
@@ -8485,6 +8594,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     else if (ov.type === 'define-raw')     inner = renderDefineRaw(getLoop(ov.loopId));
     else if (ov.type === 'menu')           inner = renderMenu(getLoop(ov.loopId));
     else if (ov.type === 'change-kind')    inner = renderChangekind(getLoop(ov.loopId));
+    else if (ov.type === 'repeat')         inner = renderRepeat(getLoop(ov.loopId));
     else if (ov.type === 'sync')           inner = renderSync();
     else if (ov.type === 'settings')       inner = renderSettings();
     else if (ov.type === 'why')            inner = renderWhy();
@@ -8594,6 +8704,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // Signed-in local cache + re-render. Supabase remains the source of truth;
   // localStorage only keeps the UI fast and protects queued offline writes.
   function persistAndRender() {
+    ensureRepeats();
     save();
     renderAll();
   }
@@ -9289,6 +9400,27 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
 
     // Change kind
+    if (action === 'open-repeat') {
+      view.overlay = { type: 'repeat', loopId };
+      renderOverlay();
+      return;
+    }
+    if (action === 'set-repeat') {
+      if (requireLogin()) return;
+      const target = getLoop(loopId);
+      if (!target) { closeOverlay(); return; }
+      const unit = REPEATS[el.dataset.repeat] ? el.dataset.repeat : '';
+      const details = { ...target.details };
+      if (unit) { details.repeat = unit; details.repeatFrom = repeatAnchor(target); details.series = details.series || target.id; }
+      else { delete details.repeat; delete details.repeatFrom; delete details.series; }
+      const patch = { details: cleanDetails(details) };
+      updateLoop(target.id, patch);
+      closeOverlay();
+      await persistAndRender();
+      Sync.updateLoop(target.id, patch);
+      announce(unit ? `Repeats ${REPEATS[unit].toLowerCase()}.` : 'Doesn’t repeat.');
+      return;
+    }
     if (action === 'reclarify-kind') {
       view.overlay = { type: 'change-kind', loopId };
       renderOverlay();
@@ -9680,7 +9812,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
     if (action === 'push-toggle') {
       const k = el.dataset.key;
-      if (!['wakeups', 'stale', 'recap'].includes(k)) return;
+      if (!['wakeups', 'stale', 'recap', 'hideText'].includes(k)) return;
       await savePushPrefs({ [k]: !Push.prefs()[k] });
       return;
     }
@@ -11035,7 +11167,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           nudge_time: p.time || '09:00',
           wakeups: !!p.wakeups,
           stale: !!p.stale,
-          recap: !!p.recap
+          recap: !!p.recap,
+          hide_text: !!p.hideText
         };
         // A check-in time that has already passed today starts tomorrow, so
         // changing the time never fires a surprise check-in right away. A
@@ -11043,10 +11176,17 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         const now = new Date();
         const t = /^(\d{1,2}):(\d{2})/.exec(row.nudge_time);
         row.quiet_on = t && atTime(now, +t[1], +t[2]) <= now ? localDateValue(now) : null;
-        const { data: saved, error } = await db.from('push_subscriptions')
-          .upsert(row, { onConflict: 'endpoint' })
+        const upsert = r => db.from('push_subscriptions')
+          .upsert(r, { onConflict: 'endpoint' })
           .select('last_run_on, last_stale_at')
           .maybeSingle();
+        let { data: saved, error } = await upsert(row);
+        // A database that hasn't run the version-29 SQL has no hide_text yet:
+        // keep nudges working without it rather than failing to save.
+        if (error && /hide_text/.test([error.message, error.details, error.hint].join(' '))) {
+          const { hide_text, ...older } = row;
+          ({ data: saved, error } = await upsert(older));
+        }
         if (error) throw error;
         return saved ? { lastRunOn: saved.last_run_on || null, lastStaleAt: saved.last_stale_at || null } : null;
       },
