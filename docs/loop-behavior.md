@@ -13,9 +13,9 @@ One row per loop in `public.loops`, mirrored on each phone in `localStorage` (`o
 | In the app | Column | What it means |
 |---|---|---|
 | `rawText` | `raw_text` | The thought, as captured |
-| `kind` | `kind` | `do`, `decide`, `ask`, `schedule`, `let_go`, or empty (not sorted yet) |
+| `kind` | `kind` | `do`, `decide`, `ask`, `schedule`, `let_go`, or empty (not shaped yet) |
 | `status` | `status` | Where it lives: `inbox`, `active`, `waiting`, `released` (section 2) |
-| `promptAnswer` | `prompt_answer` | The note from Sort: the next step, the decision, who to ask |
+| `promptAnswer` | `prompt_answer` | The note from Shape: the next step, the decision, who to ask |
 | `position` | `position` | Order within a list; higher is nearer the top |
 | `wakeAt` | `wake_at` | When a parked loop comes back to Up next (section 5) |
 | `details` | `details` | Small facts, listed below |
@@ -49,12 +49,12 @@ Older app versions drop keys they don't know when they write `details`, so a pho
 
 | Status | Tab | What it means |
 |---|---|---|
-| `inbox` | Inbox | Captured, not sorted yet |
+| `inbox` | Inbox | Captured, not shaped yet |
 | `active` | Active | In focus. The top card is **Now**; the rest are **Up next**. Only the focus cap shows (3, 5 or 7; default 5), the rest sit behind "Show N more". |
 | `waiting` | Parked | Out of your head on purpose, with or without a time to come back |
 | `released` | Closed (archive) | Done or let go. `details.outcome` says which. |
 
-A loop entering Active (sorted, woken, reopened) lands in **Up next**, right under Now, and never takes over Now on its own (`upNextPosition()`).
+A loop entering Active (shaped, woken, reopened) lands in **Up next**, right under Now, and never takes over Now on its own (`upNextPosition()`).
 
 ---
 
@@ -64,9 +64,9 @@ A loop entering Active (sorted, woken, reopened) lands in **Up next**, right und
 stateDiagram-v2
   [*] --> inbox: Capture
   [*] --> waiting: Capture with a time, "Wake it …?" accepted
-  inbox --> active: Sort → Up next
-  inbox --> waiting: Sort → Park
-  inbox --> released: Sort → Close, or kind Let go
+  inbox --> active: Shape → Up next
+  inbox --> waiting: Shape → Park
+  inbox --> released: Shape → Close, or kind Let go
   active --> waiting: Not yet → pick when
   waiting --> active: Wake time comes, or Make active
   active --> released: The kind's main action, or Let go
@@ -79,7 +79,7 @@ stateDiagram-v2
 |---|---|---|---|---|
 | none | `inbox` | Capture | | `save-raw-loop` |
 | none | `waiting` | Capture text names a time ("call the bank friday") and you accept "Wake it Fri 9:00 AM?" | `wakeAt` = that time. Never automatic. Not for Schedule. | `captureWhen()` |
-| `inbox` | any | Sort: kind → note (Schedule: the time) → where it goes (Up next, Park, Close). Let go skips the note and closes. | | `renderDefineRaw()`, `finish-define-raw` |
+| `inbox` | any | Shape: kind → note (Schedule: the time) → where it goes (Up next, Park, Close). Let go skips the note and closes. | | `renderDefineRaw()`, `finish-define-raw` |
 | `active` | `waiting` | Not yet, or menu → Park. Every park asks "when?" ("No date" is allowed). | `wakeAt` | `renderWhen()`, `park-until` |
 | `waiting` | `active` | Its wake time passes (while the app is open, on open, and once a minute) | Lands in Up next | `wakeDueLoops()` |
 | `waiting` | `active` | Make active | Drops a wake time still ahead, except a Schedule loop's nudge (**v27**) | `restore-active` |
@@ -132,8 +132,8 @@ Choices offered by I decided (`decisionOptions()`): split on "or"/"vs"; a slash 
 
 | Situation | Where it waits | `wake_at` |
 |---|---|---|
-| A time is picked (Sort suggests Park) | Parked until that time | The event time itself |
-| Up next chosen in Sort | Active | The event time itself, so the nudge still comes |
+| A time is picked (Shape suggests Park) | Parked until that time | The event time itself |
+| Up next chosen in Shape | Active | The event time itself, so the nudge still comes |
 | "Not sure yet" | Parked or Active, no time | None |
 
 Version 27 nudged 30 minutes early (`wake_at` = time − 30 min). The version-28 SQL moves those to the time itself. Until a phone updates, the app and the sender still recognise the old early ones (`LEGACY_EARLY_MIN`), so they keep working.
@@ -149,7 +149,7 @@ Version 27 nudged 30 minutes early (`wake_at` = time − 30 min). The version-28
 | Time has passed | | Was: … | Did it happen? (Yes, close it / It moved / It isn't happening) |
 
 **Every place a time can change goes through `schedulePatch()`:**
-- Sort, "When is it?" (`finish-define-raw`)
+- Shape, "When is it?" (`finish-define-raw`)
 - Not yet, or Change time, on the card (`renderScheduleWhen()`, `park-until` with `data-when="schedule"`)
 - The card's sheet, Save the time (`sched-save`)
 - The calendar step, where the time can be edited before export (`cal-google`, `cal-ics`)
@@ -168,7 +168,7 @@ Version 27 nudged 30 minutes early (`wake_at` = time − 30 min). The version-28
 
 A Do or Schedule loop can repeat every day, week or month. The card says "Repeats every week".
 
-- **Schedule: in the time picker.** Every "When is it?" (sorting, Change time, the card's sheet, the sweep) has **Repeats** under Day and Time, saved by `schedulePatch()` with the time. A note that says "every tuesday", "weekly", "daily" or "monthly" pre-selects it (`parseRepeat()`). The line under the picker says what follows ("Then every Tuesday at 3:00 PM.").
+- **Schedule: in the time picker.** Every "When is it?" (shaping, Change time, the card's sheet, the sweep) has **Repeats** under Day and Time, saved by `schedulePatch()` with the time. A note that says "every tuesday", "weekly", "daily" or "monthly" pre-selects it (`parseRepeat()`). The line under the picker says what follows ("Then every Tuesday at 3:00 PM.").
 - **Changing the time of a loop that already repeats** asks **Just this one** (the series keeps `repeatFrom`; the next one is back on its usual day) or **This one and the ones after** (`repeatFrom` moves to the new time). Changing the Repeats choice itself always starts the series at the new time.
 - **Do: ⋯ → Repeat.** It starts the series from the loop's own time (its wake time, or 9:00 this morning).
 
@@ -242,7 +242,7 @@ A banner on Active offers it. Each card gets Make it Now, Up next, Park again (M
 - A saved copy with no loops proves nothing, so it waits for the server like a new phone.
 - Edits made during a full download wait in the queue until it lands, so the download can't paint over them (`pulling` in the Sync module).
 - A fresh open starts on Active. A reload within the same sitting (an update, a refresh) keeps the tab, which is stored in `sessionStorage`.
-- Active empty while Inbox has loops says "Active is clear. 2 in Inbox to sort." "Your head is clear" is only for a truly empty head. Parked loops don't count: they're out of your head on purpose.
+- Active empty while Inbox has loops says "Active is clear. 2 in Inbox to shape." "Your head is clear" is only for a truly empty head. Parked loops don't count: they're out of your head on purpose.
 
 ---
 

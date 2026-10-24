@@ -119,7 +119,10 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+/* The canvas behind the page is the theme’s color too (what shows while a
+   phone keyboard slides or the page overscrolls), and a tap shows the app’s
+   own press state instead of the browser’s highlight. */
+html { scroll-behavior: smooth; background-color: var(--bg); -webkit-tap-highlight-color: transparent; }
 
 body {
   margin: 0;
@@ -979,7 +982,6 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   inset: 0;
   background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(6px);
   pointer-events: auto;
   animation: fadeIn 0.2s ease;
 }
@@ -998,7 +1000,6 @@ a { color: inherit; text-decoration: none; }
   width: min(100%, 540px);
   max-height: calc(100vh - 40px);
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1187,7 +1188,6 @@ a { color: inherit; text-decoration: none; }
   gap: 7px;
   max-height: 55vh;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   margin-bottom: 14px;
 }
 
@@ -2402,8 +2402,8 @@ body {
 }
 
 /* ── OVERLAYS ── */
-.overlay-backdrop { background: rgba(40,32,15,0.28); backdrop-filter: blur(4px); }
-:root[data-theme="dark"] .overlay-backdrop { background: rgba(0,10,10,0.6); }
+.overlay-backdrop { background: rgba(40,32,15,0.32); }
+:root[data-theme="dark"] .overlay-backdrop { background: rgba(0,10,10,0.66); }
 .overlay-card {
   background: var(--bg);
   border: none;
@@ -2439,6 +2439,7 @@ body {
   color: var(--text);
   font-family: var(--sans);
   box-shadow: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
 }
 .big-input { font-size: 17px; padding: 14px 16px; }
 .big-input:focus, .email-input:focus, .auth-gate-input:focus, .inline-edit-input:focus {
@@ -2447,6 +2448,7 @@ body {
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
 .inline-edit-input { border-color: var(--text); box-shadow: 0 0 0 3px var(--focus-ring); font-size: 17px; }
+:root[data-theme="dark"] .big-input:focus, :root[data-theme="dark"] .email-input:focus, :root[data-theme="dark"] .auth-gate-input:focus, :root[data-theme="dark"] .inline-edit-input { border-color: rgba(255,250,240,0.5); box-shadow: 0 0 0 3px rgba(255,250,240,0.1); }
 .input-hint { font-size: 13px; }
 .char-counter { font-family: var(--sans); font-size: 12px; font-weight: 500; }
 .char-counter.at-limit { color: var(--error); }
@@ -2634,8 +2636,8 @@ body {
 /* ── MOTION LAYER ── */
 .motion-layer { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
 .motion-layer > * { pointer-events: none; }
-.motion-backdrop { position: fixed; inset: 0; background: rgba(40,32,15,0.28); }
-:root[data-theme="dark"] .motion-backdrop { background: rgba(0,10,10,0.6); }
+.motion-backdrop { position: fixed; inset: 0; background: rgba(40,32,15,0.32); }
+:root[data-theme="dark"] .motion-backdrop { background: rgba(0,10,10,0.66); }
 .motion-sheet { position: fixed; margin: 0; max-height: none; overflow: hidden; animation: none; transform-origin: center; }
 .motion-ghost { position: fixed; margin: 0; transform-origin: center; box-shadow: 0 18px 40px rgba(40,30,10,0.12); }
 .motion-token {
@@ -2722,8 +2724,27 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
 }
 .toast { max-width: calc(100vw - 32px); white-space: normal; text-align: center; }
 
-/* ── SHEETS: in-place updates never replay the entrance ── */
+/* ── SHEETS: in-place updates don’t replay the entrance ── */
 .overlay-card.no-enter { animation: none; }
+
+/* ── SHEETS ON PHONES: a real bottom sheet ──
+   Flush with the bottom and the sides, so it rises out of the screen’s edge
+   and goes back into it (exitSheet), with its buttons clear of the home
+   indicator. */
+@media (max-width: 767px) {
+  .overlay-panel { padding: env(safe-area-inset-top) 0 0; }
+  .overlay-card {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    animation-name: sheetUp;
+    animation-duration: .36s;
+    animation-timing-function: cubic-bezier(.32,.72,0,1);
+  }
+}
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+
+/* Press states for the controls that had none (the browser’s tap highlight is off). */
+.menu-item:active { background: var(--surface-3); }
+.overlay-close:active, .reorder-btn:active, .choice-chip:active, .toast-action:active { transform: scale(.94); }
 
 /* ── CAPTURE ── */
 .capture-input { min-height: 64px; resize: none; overflow: hidden; }
@@ -3132,7 +3153,9 @@ textarea.act-input { min-height: 52px; resize: none; overflow: hidden; }
   display: inline-flex; align-items: center; gap: 8px;
   font: 600 14px/1 var(--sans); cursor: pointer;
   animation: ol-rise 260ms ease-out both;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .12s ease;
 }
+.when-chip:active { transform: scale(.96); }
 .when-chip svg { width: 15px; height: 15px; }
 .when-chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
 .when-chip-hint { font-size: 13px; color: var(--text-3); }
@@ -3424,7 +3447,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 29, date: '24 Oct 2026' };
+  const APP_VERSION = { number: 30, date: '24 Oct 2026' };
   let swRegistration = null;
   let swState = 'pending';   // 'ready' once the service worker registers, 'failed' if it can’t
 
@@ -3504,7 +3527,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     ask:      { label: 'Ask',      action: 'Reach out',       question: 'Who do you need something from?',    helper: 'One person, one ask. Nothing more.' },
     schedule: { label: 'Schedule', action: 'Add to calendar', question: 'What needs time on a calendar?',     helper: 'Give it a day and a time.' },
     let_go:   { label: 'Let go',   action: 'Let go',          question: 'What are you choosing to release?',  helper: 'Letting go counts as an ending.' },
-    inbox:    { label: 'Inbox', action: 'Sort it',    question: '',                                   helper: '' }
+    inbox:    { label: 'Inbox', action: 'Shape it',   question: '',                                   helper: '' }
   };
 
   function nowIso() { return new Date().toISOString(); }
@@ -3714,7 +3737,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   }
   // The one place a Schedule loop’s time is set. Returns the patch: the time,
   // the nudge (wake) time that follows from it, and where the loop waits.
-  //   opts.status — a route the person chose (Sort’s Up next / Park);
+  //   opts.status — a route the person chose (Shape’s Up next / Park);
   //   otherwise: Parked until its time.
   //   opts.repeat — the picker’s Repeats choice ('' = doesn’t repeat; left
   //   out = keep what it has). Turning it on, or changing it, starts the
@@ -3871,6 +3894,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   let toastTimer = null;
   let fabTucked = false;   // the Capture button, tucked away while scrolling down
   let shownActiveIds = null; // Active loops last on screen (see noteHiddenActive)
+  let captureWhenTimer = null; // the date chip waits for a pause in typing
+  let mainTab = null;          // the tab renderMain last drew
   let deferredInstallPrompt = null; // set by 'beforeinstallprompt' event
   let currentLocalUserId = null;
   // Set to true once Sync.init() resolves so we don’t flash the lock screen
@@ -5290,7 +5315,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const monthName = new Date().toLocaleDateString(undefined, { month: 'long' });
     body += monthCloses().length
       ? `<button type="button" class="btn btn-primary head-share no-autofocus" data-action="open-share">${SHARE_ICON}Share your ${esc(monthName)}</button>
-         <p class="head-fine">The card shows colors and counts. Never what your loops say.</p>`
+         <p class="head-fine">The card shows colors and counts only. What your loops say stays with you.</p>`
       : `<p class="head-fine">Close something this month to make a card you can share.</p>`;
     return `
       <div class="overlay-card head-sheet" role="dialog" aria-modal="true" aria-labelledby="head-title">
@@ -5444,7 +5469,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       <div class="overlay-card share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-title">
         <div class="overlay-header"><div class="overlay-meta"><div class="overlay-eyebrow">Share card</div></div>${SHEET_CLOSE}</div>
         <h2 class="overlay-title" id="share-title">Your ${esc(ov.month)} on one card.</h2>
-        <p class="overlay-subtitle">Colors and counts only. Never what your loops say.</p>
+        <p class="overlay-subtitle">Colors and counts only. What your loops say stays with you.</p>
         ${ov.img ? `<img class="share-preview" src="${ov.img}" alt="Share card: ${ov.count} things out of my head this ${esc(ov.month)}.">` : '<div class="share-preview is-loading" aria-hidden="true"></div>'}
         <div class="overlay-actions">
           <button type="button" class="btn btn-ghost" data-action="share-save" ${ov.img ? '' : 'disabled'}>Save image</button>
@@ -6296,7 +6321,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const HEAD = {
       now:   { title: TAB_LABEL.active,   sub: 'Only a few things, on purpose.' },
       later: { title: TAB_LABEL.waiting,  sub: 'Set aside for later.' },
-      inbox: { title: TAB_LABEL.inbox,    sub: 'New thoughts, not sorted yet.' },
+      inbox: { title: TAB_LABEL.inbox,    sub: 'New thoughts, not shaped yet.' },
       done:  { title: TAB_LABEL.released, sub: 'Done or let go.' }
     };
     const tabKey = view.activeTab === 'waiting' ? 'later' : view.activeTab === 'released' ? 'done' : view.activeTab;
@@ -6360,9 +6385,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         html += `<div class="empty-state cleared">${mascotSvg('proud', { width: 210, className: Combo.fresh() ? 'mascot-sealing' : '', label: 'The mascot, proud, closed into a ring' })}<strong>Active is clear.</strong>${n} closes, one full chord.${sharePromptHtml()}</div>`;
       } else if (inbox.length) {
         // Unsorted captures are still open loops, so the head isn’t clear.
-        html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Active is clear.</strong>${inbox.length} in Inbox to sort.<div><button class="btn btn-ghost" type="button" data-action="set-tab" data-tab="inbox">Sort Inbox</button></div></div>`;
+        html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Active is clear.</strong>${inbox.length} in Inbox to shape.<div><button class="btn btn-ghost" type="button" data-action="set-tab" data-tab="inbox">Shape Inbox</button></div></div>`;
       } else {
-        html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Your head is clear.</strong>Capture a loop, then sort it when you’re ready.</div>`;
+        html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Your head is clear.</strong>Capture a loop, then shape it when you’re ready.</div>`;
       }
       html += `</div>`;
     }
@@ -6438,7 +6463,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
               <p class="loop-title">${esc(loop.rawText)}</p>
               ${loopMetaHtml(loop)}
               <div class="loop-card-bottom">
-                <button class="btn-action" data-action="define-raw" data-loop-id="${esc(loop.id)}">Sort it</button>
+                <button class="btn-action" data-action="define-raw" data-loop-id="${esc(loop.id)}">Shape it</button>
               </div>
             </article>`;
         });
@@ -6446,7 +6471,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       } else if (!known) {
         html += notKnownYetHtml();
       } else {
-        html += `<div class="empty-state">${mascotSvg('cheeky', { width: 190 })}<strong>Inbox zero.</strong>New loops wait here until you sort them.</div>`;
+        html += `<div class="empty-state">${mascotSvg('cheeky', { width: 190 })}<strong>Inbox zero.</strong>New loops wait here until you shape them.</div>`;
       }
       html += `</div>`;
     }
@@ -6477,7 +6502,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           ${closeBtn}
         </div>
         <h2 class="overlay-title" id="capture-title">Get it out of your head.</h2>
-        <p class="overlay-subtitle">It lands in Inbox. Sort it later.</p>
+        <p class="overlay-subtitle">It lands in Inbox. Shape it later.</p>
         <textarea class="big-input capture-input" id="capture-input" rows="2" placeholder="One unfinished thing…" maxlength="${MAX_LOOP_TEXT_LEN}" aria-describedby="capture-hint" enterkeyhint="next">${esc(ov.rawText)}</textarea>
         <div class="input-hint-row">
           <p class="input-hint" id="capture-hint">${added ? `<b class="capture-added">${added} added.</b> ` : ''}Press Enter to add it and write the next one.</p>
@@ -6535,7 +6560,24 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (box) {
       const html = captureWhenHtml(ov);
       const sig = html.replace(/\s+/g, ' ');
-      if (box.dataset.sig !== sig) { box.innerHTML = html; box.dataset.sig = sig; }
+      if (box.dataset.sig !== sig) {
+        // A chip already showing changes in place: rebuilding it would replay
+        // its rise on every keystroke that moves the time, and on every tap.
+        const chip = box.querySelector('.when-chip');
+        const next = document.createElement('div');
+        next.innerHTML = html;
+        const nextChip = next.querySelector('.when-chip');
+        if (chip && nextChip) {
+          chip.className = nextChip.className;
+          chip.setAttribute('aria-pressed', nextChip.getAttribute('aria-pressed'));
+          chip.innerHTML = nextChip.innerHTML;
+          const hint = box.querySelector('.when-chip-hint'), nextHint = next.querySelector('.when-chip-hint');
+          if (hint && nextHint) hint.textContent = nextHint.textContent;
+        } else {
+          box.innerHTML = html;
+        }
+        box.dataset.sig = sig;
+      }
     }
     const btn = document.querySelector('#overlay-root [data-action="save-raw-loop"]');
     if (btn) btn.textContent = captureSaveLabel(ov);
@@ -6665,7 +6707,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         <div class="define-top">
           ${back}
           <div class="define-progress" aria-hidden="true">${bars}</div>
-          <span class="define-stepcount" id="define-title-label">Sort · ${step} of 3</span>
+          <span class="define-stepcount" id="define-title-label">Shape · ${step} of 3</span>
           ${close}
         </div>
         <textarea class="define-title-input" id="define-raw-input" rows="1" maxlength="${MAX_LOOP_TEXT_LEN}" aria-label="Loop text" enterkeyhint="done">${esc(rawText)}</textarea>
@@ -6753,7 +6795,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           </button>
           ${inbox ? `<button class="menu-item menu-item-primary" data-action="define-raw" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-            Sort it
+            Shape it
           </button>` : ''}
           ${!inbox ? `<button class="menu-item" data-action="reclarify-kind" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2a5 5 0 0 1 5 5M7 12a5 5 0 0 1-5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M12 4V7H9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10V7h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -6885,7 +6927,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   const WHY_SCENES = [
     { h: 'Your head is full of open loops.', p: 'Every unfinished thing keeps pulling at you.' },
     { h: 'One next step quiets a loop.', p: 'Studies show a plan calms the nagging, even before it’s done.', cite: 'Masicampo & Baumeister, 2011' },
-    { h: 'Catch it. Sort it. Focus.', p: 'Drop it in Inbox, give it one next step, do one at a time.' },
+    { h: 'Catch it. Shape it. Focus.', p: 'Drop it in Inbox, give it one next step, do one at a time.' },
     { h: 'Close it. Let it go.', p: 'Every closed loop lands on your shelf, and out of your head.' },
     { h: 'Made for crowded heads.', p: 'If your mind keeps saying “I still need to…”, this is for you.' }
   ];
@@ -7397,7 +7439,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     },
     {
       eyebrow: '2 of 4',
-      title: 'Sort.',
+      title: 'Shape.',
       body: 'Give it a kind: Do, Decide, Ask, Schedule or Let go. The kind says what it needs next.',
       visual: `
         <div class="onboarding-visual">
@@ -7773,7 +7815,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return actSheet({
       eyebrow: 'Not yet', titleId: 'when-title', step: 'when',
       title: 'When should it come back?',
-      sub: `It returns to Up next at that time, never straight to Now.${current}`,
+      sub: `It returns to Up next at that time. You choose when it’s Now.${current}`,
       body
     });
   }
@@ -8186,21 +8228,29 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       g.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
       g.removeAttribute('id');
       g.classList.add('motion-sheet');
+      g.style.animation = 'none';   // the copy leaves; it must not replay the sheet’s entrance
       place(g, r.left, r.top, r.width, r.height);
       const bd = document.createElement('div');
       bd.className = 'motion-backdrop';
       L.append(bd, g);
       bd.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 280, easing: 'ease-out', fill: 'forwards' }).onfinish = () => bd.remove();
       if (reduced()) { fadeOut(g, 160); return; }
+      // On a phone the sheet goes back down into the edge it rose from.
+      const phone = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
       const a = toPellet
         ? g.animate([
             { transform: 'none', opacity: 1, borderRadius: '24px' },
             { transform: 'scale(.06)', opacity: 0, borderRadius: '50%' }
           ], { duration: 340, easing: 'cubic-bezier(.55,0,.75,.1)', fill: 'forwards' })
-        : g.animate([
-            { transform: 'none', opacity: 1 },
-            { transform: 'translateY(22px)', opacity: 0 }
-          ], { duration: 220, easing: 'ease-in', fill: 'forwards' });
+        : phone
+          ? g.animate([
+              { transform: 'none' },
+              { transform: `translateY(${Math.ceil(window.innerHeight - r.top)}px)` }
+            ], { duration: 260, easing: 'cubic-bezier(.32,0,.67,0)', fill: 'forwards' })
+          : g.animate([
+              { transform: 'none', opacity: 1 },
+              { transform: 'translateY(22px)', opacity: 0 }
+            ], { duration: 220, easing: 'ease-in', fill: 'forwards' });
       a.onfinish = () => g.remove();
     }
 
@@ -8699,8 +8749,20 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (!main) return;
     const snap = Motion.snapshot(main);
     main.innerHTML = renderHome();
+    // Another tab opens at its top, like any app’s tab bar, instead of
+    // wherever the last one was scrolled. Before Motion measures, so a card
+    // gliding to its new tab ends where it is drawn.
+    if (mainTab && mainTab !== view.activeTab && window.scrollY > 0) jumpToTop();
+    mainTab = view.activeTab;
     Motion.play(main, snap);
     focusInlineEdit();
+  }
+
+  function jumpToTop() {
+    const html = document.documentElement;
+    html.style.scrollBehavior = 'auto';
+    window.scrollTo(0, 0);
+    html.style.scrollBehavior = '';
   }
 
   function focusInlineEdit() {
@@ -8715,8 +8777,17 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (!root) return;
     const ov = view.overlay;
     if (!ov) { root.innerHTML = ''; delete root.dataset.sheet; return; }
+    // A tip leaves at once: fading out, the light toast would cross the
+    // rising sheet (a pale flash in dark mode).
     const tipEl = document.getElementById('toast');
-    if (tipEl && tipEl.dataset.tip) { clearTimeout(toastTimer); tipEl.classList.remove('visible'); delete tipEl.dataset.tip; }
+    if (tipEl && tipEl.dataset.tip) {
+      clearTimeout(toastTimer);
+      tipEl.style.transition = 'none';
+      tipEl.classList.remove('visible');
+      void tipEl.offsetWidth;
+      tipEl.style.transition = '';
+      delete tipEl.dataset.tip;
+    }
 
     let inner = '';
     if      (ov.type === 'capture')        inner = renderCapture(ov);
@@ -8768,16 +8839,29 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     // Focus first input/button so keyboard users don’t have to hunt.
     // Define’s title is editable but not the first job, so skip it.
     const firstInput = root.querySelector('textarea:not(#define-raw-input):not(.no-autofocus), input[type="email"], input[type="text"]:not(.no-autofocus)');
-    if (firstInput) {
-      setTimeout(() => firstInput.focus(), 50);
-    } else {
-      // No text input — focus the first actionable button instead.
-      // Long reading sheets (Your head) start at the top: focus the close
-      // button instead of a button at the bottom that would scroll the sheet.
-      const firstBtn = root.querySelector('.overlay-card button:not([data-action="close-overlay"]):not([disabled]):not(.no-autofocus)')
-        || root.querySelector('.overlay-card .overlay-close');
-      if (firstBtn) setTimeout(() => firstBtn.focus(), 50);
-    }
+    // No text input — focus the first actionable button instead.
+    // Long reading sheets (Your head) start at the top: focus the close
+    // button instead of a button at the bottom that would scroll the sheet.
+    const target = firstInput || root.querySelector('.overlay-card button:not([data-action="close-overlay"]):not([disabled]):not(.no-autofocus)')
+      || root.querySelector('.overlay-card .overlay-close');
+    if (target) focusWhenLanded(target, switching ? null : root.querySelector('.overlay-card'));
+  }
+
+  // A phone sheet takes focus once it has risen: a keyboard opening mid-slide
+  // jolts it. preventScroll keeps the page behind it still.
+  function focusWhenLanded(el, card) {
+    let done = false;
+    const go = () => {
+      if (done) return;
+      done = true;
+      if (document.contains(el)) el.focus({ preventScroll: true });
+    };
+    const rising = card && window.matchMedia && window.matchMedia('(max-width: 767px)').matches
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!rising) { setTimeout(go, 50); return; }
+    const landed = e => { if (e.target === card) { card.removeEventListener('animationend', landed); go(); } };
+    card.addEventListener('animationend', landed);
+    setTimeout(go, 450);
   }
 
   const PERSON_ICON = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M3 13.5a5 5 0 0 1 10 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
@@ -8964,6 +9048,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       return;
     }
     if (action === 'set-tab') {
+      // The tab you’re already on: back to its top.
+      if (el.dataset.tab === view.activeTab && window.scrollY > 0) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
       view.activeTab = el.dataset.tab;
       if (view.activeTab === 'done') view.expanded = false;
       save();
@@ -9168,7 +9254,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         const when = formatWake(sched.wakeAt);
         announce(finalStatus === 'waiting' ? `Parked. Back with a nudge ${when}.` : `In Up next. Nudge ${when}.`);
       } else {
-        announce(finalStatus === 'active' ? 'Sorted. Now in Up next.' : finalStatus === 'waiting' ? 'Sorted and parked.' : 'Sorted and closed.');
+        announce(finalStatus === 'active' ? 'Shaped. Now in Up next.' : finalStatus === 'waiting' ? 'Shaped and parked.' : 'Shaped and closed.');
       }
       return;
     }
@@ -10178,7 +10264,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const btn = document.querySelector('[data-action="save-raw-loop"]');
       if (btn) btn.disabled = !e.target.value.trim();
       autoGrow(e.target);
-      refreshCaptureWhen(ov);
+      // Mid-word the date comes and goes ("fri" is Friday, "frid" isn't yet):
+      // update the chip once typing pauses, so it doesn't blink.
+      clearTimeout(captureWhenTimer);
+      captureWhenTimer = setTimeout(() => { if (view.overlay === ov) refreshCaptureWhen(ov); }, 250);
     }
   });
 
