@@ -3845,8 +3845,18 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (!key) return;
     try {
       localStorage.setItem(key, JSON.stringify({ version: 2, lastLoopId: data.lastLoopId, activeTab: view.activeTab, loops: data.loops }));
-    } catch(e) {}
+    } catch(e) { noteStorageFull(); }
     try { sessionStorage.setItem(scopedKey(TAB_KEY_BASE), view.activeTab); } catch(e) {}
+  }
+
+  // The browser refused to store anything more (its storage is full, or it
+  // blocks storage for this site). Changes still go to the account while
+  // the app is open; say once that this device can't keep its own copy.
+  let storageFullNoted = false;
+  function noteStorageFull() {
+    if (storageFullNoted) return;
+    storageFullNoted = true;
+    setTimeout(() => toast('This browser has no room to keep your loops offline. New changes still go to your account while the app is open.', { duration: 9000 }), 0);
   }
 
   const SITTING_TABS = new Set(['now', 'later', 'inbox', 'done']);
@@ -9916,6 +9926,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     // would paint over them.
     let pulling     = false;
     let deadQueueDirty = false;
+    let memQueue = null;  // the queue, when this browser has no room left to store it
 
     // Echo suppression: when we write a row, the realtime subscription will
     // echo it back. We don't want that echo to clobber a newer in-flight
@@ -9986,6 +9997,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     function loadQueue() {
       const key = queueKey();
       if (!key || !currentUser) return [];
+      if (memQueue) return memQueue.filter(entry => !entry.ownerUserId || entry.ownerUserId === currentUser.id);
       try {
         const raw = localStorage.getItem(key);
         if (!raw) return [];
@@ -10000,7 +10012,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       try {
         if (!q.length) localStorage.removeItem(key);
         else           localStorage.setItem(key, JSON.stringify(q));
-      } catch(e) {}
+        memQueue = null;
+      } catch(e) {
+        // No room to keep the queue: hold it in memory so the writes still
+        // go out while the app is open.
+        memQueue = q.slice();
+        noteStorageFull();
+      }
     }
     function loadDeadQueue() {
       const key = deadQueueKey();
@@ -10011,8 +10029,33 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         return parsed.filter(entry => !entry.ownerUserId || entry.ownerUserId === currentUser.id);
       } catch(e) { return []; }
     }
+    function keptDeadQueue() {
+      const dead = loadDeadQueue().filter(e => e.keep);
+      // A loop that was created and then deleted without ever reaching the
+      // server has nothing left to save.
+      const deletedIds = new Set(dead.filter(e => e.op === 'delete').map(e => e.id));
+      const createdIds = new Set(dead.filter(e => e.op === 'create').map(e => e.id));
+      return dead.filter(e => !(deletedIds.has(e.id) && createdIds.has(e.id)));
+    }
+    // Retry: put this device's unsaved changes back at the front of the queue.
+    function requeueDead() {
+      const key = deadQueueKey();
+      if (!key || !currentUser) return 0;
+      const kept = keptDeadQueue();
+      try {
+        const all = JSON.parse(localStorage.getItem(key) || '[]');
+        const rest = Array.isArray(all) ? all.filter(e => !e.keep) : [];
+        if (rest.length) localStorage.setItem(key, JSON.stringify(rest));
+        else localStorage.removeItem(key);
+      } catch(_) {}
+      if (kept.length) {
+        saveQueue([...kept.map(({ keep, lastError, droppedAt, attempts, ...entry }) => entry), ...loadQueue()]);
+      }
+      deadQueueDirty = false;
+      return kept.length;
+    }
     function settleSyncStatus() {
-      if (deadQueueDirty && loadDeadQueue().length) {
+      if ((deadQueueDirty && loadDeadQueue().length) || keptDeadQueue().length) {
         setSyncStatus('error', 'Still saving');
         showSyncErrorBanner();
         return { ok: false, dead: true };
@@ -10059,6 +10102,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         prompt_answer: loop.promptAnswer || '',
         position:      typeof loop.position === 'number' ? loop.position : nowPosition(),
         created_at:    loop.createdAt || nowIso(),
+        completed_at:  loop.completedAt || null,
         wake_at:       loop.wakeAt || null,
         details:       cleanDetails(loop.details)
         // updated_at is set by the DB trigger.
@@ -10143,7 +10187,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         ({ data: updated, error } = await db.from('loops').update(row).eq('id', id).select('id').maybeSingle());
       }
       if (error) throw error;
-      if (!updated) throw new Error('No matching loop was updated for this signed-in user.');
+      if (!updated) throw gone('No matching loop was updated for this signed-in user.');
     }
 
     // Server rows from a database without the new columns carry no wake time
@@ -10167,7 +10211,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         .select('id')
         .maybeSingle();
       if (error) throw error;
-      if (!updated) throw new Error('No matching loop was deleted for this signed-in user.');
+      if (!updated) throw gone('No matching loop was deleted for this signed-in user.');
     }
     async function netUndelete(id) {
       markEcho(id);
@@ -10177,20 +10221,43 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         .select('id')
         .maybeSingle();
       if (error) throw error;
-      if (!updated) throw new Error('No matching loop was restored for this signed-in user.');
+      if (!updated) throw gone('No matching loop was restored for this signed-in user.');
     }
 
     // Max attempts per queue entry before moving it to a dead-letter queue.
     // Prevents a single poison-pill entry from blocking every edit behind it.
+    // Only a write the server understood and refused can end up there: one
+    // that never got an answer is retried for as long as it takes.
     const MAX_QUEUE_ATTEMPTS = 5;
+
+    // The row this write needs isn't on the server, so retrying won't help.
+    function gone(message) {
+      const e = new Error(message);
+      e.permanent = true;
+      return e;
+    }
+    // Worth trying again: no answer at all (offline, server down, a paused
+    // project, a Wi-Fi login page), a timeout, a busy database or an expired
+    // sign-in. Anything the server understood and refused is not.
+    function isRetryableError(e) {
+      if (!e) return true;
+      if (e.permanent) return false;
+      const code = String(e.code || '');
+      if (!code) return true;
+      if (/^PGRST(0\d\d|3\d\d)$/.test(code)) return true;
+      return /^(08|40|53|57|58)/.test(code);
+    }
 
     function moveToDeadQueue(entry, error) {
       const key = deadQueueKey();
       if (!key) return;
       try {
         const dead = JSON.parse(localStorage.getItem(key) || '[]');
+        // keep: still this device's change. Pulls keep showing it and Retry
+        // sends it again; older entries without it are history only.
         dead.push({
           ...entry,
+          keep: true,
           lastError: String(error && error.message ? error.message : error),
           droppedAt: Date.now()
         });
@@ -10241,7 +10308,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
             // Poison-pill: after MAX_QUEUE_ATTEMPTS, move this entry to the
             // dead-letter queue so it stops blocking everything behind it.
-            if (entry.attempts >= MAX_QUEUE_ATTEMPTS) {
+            // A write that never got an answer stays at the head and keeps
+            // retrying; dropping it would lose it at the next pull.
+            if (entry.attempts >= MAX_QUEUE_ATTEMPTS && !isRetryableError(e)) {
               const latest = loadQueue();
               const skipped = latest.shift();
               saveQueue(latest);
@@ -10290,7 +10359,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
 
     function applyPendingQueueOverlay(remoteLoops) {
-      const pending = loadQueue();
+      const pending = [...keptDeadQueue(), ...loadQueue()];
       if (!pending.length) return remoteLoops;
 
       const byId = new Map(remoteLoops.map(loop => [loop.id, loop]));
@@ -10366,6 +10435,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
               promptAnswer: l.promptAnswer,
               position:     l.position,
               createdAt:    l.createdAt,
+              completedAt:  l.completedAt || null,
               wakeAt:       l.wakeAt || null,
               details:      l.details || {}
             }));
@@ -10707,6 +10777,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       async retry() {
         if (!currentUser) return { ok: true, pending: true };
         setSyncStatus('syncing', 'Syncing…');
+        requeueDead();
         try {
           const r = await processQueue();
           if (!r.ok) return r;

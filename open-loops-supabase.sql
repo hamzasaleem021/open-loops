@@ -105,7 +105,7 @@ create policy "users update own loops"
 -- ── BATCH UPSERT (used when seeding server from local data) ──────────────
 -- p_loops is a JSON array whose items use camelCase keys to match the JS
 -- client: { id, rawText, kind, status, promptAnswer, position, createdAt,
--- wakeAt, details }.
+-- completedAt, wakeAt, details }.
 -- Every inserted row is stamped with auth.uid() as user_id regardless of
 -- what the payload contains, so a caller cannot impersonate another user.
 -- RLS on public.loops blocks updates to rows owned by a different user, so
@@ -127,7 +127,7 @@ begin
   for item in select * from jsonb_array_elements(p_loops)
   loop
     insert into public.loops
-      (id, user_id, raw_text, kind, status, prompt_answer, position, created_at, wake_at, details)
+      (id, user_id, raw_text, kind, status, prompt_answer, position, created_at, completed_at, wake_at, details)
     values (
       item->>'id',
       auth.uid(),
@@ -138,6 +138,7 @@ begin
       coalesce((item->>'position')::double precision,
                extract(epoch from coalesce((item->>'createdAt')::timestamptz, now()))),
       coalesce((item->>'createdAt')::timestamptz, now()),
+      nullif(item->>'completedAt', '')::timestamptz,
       nullif(item->>'wakeAt', '')::timestamptz,
       case when jsonb_typeof(item->'details') = 'object' then item->'details' else '{}'::jsonb end
     )
@@ -147,6 +148,7 @@ begin
           status        = excluded.status,
           prompt_answer = excluded.prompt_answer,
           position      = excluded.position,
+          completed_at  = excluded.completed_at,
           wake_at       = excluded.wake_at,
           details       = excluded.details,
           deleted_at    = null,
