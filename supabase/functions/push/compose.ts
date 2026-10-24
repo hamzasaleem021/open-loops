@@ -3,10 +3,10 @@
 // Three kinds of nudge:
 //   • Wake-ups: the moment a parked loop's time comes. Loops that wake
 //     together share one nudge.
-//   • Heads-ups: a Schedule loop's wake time is set 30 minutes before it
-//     happens (the app derives it from the time you picked). That wake-up
-//     says so, with the real minutes left, on its own, never folded into a
-//     "3 loops woke up".
+//   • Schedule nudges: a Schedule loop's wake time is its time (details.at),
+//     so this wake-up goes out right when it happens: "“Dentist” is now.",
+//     on its own, never folded into a "3 loops woke up". (Version 27 set it
+//     30 minutes early; those still say "in 30 min" until the SQL moves them.)
 //   • The daily check-in, at the time the phone picked, and only when there
 //     is something to say: the Sunday recap, or one loop that has gone stale
 //     (at most weekly).
@@ -32,7 +32,7 @@ export type Sub = {
 };
 
 export type Nudge = {
-  kind: 'wake' | 'heads_up' | 'stale' | 'recap' | 'test';
+  kind: 'wake' | 'schedule' | 'stale' | 'recap' | 'test';
   lineId: string;
   title: string;
   body: string;
@@ -54,10 +54,15 @@ const LINES: Record<string, Line[]> = {
     { id: 'wqa', title: 'Did {whoS} reply?', body: 'Time to check back on “{t}”.' },
     { id: 'wqb', title: 'Any word from {whoO}?', body: 'You said you’d check back on “{t}” about now.' },
   ],
-  headsUp: [
+  scheduleNow: [
+    { id: 'n0a', title: '“{t}” is now.', body: 'You set it for {clock}. It’s in Up next.' },
+    { id: 'n0b', title: 'It’s {clock}.', body: 'Time for “{t}”.' },
+    { id: 'n0c', title: 'On the dot.', body: '“{t}” is happening now.' },
+  ],
+  // Version 27's early wake times, until the SQL moves them to the time itself.
+  scheduleSoon: [
     { id: 'h1a', title: '“{t}” in {m}.', body: 'Starts at {clock}. It’s in Up next.' },
     { id: 'h1b', title: '{m} to “{t}”.', body: 'Heads up: it starts at {clock}.' },
-    { id: 'h1c', title: 'Coming up: “{t}”.', body: 'Starts at {clock}, {m} from now.' },
   ],
   wakeMany: [
     { id: 'wNa', title: '{n} loops just woke up.', body: 'They’re in Up next. Thirty seconds to sort them?' },
@@ -103,26 +108,34 @@ export function askWho(note: string | null | undefined): string {
   return m && m[2].trim() && m[1].trim().split(/\s+/).length <= 4 ? m[1].trim() : '';
 }
 
-// The app sets a Schedule loop's wake time to exactly HEADS_UP_MIN before its
-// time (details.at). Only that wake-up is a heads-up: an older app may have
-// parked a Schedule loop until some other time, and "in 4,320 min" would be
-// nonsense, so that one stays an ordinary wake-up.
-export const HEADS_UP_MIN = 30;
+// The app sets a Schedule loop's wake time to its time (details.at). Only that
+// wake-up is a Schedule nudge (version 27's 30-minutes-early one too): an
+// older app may have parked a Schedule loop until some other time, and
+// "is now" four days early would be nonsense, so that one stays an ordinary
+// wake-up.
+export const LEGACY_EARLY_MIN = 30;
+// How late a "now" nudge may still arrive (a phone that was offline, a slow
+// run). Later than this, the app's "Did it happen?" is the better question.
+export const NOW_GRACE_MIN = 15;
 export function eventAt(l: Loop): number | null {
   const at = l.kind === 'schedule' && l.details && typeof l.details === 'object' ? (l.details as Record<string, unknown>).at : null;
   const t = typeof at === 'string' ? Date.parse(at) : NaN;
   return Number.isFinite(t) ? t : null;
 }
-export function isHeadsUp(l: Loop): boolean {
+export function isScheduleNudge(l: Loop): boolean {
   const at = eventAt(l);
   const wake = l.wake_at ? Date.parse(l.wake_at) : NaN;
-  return at !== null && Number.isFinite(wake) && Math.abs(wake - (at - HEADS_UP_MIN * 60000)) < 60000;
+  return at !== null && Number.isFinite(wake) &&
+    (Math.abs(wake - at) < 60000 || Math.abs(wake - (at - LEGACY_EARLY_MIN * 60000)) < 60000);
 }
-// Seconds until the event: how long a heads-up may wait on the way to the
-// phone. Delivered after it started, "in 30 min" would be a lie.
-export function headsUpTtl(l: Loop, now: Date): number {
+// How long a Schedule nudge may wait on the way to the phone, in seconds.
+// An early ("in 30 min") one must land before the start; a "now" one may be
+// up to NOW_GRACE_MIN late. 0 or less: too late, don't send.
+export function scheduleNudgeTtl(l: Loop, now: Date): number {
   const at = eventAt(l);
-  return at === null ? 0 : Math.floor((at - now.getTime()) / 1000);
+  if (at === null) return 0;
+  const untilStart = Math.floor((at - now.getTime()) / 1000);
+  return untilStart >= 60 ? untilStart : Math.floor((at + NOW_GRACE_MIN * 60000 - now.getTime()) / 1000);
 }
 
 function clockIn(ms: number, tz: string): string {
@@ -136,21 +149,20 @@ function minutesText(m: number): string {
   return m === 1 ? '1 min' : `${m} min`;
 }
 
-// One Schedule loop's heads-up, from the real minutes left (a late run says
-// "in 12 min", not "in 30"). Null once it has started: the app asks
-// "Did it happen?" instead.
-export function composeHeadsUp(sub: { recent_lines: string[] | null; tz: string }, l: Loop, now: Date): Nudge | null {
+// One Schedule loop's nudge, said from the real time left: "is now" at its
+// time (and up to NOW_GRACE_MIN late), "in 12 min" for a version-27 early
+// one. Null when it's too late to be useful: the app asks "Did it happen?".
+export function composeScheduleNudge(sub: { recent_lines: string[] | null; tz: string }, l: Loop, now: Date): Nudge | null {
   const at = eventAt(l);
   if (at === null) return null;
   const m = Math.round((at - now.getTime()) / 60000);
-  if (m < 1) return null;
-  const line = fill(pickLine(LINES.headsUp, sub.recent_lines || [], Math.floor(now.getTime() / 60000)), {
-    t: short(l.raw_text), m: minutesText(m), clock: clockIn(at, sub.tz),
-  });
+  if (m < 1 && now.getTime() - at > NOW_GRACE_MIN * 60000) return null;
+  const vars = { t: short(l.raw_text), m: minutesText(m), clock: clockIn(at, sub.tz) };
+  const line = fill(pickLine(m >= 1 ? LINES.scheduleSoon : LINES.scheduleNow, sub.recent_lines || [], Math.floor(now.getTime() / 60000)), vars);
   return {
-    kind: 'heads_up', lineId: line.id, title: line.title, body: line.body,
-    query: `loop=${encodeURIComponent(l.id)}`, tag: `open-loops-soon-${l.id}`, loopId: l.id,
-    // Done only: "Tomorrow at 9" makes no sense for something happening today.
+    kind: 'schedule', lineId: line.id, title: line.title, body: line.body,
+    query: `loop=${encodeURIComponent(l.id)}`, tag: `open-loops-time-${l.id}`, loopId: l.id,
+    // Done only: "Tomorrow at 9" makes no sense for something happening now.
     actions: [{ action: 'done', title: 'Done' }],
   };
 }
