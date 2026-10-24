@@ -3424,7 +3424,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 28, date: '24 Oct 2026' };
+  const APP_VERSION = { number: 29, date: '24 Oct 2026' };
   let swRegistration = null;
   let swState = 'pending';   // 'ready' once the service worker registers, 'failed' if it can’t
 
@@ -3673,6 +3673,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     for (const l of data.loops.slice()) {
       const d = l.details || {};
       if (l.status !== 'released' || !REPEATS[d.repeat] || d.next || isLetGo(l)) continue;
+      if (l.kind !== 'do' && l.kind !== 'schedule') continue;   // changed to another kind since
       const when = nextOccurrence(l);
       if (!when) continue;
       const series = d.series || l.id;
@@ -9604,9 +9605,14 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (!ov || ov.type !== 'delete-account' || ov.busy) return;
       if (navigator.onLine === false) { ov.error = 'You’re offline. Connect, then try again.'; renderOverlay(); return; }
       ov.busy = true; ov.error = null; renderOverlay();
-      await Push.disable().catch(() => {});
       const r = await Sync.deleteAccount();
       if (!r.ok) { ov.busy = false; ov.error = 'Couldn’t delete it just now. Nothing was deleted. Try again in a moment.'; renderOverlay(); return; }
+      // The server already removed this phone's nudge row; stop the browser
+      // subscription too, so nothing more can arrive here.
+      await Push.disable().catch(() => {});
+      // Turning nudges off rewrote this device's nudge settings; nothing of
+      // the deleted account should stay behind.
+      try { Object.keys(localStorage).filter(k => k.endsWith(':' + r.id)).forEach(k => localStorage.removeItem(k)); } catch (_) {}
       closeOverlay();
       toast('Your account and all your loops are deleted.', { duration: 6000 });
       return;
@@ -11247,7 +11253,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         } catch (_) {}
         forgetAccount();
         await db.auth.signOut().catch(() => {});
-        return { ok: true };
+        return { ok: true, id };
       },
       isLoggedIn() { return !!currentUser; },
       userEmail() { return (currentUser && currentUser.email) || ''; },
