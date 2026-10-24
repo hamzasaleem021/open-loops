@@ -370,6 +370,24 @@ select cron.schedule(
   $job$ delete from cron.job_run_details where end_time < now() - interval '2 days' $job$
 );
 
+-- ── SCHEDULE HEADS-UPS (version 27) ─────────────────────────────────────
+-- From version 27 the app sets a Schedule loop's wake_at to 30 minutes
+-- before its time (details.at), so the wake-up above doubles as its
+-- heads-up. Older versions saved the time without a wake_at, so those loops
+-- never nudged. This gives the ones still ahead their heads-up. It only
+-- adds a wake time (where each loop waits is left alone), only where there
+-- is none, and only while the heads-up is still ahead, so running the file
+-- again changes nothing.
+update public.loops
+   set wake_at = (details->>'at')::timestamptz - interval '30 minutes'
+ where deleted_at is null
+   and kind = 'schedule'
+   and status in ('active', 'waiting')
+   and wake_at is null
+   and case when (details->>'at') ~ '^\d{4}-\d{2}-\d{2}T'
+            then (details->>'at')::timestamptz - interval '30 minutes' > now()
+            else false end;
+
 -- ── REALTIME ─────────────────────────────────────────────────────────────
 do $$
 begin
