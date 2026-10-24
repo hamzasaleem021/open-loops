@@ -3586,6 +3586,96 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return loop.kind === 'let_go';
   }
 
+  // ── SCHEDULE ──
+  // A Schedule loop has one time: when it happens (details.at). Everything
+  // else follows from it, and only schedulePatch() writes it:
+  //   • it waits in Parked and comes back to Up next HEADS_UP_MIN before,
+  //     which is when the nudge goes out (wake_at = at − HEADS_UP_MIN);
+  //   • closer than that, it goes straight to Up next with no heads-up;
+  //   • once the time has passed, its card asks "Did it happen?".
+  // "Not yet" on a Schedule loop means "it's at a different time", so it
+  // opens the same day-and-time picker, never quick presets.
+  const HEADS_UP_MIN = 30;
+  function scheduleAt(loop) {
+    const at = loop && loop.kind === 'schedule' && loop.details && loop.details.at;
+    const t = at ? new Date(at).getTime() : NaN;
+    return Number.isFinite(t) ? t : null;
+  }
+  // When the heads-up goes out for an event at atMs, or null when it's too
+  // close for one (less than a minute of notice left).
+  function headsUpFor(atMs, now = Date.now()) {
+    const w = atMs - HEADS_UP_MIN * 60000;
+    return w > now + 60000 ? new Date(w).toISOString() : null;
+  }
+  function schedulePassed(loop) { const t = scheduleAt(loop); return t !== null && t <= Date.now(); }
+  // Was this loop's wake time put there by its event time?
+  function wakeIsHeadsUp(loop) {
+    const t = scheduleAt(loop);
+    return t !== null && !!loop.wakeAt && Math.abs(new Date(loop.wakeAt).getTime() - (t - HEADS_UP_MIN * 60000)) < 1000;
+  }
+  // The one place a Schedule loop's time is set. Returns the patch: the time,
+  // the heads-up wake time that follows from it, and where the loop waits.
+  //   opts.status — a route the person chose (Define's Up next / Park);
+  //   otherwise: Parked when a heads-up is ahead, Up next when it's too close.
+  function schedulePatch(loop, atIso, opts = {}) {
+    const details = { ...((loop && loop.details) || {}) };
+    if (atIso) {
+      if (details.at !== atIso) delete details.calAt;   // a new time: the calendar has the old one
+      details.at = atIso;
+    } else {
+      delete details.at;
+      delete details.calAt;
+    }
+    delete details.outcome;
+    const wakeAt = atIso ? headsUpFor(new Date(atIso).getTime()) : null;
+    let status = opts.status || (atIso ? (wakeAt ? 'waiting' : 'active') : (loop && loop.status === 'waiting' ? 'waiting' : 'active'));
+    if (status === 'waiting' && atIso && !wakeAt) status = 'active';   // too close to park
+    return { details: cleanDetails(details), wakeAt, status, completedAt: null };
+  }
+  // A day and a time, both required (no 9:00 filled in behind your back).
+  function fromScheduleInputs(dateStr, timeStr) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || '') || !/^\d{1,2}:\d{2}/.test(timeStr || '')) return null;
+    return fromLocalInputs(dateStr, timeStr);
+  }
+  function readSchedulePick(prefix) {
+    const d = fromScheduleInputs(document.getElementById(`${prefix}-date`)?.value, document.getElementById(`${prefix}-time`)?.value);
+    if (!d) { toast('Pick a day and a time.'); return null; }
+    if (d.getTime() <= Date.now()) { toast('Pick a time that is still ahead.'); return null; }
+    return d.toISOString();
+  }
+  // The honest line under every Schedule picker: what will actually happen.
+  function scheduleNoteText(atMs) {
+    if (atMs === null || !Number.isFinite(atMs)) return `Pick a day and a time. It comes back ${HEADS_UP_MIN} minutes before.`;
+    if (atMs <= Date.now()) return 'That time has already passed. Pick one that is still ahead.';
+    const heads = headsUpFor(atMs);
+    if (!heads) return `Less than ${HEADS_UP_MIN} minutes away, so it goes straight to Up next.`;
+    const at = clockText(new Date(heads));
+    let nudges = false;
+    try { nudges = nudgeState() === 'on' && Push.prefs().wakeups !== false; } catch (_) {}
+    return nudges
+      ? `I'll nudge you at ${at}, ${HEADS_UP_MIN} minutes before.`
+      : `It comes back to Up next at ${at}. Nudges are off on this phone, so turn them on in Settings to get a ping too.`;
+  }
+  // Day + time fields for a Schedule picker. Empty unless there's a real
+  // time to start from (one already set, or read from the note).
+  function scheduleFieldsHtml(prefix, start, autofocus = false) {
+    const af = autofocus ? '' : ' no-autofocus';
+    const atMs = start ? start.getTime() : null;
+    return `
+      <div class="act-row">
+        ${actField(`${prefix}-date`, 'Day', `<input class="big-input act-input sched-input${af}" id="${prefix}-date" type="date" value="${start ? localDateValue(start) : ''}" min="${localDateValue(new Date())}" data-sched="${prefix}">`)}
+        ${actField(`${prefix}-time`, 'Time', `<input class="big-input act-input sched-input no-autofocus" id="${prefix}-time" type="time" value="${start ? localTimeValue(start) : ''}" data-sched="${prefix}">`)}
+      </div>
+      <p class="input-hint sched-note" id="${prefix}-note" aria-live="polite">${esc(scheduleNoteText(atMs))}</p>`;
+  }
+  function refreshScheduleNote(input) {
+    const prefix = input && input.dataset.sched;
+    if (!prefix) return;
+    const d = fromScheduleInputs(document.getElementById(`${prefix}-date`)?.value, document.getElementById(`${prefix}-time`)?.value);
+    const note = document.getElementById(`${prefix}-note`);
+    if (note) note.textContent = scheduleNoteText(d ? d.getTime() : null);
+  }
+
   // ── STATE ──
   let data = seedState();
   let view = {
@@ -4297,9 +4387,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     // On Active the sweep banner already says what woke up.
     const bannerSaysIt = view.activeTab === 'now' && sweepBannerItems().length > 0;
     if (!opts.quiet && !bannerSaysIt) {
-      const first = due[due.length - 1].rawText || '';
+      const firstLoop = due[due.length - 1];
+      const first = firstLoop.rawText || '';
       const short = first.length > 42 ? first.slice(0, 40).trimEnd() + '…' : first;
-      toast(due.length === 1 ? `Back in Up next: ${short}` : `${due.length} loops woke up. They're in Up next.`);
+      const schedAt = scheduleAt(firstLoop);
+      toast(due.length !== 1 ? `${due.length} loops woke up. They're in Up next.`
+        : schedAt !== null && schedAt > now ? `Coming up at ${clockText(new Date(schedAt))}: ${short}`
+        : `Back in Up next: ${short}`);
     }
     return due;
   }
@@ -4395,6 +4489,14 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const d = loop.details || {};
     const wake = loop.wakeAt ? new Date(loop.wakeAt).getTime() : null;
     const isSentAsk = loop.kind === 'ask' && !!d.sentAt;
+    // A timed Schedule loop: say when it comes back (the nudge) or starts.
+    const schedAt = scheduleAt(loop);
+    if (schedAt !== null && (loop.status === 'waiting' || loop.status === 'active') && schedAt > Date.now()) {
+      if (wakeIsHeadsUp(loop) && wake > Date.now()) {
+        return { icon: 'cal', text: loop.status === 'waiting' ? `Back ${formatWake(loop.wakeAt)}, ${HEADS_UP_MIN} min before` : `Nudge ${formatWake(loop.wakeAt)}` };
+      }
+      return { icon: 'cal', text: `Starts ${formatEvent(new Date(schedAt).toISOString())}` };
+    }
     if (loop.status === 'waiting') {
       if (isSentAsk) {
         const who = parseAsk(loop.promptAnswer).who || 'them';
@@ -4433,6 +4535,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   function dryness(loop) {
     if (!loop || (loop.status !== 'active' && loop.status !== 'waiting')) return null;
     if (loop.status === 'waiting' && loop.wakeAt) return null;
+    // Waiting for its date is not neglect.
+    const schedAt = scheduleAt(loop);
+    if (schedAt !== null && schedAt > Date.now()) return null;
     const days = untouchedDays(loop);
     if (days >= CRACK_DAYS) return { level: 'cracked', days };
     if (days >= DRY_DAYS) return { level: 'drying', days };
@@ -4659,6 +4764,19 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (!loop) return '';
     const dots = items.map((_, i) => `<span class="sweep-dot${i < ov.idx ? ' done' : i === ov.idx ? ' on' : ''}"></span>`).join('');
     const progress = `<div class="sweep-dots" role="img" aria-label="Loop ${ov.idx + 1} of ${items.length}">${dots}</div>`;
+    if (ov.step === 'park' && loop.kind === 'schedule') {
+      // It moved: when is it now? A day and a time, no presets.
+      const at = scheduleAt(loop);
+      return sheet(`
+        ${progress}
+        <h2 class="sweep-h small" id="sweep-title">When is “${esc(shortText(loop.rawText, 40))}” now?</h2>
+        ${scheduleFieldsHtml('sweep-sched', at !== null && at > Date.now() ? new Date(at) : null)}
+        <div class="act-list">
+          ${actBtn({ action: 'sweep-park', label: 'Save the time', primary: true, loopId: loop.id, attrs: 'data-when="schedule"', icon: ACT_ICON.clock })}
+          ${actBtn({ action: 'sweep-park', label: 'Not sure yet', sub: 'It waits in Parked until you bring it back', loopId: loop.id, attrs: 'data-when=""', icon: ACT_ICON.next })}
+        </div>
+        <button type="button" class="btn btn-ghost sweep-back" data-action="sweep-back">Back</button>`);
+    }
     if (ov.step === 'park') {
       const presets = wakePresets('park')
         .filter(p => p.label !== 'Tonight' && p.label !== 'In 3 hours')
@@ -4678,9 +4796,12 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     let reason;
     if (it.why === 'woke') {
       const d = loop.details || {};
+      const schedAt = scheduleAt(loop);
       reason = loop.kind === 'ask' && d.sentAt
         ? { icon: 'person', text: `Checking back on ${parseAsk(loop.promptAnswer).who || 'them'}` }
-        : { icon: 'sun', text: `You parked it until ${formatWake(loop.wakeAt)}` };
+        : schedAt !== null
+          ? { icon: 'cal', text: `${schedAt > Date.now() ? 'Starts' : 'Was'} ${formatEvent(new Date(schedAt).toISOString())}` }
+          : { icon: 'sun', text: `You parked it until ${formatWake(loop.wakeAt)}` };
     } else {
       reason = { icon: 'dry', text: `Untouched ${untouchedDays(loop)} days. Still yours?` };
     }
@@ -4700,7 +4821,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         <div class="sweep-grid">
           <button type="button" class="btn btn-primary" data-action="sweep-pick" data-pick="now">Make it Now</button>
           <button type="button" class="btn btn-ghost" data-action="sweep-pick" data-pick="next">${dry ? 'Keep it' : 'Up next'}</button>
-          <button type="button" class="btn btn-ghost" data-action="sweep-pick" data-pick="park">${dry ? 'Park it' : 'Park again'}</button>
+          <button type="button" class="btn btn-ghost" data-action="sweep-pick" data-pick="park">${dry ? 'Park it' : loop.kind === 'schedule' ? 'Move it' : 'Park again'}</button>
           <button type="button" class="btn btn-ghost" data-action="sweep-pick" data-pick="go">Let go</button>
         </div>
         <p class="sweep-note">${hasOtherNow ? 'Make it Now puts it above your current Now. Up next leaves your Now as it is.' : 'Make it Now puts it at the top of Active.'}</p>`);
@@ -4717,7 +4838,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }, 900);
   }
   // One card's choice, applied to the loop. Returns what to sync.
-  function sweepApply(loop, pick, wakeAt) {
+  function sweepApply(loop, pick, wakeAt, schedIso) {
     const top = byStatus('active')[0];
     const isNow = !!(top && top.id === loop.id);
     let patch;
@@ -4727,6 +4848,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     } else if (pick === 'next') {
       if (isNow) patch = { position: loop.position };
       else { const up = upNextPosition(loop.id); patch = { status: 'active', position: up.position }; rebalance = up.rebalance; }
+    } else if (pick === 'park' && loop.kind === 'schedule') {
+      // Moved to a new time (or no time yet): where it waits follows from it.
+      patch = schedulePatch(loop, schedIso || null, schedIso ? {} : { status: 'waiting' });
+      if (patch.status === 'active') { const up = upNextPosition(loop.id); patch.position = up.position; rebalance = up.rebalance; }
     } else if (pick === 'park') {
       patch = { status: 'waiting', wakeAt: wakeAt || null };
     } else {
@@ -5564,7 +5689,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const DAY = 86400000;
     if (p.recap && at.getDay() === 0 && data.loops.some(l => l.status === 'released' && l.completedAt && new Date(l.completedAt).getTime() > t - 7 * DAY)) return 'recap';
     const staleLately = p.lastStaleAt && new Date(p.lastStaleAt).getTime() > t - 6.5 * DAY;
-    if (p.stale && !staleLately && data.loops.some(l => (l.status === 'active' || (l.status === 'waiting' && !l.wakeAt)) && new Date(l.updatedAt).getTime() <= t - CRACK_DAYS * DAY)) return 'stale';
+    // Same rule as the sender: a Schedule loop waiting for its date isn't stale.
+    if (p.stale && !staleLately && data.loops.some(l => (l.status === 'active' || (l.status === 'waiting' && !l.wakeAt)) && !(scheduleAt(l) > t) && new Date(l.updatedAt).getTime() <= t - CRACK_DAYS * DAY)) return 'stale';
     return '';
   }
   function nextWakeLoop() {
@@ -5637,7 +5763,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // What the card's main button says. An Ask that was sent asks the real
   // question: did they reply?
   function actionLabel(loop) {
-    if (loop.kind === 'schedule' && loop.details && loop.details.calAt) return 'On your calendar?';
+    if (loop.kind === 'schedule') {
+      if (schedulePassed(loop)) return 'Did it happen?';
+      if (loop.details && loop.details.calAt) return 'On your calendar?';
+      return scheduleAt(loop) !== null ? 'Change the time' : 'Set the time';
+    }
     if (loop.kind === 'ask' && loop.details && loop.details.sentAt) {
       const who = parseAsk(loop.promptAnswer).who;
       return who ? `Did ${who} reply?` : 'Did they reply?';
@@ -5649,7 +5779,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // when it happens.
   function nextLineHtml(loop, label = 'Next', empty = 'No next step set.') {
     const at = loop.kind === 'schedule' && loop.details && loop.details.at;
-    if (at) return `<div class="loop-next"><span class="loop-next-label">When</span><span>${esc(formatEvent(at))}</span></div>`;
+    if (at) return `<div class="loop-next"><span class="loop-next-label">${schedulePassed(loop) ? 'Was' : 'When'}</span><span>${esc(formatEvent(at))}</span></div>`;
     const fallback = loop.kind === 'schedule' && label === 'Next' ? 'No time set yet.' : empty;
     return `<div class="loop-next"><span class="loop-next-label">${label}</span><span>${esc(loop.promptAnswer || fallback)}</span></div>`;
   }
@@ -6060,13 +6190,14 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   };
 
   // Where Define's "When is it?" starts: the time already picked, else what
-  // the note says, else tomorrow at 9:00.
+  // the note says, else empty. Never an invented default: a "tomorrow 9:00"
+  // you didn't choose is a false answer one tap away from being saved.
   function defineWhen(loop, ov) {
     const picked = ov.at ? new Date(ov.at) : (loop.details && loop.details.at ? new Date(loop.details.at) : null);
-    if (picked && !Number.isNaN(picked.getTime())) return { date: picked, hint: 'You’ll put it on your calendar from its card.' };
+    if (picked && !Number.isNaN(picked.getTime())) return { date: picked, readFrom: null };
     const parsed = parseWhen(ov.rawText ?? loop.rawText) || parseWhen(loop.promptAnswer);
-    if (parsed) return { date: parsed.date, hint: `I read “${parsed.text}” from your note. Change it if that’s wrong.` };
-    return { date: atTime(addDays(new Date(), 1), 9), hint: 'You’ll put it on your calendar from its card.' };
+    if (parsed && parsed.date.getTime() > Date.now()) return { date: parsed.date, readFrom: parsed.text };
+    return { date: null, readFrom: null };
   }
 
   function renderDefineRaw(loop) {
@@ -6100,11 +6231,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       body = `
         <div class="step-kind">${kindChip}</div>
         <h3 class="step-q" id="define-when-q">When is it?</h3>
-        <div class="act-row define-when" role="group" aria-labelledby="define-when-q">
-          ${actField('define-date', 'Day', `<input class="big-input act-input" id="define-date" type="date" value="${localDateValue(when.date)}">`)}
-          ${actField('define-time', 'Time', `<input class="big-input act-input" id="define-time" type="time" value="${localTimeValue(when.date)}">`)}
+        <div class="define-when" role="group" aria-labelledby="define-when-q">
+          ${scheduleFieldsHtml('define', when.date, true)}
         </div>
-        <p class="input-hint">${esc(when.hint)}</p>
+        ${when.readFrom ? `<p class="input-hint">I read “${esc(when.readFrom)}” from your note. Change it if that’s wrong.</p>` : ''}
         <div class="overlay-actions">
           <button class="btn btn-ghost" data-action="define-next" data-skip="1">Not sure yet</button>
           <button class="btn btn-primary" data-action="define-next">Next</button>
@@ -6129,10 +6259,21 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const cap = view.loopCap || DEFAULT_LOOP_CAP;
       const full = active >= cap;
       const wasActive = loop.status === 'active';
-      const suggest = kind === 'let_go' ? 'released' : (full && !wasActive ? 'waiting' : 'active');
+      // A timed Schedule loop is out of your head until just before it
+      // happens, so Park is the natural home and says when it comes back.
+      const schedAt = kind === 'schedule' && ov.at ? new Date(ov.at).getTime() : null;
+      const schedHeads = schedAt ? headsUpFor(schedAt) : null;
+      const headsClock = schedHeads ? clockText(new Date(schedHeads)) : '';
+      const suggest = kind === 'let_go' ? 'released' : schedHeads ? 'waiting' : (full && !wasActive ? 'waiting' : 'active');
+      const activeHint = schedHeads
+        ? `${wasActive ? 'Stays in Active' : 'Into Active now'}, with a nudge at ${headsClock}.`
+        : wasActive ? 'Stays where it is in Active.' : 'Into Active, right under your Now card.';
+      const parkHint = schedHeads
+        ? `Out of your head until ${headsClock}, ${HEADS_UP_MIN} minutes before.`
+        : schedAt ? `Less than ${HEADS_UP_MIN} minutes away, so it goes to Up next.` : 'Not now. It waits in Parked.';
       const routes = [
-        { key: 'active',   title: wasActive ? 'Keep in Active' : 'Up next', hint: wasActive ? 'Stays where it is in Active.' : 'Into Active, right under your Now card.' },
-        { key: 'waiting',  title: 'Park',  hint: 'Not now. It waits in Parked.' },
+        { key: 'active',   title: wasActive ? 'Keep in Active' : 'Up next', hint: activeHint },
+        { key: 'waiting',  title: 'Park',  hint: parkHint },
         { key: 'released', title: 'Close', hint: kind === 'let_go' ? 'Let it go. It lands on your shelf.' : 'Already done. It lands on your shelf.' }
       ].map(r => `
         <button type="button" class="route-big ${r.key}${suggest === r.key ? ' suggested' : ''}" data-action="finish-define-raw" data-status="${r.key}" data-loop-id="${esc(loop.id)}">
@@ -7027,7 +7168,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const sentAsk = kind === 'ask' && !!d.sentAt && loop.status === 'active';
     // Sent to a calendar already: the first question is whether it made it.
     const sentToCal = kind === 'schedule' && !!d.calAt && loop.status === 'active';
-    const step = ov.step || (sentAsk ? 'reply' : sentToCal ? 'confirm' : 'main');
+    // Its time has come and gone: the only question left is whether it happened.
+    const happened = kind === 'schedule' && schedulePassed(loop);
+    const step = ov.step || (sentAsk ? 'reply' : happened ? 'happened' : sentToCal ? 'confirm' : 'main');
     const editLink = `<button type="button" class="act-link" data-action="complete-update" data-loop-id="${esc(id)}">Edit the note</button>`;
     let title = '', sub = '', body = '';
 
@@ -7094,8 +7237,31 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           </div>${ov.nudge ? '' : editLink}`;
       }
     } else if (kind === 'schedule') {
+      const atMs = scheduleAt(loop);
+      const upcoming = atMs !== null && atMs > Date.now();
       const { start, parsed, saved } = scheduleStart(loop, ov);
-      if (step === 'confirm') {
+      if (step === 'happened') {
+        title = 'Did it happen?';
+        sub = atMs !== null ? `It was ${formatEvent(new Date(atMs).toISOString())}.` : '';
+        body = actLoopBox(loop.rawText, loop.promptAnswer) + `
+          <div class="act-list">
+            ${actBtn({ action: 'complete-done', label: 'Yes, close the loop', primary: true, loopId: id, icon: ACT_ICON.ring })}
+            ${actBtn({ action: 'act-step', label: 'It moved', sub: 'Pick its new day and time', loopId: id, attrs: 'data-step="main"', icon: ACT_ICON.clock })}
+            ${actBtn({ action: 'move-released', label: 'It isn’t happening', sub: 'Let it go', loopId: id, icon: ACT_ICON.drift })}
+          </div>`;
+      } else if (step === 'main') {
+        // The time is the whole job: pick it (or change it), and the app
+        // brings it back before it happens. A calendar is optional.
+        const typed = fromScheduleInputs(ov.schedDate, ov.schedTime);
+        const pickStart = typed || (upcoming ? new Date(atMs) : null);
+        title = upcoming ? 'Change the time' : 'When is it?';
+        body = actLoopBox(loop.rawText, loop.promptAnswer) + scheduleFieldsHtml('sched', pickStart) + `
+          <div class="act-list">
+            ${actBtn({ action: 'sched-save', label: 'Save the time', primary: true, loopId: id, icon: ACT_ICON.clock })}
+            ${upcoming ? actBtn({ action: 'act-step', label: 'Put it on my calendar too', sub: 'Google, Apple, Outlook or other', loopId: id, attrs: 'data-step="cal"', icon: ACT_ICON.cal }) : ''}
+            ${actBtn({ action: 'complete-done', label: 'It’s done', sub: 'Close the loop now', loopId: id, icon: ACT_ICON.ring })}
+          </div>${editLink}`;
+      } else if (step === 'confirm') {
         title = 'On your calendar?';
         sub = 'Once it’s saved there, your calendar holds it and this loop can close.';
         const when = `${start.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}, ${clockText(start)}`;
@@ -7118,8 +7284,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             ${actBtn({ action: 'cal-google', label: 'Google Calendar', sub: 'Opens a ready-made event, 30 minutes', primary: true, loopId: id, icon: ACT_ICON.cal })}
             ${actBtn({ action: 'cal-ics', label: 'Apple, Outlook or other', sub: 'Downloads an event file', loopId: id, icon: ACT_ICON.file })}
             ${actBtn({ action: 'complete-done', label: 'It’s already on my calendar', sub: 'Close the loop now', loopId: id, icon: ACT_ICON.ring })}
-            ${notYetBtn(loop)}
-          </div>`;
+          </div>
+          <button type="button" class="act-link" data-action="act-step" data-step="main">Back</button>`;
       }
     } else if (kind === 'let_go') {
       title = 'Ready to let it go?';
@@ -7162,6 +7328,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   function renderWhen(loop) {
     if (!loop) return '';
     const ov = view.overlay || {};
+    if ((ov.define ? ov.define.kind : loop.kind) === 'schedule') return renderScheduleWhen(loop);
     const rawText = ov.define ? ov.define.rawText : loop.rawText;
     const current = loop.status === 'waiting' && loop.wakeAt ? ` Right now it's set for ${formatWake(loop.wakeAt)}.` : '';
     const presets = wakePresets('park').map(p => actBtn({
@@ -7192,10 +7359,28 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     });
   }
 
+  // "Not yet" for a Schedule loop: it's happening at a different time, so
+  // the only question is when. A day and a time, no quick presets.
+  function renderScheduleWhen(loop) {
+    const at = scheduleAt(loop);
+    const start = at !== null && at > Date.now() ? new Date(at) : null;
+    const body = actLoopBox(loop.rawText, at !== null ? `${at > Date.now() ? 'Now' : 'Was'} ${formatEvent(new Date(at).toISOString())}` : '') + `
+      <div class="act-pick">
+        ${scheduleFieldsHtml('when-sched', start)}
+        <button type="button" class="btn btn-primary act-pick-go" data-action="park-until" data-when="schedule" data-loop-id="${esc(loop.id)}">Save the time</button>
+      </div>
+      <button type="button" class="act-link" data-action="park-until" data-when="schedule-clear" data-loop-id="${esc(loop.id)}">Not sure yet</button>`;
+    return actSheet({
+      kind: 'schedule', titleId: 'when-title', step: 'when',
+      title: at !== null ? 'When is it now?' : 'When is it?',
+      body
+    });
+  }
+
   // Keep what the person typed when the sheet changes step.
   function readActInputs(ov) {
     const val = id => { const el = document.getElementById(id); return el ? el.value : null; };
-    const map = { 'act-next': 'nextText', 'act-decision': 'decision', 'act-spawn': 'spawnText', 'act-msg': 'message', 'cal-title': 'calTitle', 'cal-date': 'calDate', 'cal-time': 'calTime' };
+    const map = { 'act-next': 'nextText', 'act-decision': 'decision', 'act-spawn': 'spawnText', 'act-msg': 'message', 'cal-title': 'calTitle', 'cal-date': 'calDate', 'cal-time': 'calTime', 'sched-date': 'schedDate', 'sched-time': 'schedTime' };
     Object.keys(map).forEach(id => { const v = val(id); if (v !== null) ov[map[id]] = v; });
   }
 
@@ -8263,6 +8448,28 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return true;
   }
 
+  // Save a Schedule loop's time from any picker (Not yet, the card's sheet):
+  // schedulePatch() decides where it waits, then the usual save and sync.
+  async function saveScheduleTime(target, atIso, opts = {}, extra = null) {
+    const base = extra ? { ...target, ...extra, kind: 'schedule' } : target;
+    const patch = schedulePatch(base, atIso, opts);
+    if (extra) Object.assign(patch, extra);
+    const up = patch.status === 'active' && target.status !== 'active' ? upNextPosition(target.id) : null;
+    if (up) patch.position = up.position;
+    updateLoop(target.id, patch);
+    const positionChanges = up && up.rebalance ? rebalanceActivePositions() : null;
+    view.activeTab = patch.status === 'waiting' ? 'later' : 'now';
+    view.highlightedId = target.id;
+    saveReentryDismissed(null);
+    closeOverlay();
+    await persistAndRender();
+    Sync.updateLoop(target.id, patch);
+    if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
+    announce(!atIso ? 'Parked, no time yet.'
+      : patch.wakeAt ? `Parked. Back at ${clockText(new Date(patch.wakeAt))}, ${HEADS_UP_MIN} minutes before.`
+      : `Less than ${HEADS_UP_MIN} minutes away, so it's in Up next.`);
+  }
+
   // ── EVENT DELEGATION ──
   document.addEventListener('click', async e => {
     const el = e.target.closest('[data-action]');
@@ -8443,8 +8650,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             ov.at = null;
             ov.atCleared = true;
           } else {
-            const picked = fromLocalInputs(document.getElementById('define-date')?.value, document.getElementById('define-time')?.value);
-            if (!picked) { toast('Pick a day, or tap Not sure yet.'); return; }
+            const picked = fromScheduleInputs(document.getElementById('define-date')?.value, document.getElementById('define-time')?.value);
+            if (!picked) { toast('Pick a day and a time, or tap Not sure yet.'); return; }
+            if (picked.getTime() <= Date.now()) { toast('Pick a time that is still ahead.'); return; }
             ov.at = picked.toISOString();
             ov.atCleared = false;
           }
@@ -8480,15 +8688,24 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       // A new note means a new ask: forget that the old one was sent.
       const details = { ...((prevLoop && prevLoop.details) || {}) };
       if (prevLoop && ans !== (prevLoop.promptAnswer || '')) { delete details.sentAt; delete details.nudges; }
-      // A Schedule keeps its time; a new time means the calendar has the old one.
+      // A Schedule loop's time decides where it waits and when it comes back,
+      // so it never goes through the "when should it come back?" presets:
+      // schedulePatch() works it out. Every other kind drops the Schedule
+      // time, along with any heads-up that time had set.
+      let sched = null;
       if (ov.kind === 'schedule') {
-        if (ov.at) { if (details.at !== ov.at) delete details.calAt; details.at = ov.at; }
-        else if (ov.atCleared) { delete details.at; delete details.calAt; }
+        const atIso = ov.at || (ov.atCleared ? null : (details.at || null));
+        if (status === 'released') {
+          if (atIso) { if (details.at !== atIso) delete details.calAt; details.at = atIso; }
+          else { delete details.at; delete details.calAt; }
+        } else {
+          sched = schedulePatch({ ...(prevLoop || {}), kind: 'schedule', details }, atIso, { status });
+        }
       } else {
         delete details.at;
         delete details.calAt;
       }
-      if (status === 'waiting') {
+      if (status === 'waiting' && !sched) {
         // Parking asks "when?" first; the define choices are applied then.
         view.overlay = { type: 'when', loopId: ov.loopId, define: { rawText: raw, kind: ov.kind, promptAnswer: ans, details: cleanDetails(details) } };
         renderOverlay();
@@ -8497,23 +8714,36 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (status === 'released') details.outcome = ov.kind === 'let_go' ? 'let_go' : 'done';
       else delete details.outcome;
       const patch = { rawText: raw, kind: ov.kind, promptAnswer: ans, status, completedAt: status === 'released' ? nowIso() : null, details: cleanDetails(details) };
-      // In Active now: a wake time still ahead would only send a nudge for nothing.
-      if (status === 'active' && prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now()) patch.wakeAt = null;
+      if (sched) {
+        Object.assign(patch, { status: sched.status, details: sched.details, wakeAt: sched.wakeAt });
+      } else if (prevLoop && wakeIsHeadsUp(prevLoop)) {
+        // No longer a timed Schedule: its heads-up would nudge for nothing.
+        patch.wakeAt = null;
+      } else if (status === 'active' && prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now()) {
+        // In Active now: a wake time still ahead would only send a nudge for nothing.
+        patch.wakeAt = null;
+      }
+      const finalStatus = patch.status;
       const prevStatus = prevLoop?.status;
-      const upNext = status === 'active' && prevStatus !== 'active' ? upNextPosition(ov.loopId) : null;
+      const upNext = finalStatus === 'active' && prevStatus !== 'active' ? upNextPosition(ov.loopId) : null;
       if (upNext) patch.position = upNext.position;
       updateLoop(ov.loopId, patch);
       const positionChanges = upNext && upNext.rebalance ? rebalanceActivePositions() : null;
-      view.highlightedId = status === 'active' ? ov.loopId : null;
+      view.highlightedId = finalStatus === 'active' ? ov.loopId : null;
       // Closing stays on the current view so the loop visibly lands in the
       // Closed archive in the header instead of jumping tabs.
-      if (status !== 'released') view.activeTab = status === 'waiting' ? 'later' : 'now';
+      if (finalStatus !== 'released') view.activeTab = finalStatus === 'waiting' ? 'later' : 'now';
       saveReentryDismissed(null);
       closeOverlay();
       await persistAndRender();
       Sync.updateLoop(ov.loopId, patch);
       if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
-      announce(status === 'active' ? 'Defined. Now in Up next.' : status === 'waiting' ? 'Defined and parked.' : 'Defined and closed.');
+      if (sched && sched.wakeAt) {
+        const back = clockText(new Date(sched.wakeAt));
+        announce(finalStatus === 'waiting' ? `Parked. Back at ${back}, ${HEADS_UP_MIN} minutes before.` : `In Up next. Nudge at ${back}.`);
+      } else {
+        announce(finalStatus === 'active' ? 'Defined. Now in Up next.' : finalStatus === 'waiting' ? 'Defined and parked.' : 'Defined and closed.');
+      }
       return;
     }
 
@@ -8683,6 +8913,15 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       announce(`Parked. Checking back with ${who} ${formatWake(wakeAt)}.`);
       return;
     }
+    if (action === 'sched-save') {
+      if (requireLogin()) return;
+      const target = getLoop(loopId);
+      if (!target) { closeOverlay(); return; }
+      const atIso = readSchedulePick('sched');
+      if (!atIso) return;
+      await saveScheduleTime(target, atIso);
+      return;
+    }
     if (action === 'cal-google' || action === 'cal-ics') {
       const ov = view.overlay;
       const target = getLoop(loopId);
@@ -8699,7 +8938,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       }
       // Remember it went to a calendar: the card asks "On your calendar?",
       // and so does the app when you come back, even if this sheet is gone.
-      const patch = { details: cleanDetails({ ...target.details, at: start.toISOString(), calAt: nowIso() }) };
+      // The time may have been changed here, so it goes through
+      // schedulePatch() like every other time, keeping the loop where it is.
+      const sched = schedulePatch(target, start.toISOString(), { status: target.status === 'waiting' ? 'waiting' : 'active' });
+      const patch = { details: cleanDetails({ ...sched.details, calAt: nowIso() }), wakeAt: sched.wakeAt };
       updateLoop(target.id, patch);
       save();
       Sync.updateLoop(target.id, patch);
@@ -8737,6 +8979,14 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (!ov || ov.type !== 'when') return;
       const target = getLoop(ov.loopId);
       if (!target) { closeOverlay(); return; }
+      if (el.dataset.when === 'schedule' || el.dataset.when === 'schedule-clear') {
+        // A Schedule loop's new time: where it waits follows from it.
+        const atIso = el.dataset.when === 'schedule' ? readSchedulePick('when-sched') : null;
+        if (el.dataset.when === 'schedule' && !atIso) return;
+        const extra = ov.define ? { rawText: ov.define.rawText, kind: ov.define.kind, promptAnswer: ov.define.promptAnswer } : null;
+        await saveScheduleTime(target, atIso, atIso ? {} : { status: 'waiting' }, extra);
+        return;
+      }
       let wakeAt = null;
       if (el.dataset.when === 'pick') {
         const picked = fromLocalInputs(document.getElementById('when-date')?.value, document.getElementById('when-time')?.value);
@@ -8800,8 +9050,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const details = { ...((prevLoop && prevLoop.details) || {}) };
       delete details.outcome;
       const patch = { status: 'active', position: upNext.position, completedAt: null, details: cleanDetails(details) };
-      // Brought back early: drop the wake time it no longer needs.
-      if (prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now()) patch.wakeAt = null;
+      // Brought back early: drop the wake time it no longer needs. A Schedule
+      // loop's heads-up stays: you still want the nudge before it happens.
+      if (prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now() && !wakeIsHeadsUp(prevLoop)) patch.wakeAt = null;
       updateLoop(loopId, patch);
       const positionChanges = upNext.rebalance ? rebalanceActivePositions() : null;
       closeOverlay();
@@ -8872,11 +9123,20 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (requireLogin()) return;
       const newKind = el.dataset.kind;
       const patch = { kind: newKind };
+      // Leaving Schedule: its time goes, and so does the heads-up it set.
+      const before = getLoop(loopId);
+      if (before && before.kind === 'schedule' && newKind !== 'schedule') {
+        const d = { ...(before.details || {}) };
+        delete d.at;
+        delete d.calAt;
+        patch.details = cleanDetails(d);
+        if (wakeIsHeadsUp(before)) patch.wakeAt = null;
+      }
       // Match capture-flow behavior: choosing "Let go" releases the loop.
       if (newKind === 'let_go') {
         patch.status = 'released';
         patch.completedAt = nowIso();
-        patch.details = cleanDetails({ ...(getLoop(loopId)?.details || {}), outcome: 'let_go' });
+        patch.details = cleanDetails({ ...(patch.details || getLoop(loopId)?.details || {}), outcome: 'let_go' });
       }
       updateLoop(loopId, patch);
       closeOverlay();
@@ -9102,10 +9362,15 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const loop = it && getLoop(it.id);
       const pick = action === 'sweep-park' ? 'park' : el.dataset.pick;
       if (loop && action === 'sweep-pick' && pick === 'park') { ov.step = 'park'; renderOverlay(); return; }
+      let schedIso = null;
+      if (loop && action === 'sweep-park' && loop.kind === 'schedule' && el.dataset.when === 'schedule') {
+        schedIso = readSchedulePick('sweep-sched');
+        if (!schedIso) return;
+      }
       let result = null;
       if (loop && sweepable(it)) {
-        const wakeAt = action === 'sweep-park' && el.dataset.when ? validIso(el.dataset.when) : null;
-        result = sweepApply(loop, pick, wakeAt);
+        const wakeAt = action === 'sweep-park' && el.dataset.when && el.dataset.when !== 'schedule' ? validIso(el.dataset.when) : null;
+        result = sweepApply(loop, pick, wakeAt, schedIso);
         if (pick === 'now') ov.nowId = loop.id;
       }
       ov.picks.push(pick);
@@ -9384,7 +9649,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   }
 
   // Input binding for capture + auth gate email tracking
+  // Schedule pickers: keep the "what will happen" line true as you pick.
+  // Phones' native pickers fire 'change' rather than 'input', so both.
+  document.addEventListener('change', e => {
+    if (e.target.classList && e.target.classList.contains('sched-input')) refreshScheduleNote(e.target);
+  });
   document.addEventListener('input', e => {
+    if (e.target.classList && e.target.classList.contains('sched-input')) refreshScheduleNote(e.target);
     // Track auth gate email typing in view state
     if (e.target.id === 'auth-gate-email') {
       view.authGateEmail = e.target.value;
