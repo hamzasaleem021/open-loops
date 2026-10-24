@@ -19,6 +19,18 @@
 <!-- Only the letters of the Auxila wordmark -->
 <link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@100..125,500..900&text=auxilc.&display=swap" rel="stylesheet">
 <script src="./open-loops-config.js"></script>
+<script>
+// Theme before the first paint, so a dark-mode phone never flashes cream.
+// Same key and fallback as loadTheme() below.
+(function () {
+  try {
+    var c = window.OL_CONFIG || {};
+    var t = localStorage.getItem(c.STORAGE_KEY ? c.STORAGE_KEY + '_theme' : 'open_loops_theme');
+    if (t !== 'light' && t !== 'dark') t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.103.3/dist/umd/supabase.js"
   integrity="sha384-hCWGwlkWlatZlBB+xRL7caQ0wei4AIvA80dQT3CEhafaMinAJQdfdb99y48Oai+Q"
   crossorigin="anonymous"></script>
@@ -3275,9 +3287,41 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
 .aux-credit:hover .aux-word { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .auth-gate-card .aux-credit { margin-top: 28px; align-self: flex-start; }
 .settings-credit { padding: 14px 0 4px; border-top: 1px solid var(--border-soft); }
+
+/* ── v27: opening the app ──
+   The splash covers only "which account is this?". It matches the phone's
+   own launch screen (manifest background #fffaf0) so the two read as one.
+   Loop bars cover "signed in, nothing saved on this phone yet". Neither is
+   ever an empty state. */
+.boot-splash { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: var(--bg); transition: opacity .22s ease; }
+.boot-splash.gone { opacity: 0; pointer-events: none; }
+.boot-splash svg { width: 84px; height: 84px; }
+.loop-bars { display: flex; flex-direction: column; gap: 12px; }
+.loop-bars span { display: block; height: 92px; border-radius: var(--r-lg); background: var(--surface-strong); }
+.loop-bars span:first-child { height: 132px; }
+.empty-state .btn { margin-top: 14px; }
+@media (prefers-reduced-motion: no-preference) {
+  .boot-splash svg { animation: boot-breathe 1.6s ease-in-out infinite; }
+  .loop-bars span { animation: bars-pulse 1.4s ease-in-out infinite; }
+  .loop-bars span:nth-child(2) { animation-delay: .18s; }
+  .loop-bars span:nth-child(3) { animation-delay: .36s; }
+}
+@keyframes boot-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes bars-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 </style>
 </head>
 <body>
+
+<div class="boot-splash" id="boot-splash" aria-hidden="true">
+  <svg viewBox="71 22 180 180" focusable="false"><path d="M 196 72 A 58 58 0 1 0 200 150" fill="none" stroke="#ffb084" stroke-width="32" stroke-linecap="round"/><circle cx="236" cy="104" r="10" fill="#ff4d8b"/></svg>
+</div>
+<script>
+// Failsafe: the app removes the splash as soon as it knows who you are. If
+// that hasn't happened in 3 seconds (a slow sign-in check, or the app's code
+// failed to load), lift it anyway. What's underneath is loop bars, never a
+// false "Your head is clear".
+setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) s.classList.add('gone'); }, 3000);
+</script>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
@@ -3360,13 +3404,19 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   const THEME_KEY      = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_theme'      : 'open_loops_theme';
   const LOOP_CAP_KEY_BASE   = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_cap'        : 'open_loops_cap';
   const REENTRY_KEY_BASE    = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_reentry_dismissed' : 'open_loops_reentry_dismissed';
+  // The account last signed in on this phone (its id only), so the first
+  // frame can show its saved loops. Removed on sign-out.
+  const LAST_USER_KEY       = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_last_user'  : 'open_loops_last_user';
+  // The tab for this sitting only (sessionStorage): a reload stays put, a
+  // fresh open starts on Active.
+  const TAB_KEY_BASE        = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_tab'        : 'open_loops_tab';
   const LEGACY_STORAGE_KEY  = STORAGE_KEY_BASE;
   const LEGACY_STORAGE_QUARANTINE_KEY = `${STORAGE_KEY_BASE}_legacy_unscoped`;
   const IS_FILE = location.protocol === 'file:';
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 26, date: '20 Oct 2026' };
+  const APP_VERSION = { number: 27, date: '24 Oct 2026' };
   let swRegistration = null;
   let swState = 'pending';   // 'ready' once the service worker registers, 'failed' if it can't
 
@@ -3566,6 +3616,57 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   // Set to true once Sync.init() resolves so we don't flash the lock screen
   // during the async auth check on cold start.
   let authReady = false;
+
+  // ── BOOT ──
+  // What the app knows about your loops right now. "Not loaded yet" is its
+  // own state, never an empty list: nothing on screen may say a list is empty
+  // until real data says so.
+  //   starting    — which account is this? (splash)
+  //   loading     — signed in, nothing saved on this phone yet (loop bars)
+  //   cached      — showing the copy saved on this phone; the server is checking
+  //   ready       — the server has answered (or nobody is signed in)
+  //   unreachable — nothing saved here and the server couldn't be reached
+  // Loops that exist are always shown; only emptiness waits for the truth.
+  let bootState = 'starting';
+  function dataKnown() { return bootState === 'cached' || bootState === 'ready'; }
+  function hideSplash() {
+    const s = document.getElementById('boot-splash');
+    if (!s || s.dataset.leaving) return;
+    s.dataset.leaving = '1';
+    s.classList.add('gone');
+    setTimeout(() => s.remove(), 260);
+  }
+  function setBoot(state) {
+    if (state !== 'starting') hideSplash();
+    if (bootState === state) return;
+    bootState = state;
+    // Only the list, its counts and the header: an open sheet (someone typing
+    // a capture while the first sync runs) must not be re-rendered.
+    try { renderHeader(); renderBottomNav(); renderMain(); } catch (_) {}
+  }
+  // A saved copy with loops in it is real data; an empty one proves nothing
+  // (it could have been saved before the first sync), so it waits for the server.
+  // Always redraws: the saved copy may belong to a different account than the
+  // one on screen, even when both boot states are the same.
+  function bootFromSavedCopy() {
+    const next = data.loops.length ? 'cached' : 'loading';
+    if (bootState !== next) { setBoot(next); return; }
+    hideSplash();
+    try { renderHeader(); renderBottomNav(); renderMain(); } catch (_) {}
+  }
+
+  function rememberAccount(id) { try { if (id) localStorage.setItem(LAST_USER_KEY, id); } catch (_) {} }
+  function forgetAccount() { try { localStorage.removeItem(LAST_USER_KEY); } catch (_) {} }
+  function rememberedAccount() { try { return localStorage.getItem(LAST_USER_KEY) || null; } catch (_) { return null; } }
+  // Arriving from a sign-in link: the link may be for a different account
+  // than the one this phone remembers, so wait for the real session.
+  function arrivedFromSignInLink() {
+    try {
+      if (/(^|[#&])(access_token|refresh_token|error)=/.test(location.hash.slice(1))) return true;
+      const q = new URLSearchParams(location.search);
+      return q.has('code') || q.has('token_hash') || q.has('error_description');
+    } catch (_) { return false; }
+  }
   // Magic-link cooldown: Supabase rate-limits magic link sends (3/hour/email
   // on free tier). A user tapping "Send link" repeatedly can lock themselves
   // out. Enforce a 60s client-side cooldown between sends.
@@ -3630,10 +3731,12 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         const parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.loops)) {
           data = { version: 2, lastLoopId: parsed.lastLoopId || null, activeTab: 'now', loops: parsed.loops.map(sanitize) };
-          view.activeTab = parsed.activeTab || 'now';
         }
       }
     } catch(e) {}
+    // A fresh open always starts on Active, the app's home. Only a reload
+    // within the same sitting (an update, a pull-to-refresh) keeps the tab.
+    view.activeTab = sittingTab() || 'now';
     // Reentry dismissal (survives reload)
     try {
       const r = localStorage.getItem(scopedKey(REENTRY_KEY_BASE));
@@ -3652,6 +3755,15 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     try {
       localStorage.setItem(key, JSON.stringify({ version: 2, lastLoopId: data.lastLoopId, activeTab: view.activeTab, loops: data.loops }));
     } catch(e) {}
+    try { sessionStorage.setItem(scopedKey(TAB_KEY_BASE), view.activeTab); } catch(e) {}
+  }
+
+  const SITTING_TABS = new Set(['now', 'later', 'inbox', 'done']);
+  function sittingTab() {
+    try {
+      const t = sessionStorage.getItem(scopedKey(TAB_KEY_BASE));
+      return SITTING_TABS.has(t) ? t : null;
+    } catch(e) { return null; }
   }
 
   function saveReentryDismissed(id) {
@@ -5659,6 +5771,15 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       </article>`;
   }
 
+  // Where an empty list would go while the app doesn't know yet: loop bars,
+  // or, when nothing is saved here and the server can't be reached, say so.
+  function notKnownYetHtml() {
+    if (bootState === 'unreachable') {
+      return `<div class="empty-state">${mascotSvg('sleepy', { width: 170 })}<strong>Can't reach your loops right now.</strong>They're safe in your account. Check your connection, then try again.<div><button class="btn btn-ghost" type="button" data-action="boot-retry">Try again</button></div></div>`;
+    }
+    return `<div class="loop-bars" role="status" aria-label="Loading your loops"><span></span><span></span><span></span></div>`;
+  }
+
   // ── HOME RENDER ──
   function renderHome() {
     const active = byStatus('active');
@@ -5680,13 +5801,16 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     const tabKey = view.activeTab === 'waiting' ? 'later' : view.activeTab === 'released' ? 'done' : view.activeTab;
     const head = HEAD[tabKey] || HEAD.now;
     let meter = '';
-    if (tabKey === 'now') {
+    const known = dataKnown();
+    // Counts are claims too: "0" while loading is as false as an empty state.
+    const count = n => known ? ` <span class="tab-count">${n}</span>` : '';
+    if (tabKey === 'now' && known) {
       const used = Math.min(active.length, cap);
       const dots = Array.from({ length: cap }, (_, i) => `<span class="cap-meter-dot${i < used ? ' on' : ''}"></span>`).join('');
       const over = active.length > cap ? ` · +${active.length - cap} waiting` : '';
       meter = `<div class="cap-meter" title="Focus cap"><div class="cap-meter-dots">${dots}</div><div class="cap-meter-label">${used} of ${cap} focus slots${over}</div></div>`;
     }
-    if (tabKey === 'done') {
+    if (tabKey === 'done' && known) {
       const week = closedThisWeek();
       if (week.length) {
         const shown = week.slice(-21);
@@ -5708,13 +5832,13 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     html += `
       <div class="tabs">
         <button class="tab ${view.activeTab === 'now' ? 'active' : ''}" data-action="set-tab" data-tab="now">
-          ${TAB_LABEL.active} <span class="tab-count">${active.length}</span>
+          ${TAB_LABEL.active}${count(active.length)}
         </button>
         <button class="tab ${view.activeTab === 'later' ? 'active' : ''}" data-action="set-tab" data-tab="later">
-          ${TAB_LABEL.waiting} <span class="tab-count">${waiting.length}</span>
+          ${TAB_LABEL.waiting}${count(waiting.length)}
         </button>
         <button class="tab ${view.activeTab === 'inbox' ? 'active' : ''}" data-action="set-tab" data-tab="inbox">
-          ${TAB_LABEL.inbox} <span class="tab-count">${inbox.length}</span>
+          ${TAB_LABEL.inbox}${count(inbox.length)}
         </button>
       </div>`;
 
@@ -5727,9 +5851,14 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         if (hidden > 0 && !view.expanded) {
           html += `<button class="show-more" data-action="show-more">Show ${hidden} more loop${hidden > 1 ? 's' : ''}</button>`;
         }
+      } else if (!known) {
+        html += notKnownYetHtml();
       } else if (Combo.count() >= 2) {
         const n = Combo.count();
         html += `<div class="empty-state cleared">${mascotSvg('proud', { width: 210, className: Combo.fresh() ? 'mascot-sealing' : '', label: 'The mascot, proud, closed into a ring' })}<strong>Active is clear.</strong>${n} closes, one full chord. Enjoy the quiet.${sharePromptHtml()}</div>`;
+      } else if (inbox.length) {
+        // Unsorted captures are still open loops, so the head isn't clear.
+        html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Active is clear.</strong>${inbox.length} in Inbox to sort.<div><button class="btn btn-ghost" type="button" data-action="set-tab" data-tab="inbox">Sort Inbox</button></div></div>`;
       } else {
         html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Your head is clear.</strong>Capture a loop, then define it when you're ready.</div>`;
       }
@@ -5761,6 +5890,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             </article>`;
         });
         html += `</div>`;
+      } else if (!known) {
+        html += notKnownYetHtml();
       } else {
         html += `<div class="empty-state">${mascotSvg('sleepy', { width: 190 })}<strong>Nothing parked.</strong>Park loops here when the next move isn't yours yet.</div>`;
       }
@@ -5786,6 +5917,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             </article>`;
         });
         html += `</div>`;
+      } else if (!known) {
+        html += notKnownYetHtml();
       } else {
         html += `<div class="empty-state">${mascotSvg('curious', { width: 190 })}<strong>Nothing closed yet.</strong>When a loop is done, close it here.</div>`;
       }
@@ -5808,6 +5941,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             </article>`;
         });
         html += `</div>`;
+      } else if (!known) {
+        html += notKnownYetHtml();
       } else {
         html += `<div class="empty-state">${mascotSvg('cheeky', { width: 190 })}<strong>Inbox zero.</strong>Captured loops land here before you define where they belong.</div>`;
       }
@@ -6608,6 +6743,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   function renderAuthGate() {
     const root = document.getElementById('auth-gate-root');
     if (!root) return;
+    hideSplash();
     const app = document.getElementById('app');
     if (app) app.classList.add('app-locked');
 
@@ -7146,7 +7282,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     ];
     nav.innerHTML = items.map(item => `
       <button class="bottom-nav-btn ${view.activeTab === item.key ? 'active' : ''}" type="button" data-action="set-tab" data-tab="${item.key}">
-        ${counts[item.key] ? `<span class="bottom-nav-badge">${counts[item.key]}</span>` : ''}
+        ${counts[item.key] && dataKnown() ? `<span class="bottom-nav-badge">${counts[item.key]}</span>` : ''}
         <svg class="bottom-nav-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true">${item.icon}</svg>
         <span>${item.label}</span>
       </button>
@@ -8063,7 +8199,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         badge.className = 'archive-count';
         archive.appendChild(badge);
       }
-      const n = closedThisWeek().length;
+      const n = dataKnown() ? closedThisWeek().length : 0;
       badge.textContent = String(n);
       archive.classList.toggle('has-count', n > 0);
       archive.setAttribute('aria-label', n ? `Closed loops, ${n} this week` : 'Closed loops');
@@ -8119,6 +8255,9 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   // see the auth gate and cannot mutate state.
   function requireLogin() {
     if (Sync.isLoggedIn()) return false;
+    // Showing this phone's saved loops while the sign-in check finishes:
+    // you are signed in, the app just hasn't confirmed it yet.
+    if (!authReady && currentLocalUserId) { toast('Still opening. One moment.'); return true; }
     toast('Sign in to save your loops.');
     if (authReady) renderAuthGate();
     return true;
@@ -8187,6 +8326,11 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     // Overlay management
 
     // Tabs
+    if (action === 'boot-retry') {
+      setBoot('loading');
+      Sync.retry();
+      return;
+    }
     if (action === 'set-tab') {
       view.activeTab = el.dataset.tab;
       if (view.activeTab === 'done') view.expanded = false;
@@ -9492,6 +9636,11 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     let channelSeq = 0;
     let retryTimer  = null;
     let draining    = false;
+    // True while a full pull is in flight. Edits made meanwhile wait in the
+    // queue (the pull keeps queued edits on top of what it downloads), then
+    // go out the moment it lands. Sent earlier, the pull's older snapshot
+    // would paint over them.
+    let pulling     = false;
     let deadQueueDirty = false;
 
     // Echo suppression: when we write a row, the realtime subscription will
@@ -9780,6 +9929,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     async function processQueue() {
       if (!currentUser) return { ok: true, pending: true };
       if (draining) return { ok: true, pending: loadQueue().length > 0 };
+      if (pulling) return { ok: true, pending: loadQueue().length > 0 };
       if (!loadQueue().length) return settleSyncStatus();
       draining = true;
       let chainAfterRun = true;
@@ -9908,6 +10058,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       const pullForUser = currentUser;
       if (!pullForUser) return;
       setSyncStatus('syncing', 'Syncing…');
+      pulling = true;
       try {
         const { data: rows, error } = await db
           .from('loops')
@@ -9972,6 +10123,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             save();
             renderMain();
           }
+          setBoot('ready');
           settleSyncStatus();
           return;
         }
@@ -9986,13 +10138,25 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
           loops:      remoteLoops
         };
         save();
-        renderMain();
+        bootState === 'ready' ? renderMain() : setBoot('ready');
         settleSyncStatus();
       } catch(e) {
         if (currentUser !== pullForUser) return;   // ignore errors from a stale pull
         console.error('Pull error:', e);
-        setSyncStatus('error', 'Still saving');
-        showSyncErrorBanner();
+        // Nothing saved here to show instead: the page says it can't reach
+        // your loops, rather than "empty". The "Still saving" banner is about
+        // queued edits, so it stays out of that screen unless edits are queued.
+        if (bootState === 'loading' || bootState === 'unreachable') {
+          setSyncStatus('error', 'Offline');
+          if (loadQueue().length) showSyncErrorBanner();
+          setBoot('unreachable');
+        } else {
+          setSyncStatus('error', 'Still saving');
+          showSyncErrorBanner();
+        }
+      } finally {
+        pulling = false;
+        if (currentUser && currentUser === pullForUser && navigator.onLine && loadQueue().length) processQueue();
       }
     }
 
@@ -10122,6 +10286,9 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         const foundLegacyQueue = quarantineLegacyQueueData();
         const foundLegacy = foundLegacyData || foundLegacyQueue;
         load();
+        rememberAccount(currentUser.id);
+        // Draw this phone's saved loops now; the pull below corrects them.
+        bootFromSavedCopy();
         cleanUrl();
         setSyncStatus('syncing', 'Syncing…');
         // Drain only this user's offline queue, then pull server truth.
@@ -10163,6 +10330,9 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
         if (realtimeReconnectTimer) { clearTimeout(realtimeReconnectTimer); realtimeReconnectTimer = null; }
         resetLocalAppState();
+        // A signed-out phone must never paint the previous person's loops.
+        forgetAccount();
+        bootState = 'ready';
         setSyncStatus('idle', 'Sync');
         hideSyncErrorBanner();
         renderAll();
@@ -10182,14 +10352,19 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     return {
       async init() {
         try {
-          const { data: { session } } = await db.auth.getSession();
+          const { data: { session }, error: sessionError } = await db.auth.getSession();
           if (session) {
             currentUser = session.user;
+            const sameAsShown = currentLocalUserId === currentUser.id && bootState !== 'starting';
             setLocalUser(currentUser);
             const foundLegacyData = quarantineLegacyLocalData();
             const foundLegacyQueue = quarantineLegacyQueueData();
             const foundLegacy = foundLegacyData || foundLegacyQueue;
-            load();
+            // Already showing this account's saved copy from the first frame:
+            // keep it (and whatever tab or sheet you've touched since). Otherwise
+            // load it now and draw it before going to the network.
+            if (!sameAsShown) { load(); bootFromSavedCopy(); }
+            rememberAccount(currentUser.id);
             cleanUrl();
             setSyncStatus('syncing', 'Syncing…');
             if (loadQueue().length) await processQueue();
@@ -10198,6 +10373,9 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             if (foundLegacy) toast('We kept an older copy of your loops on this device, just in case.');
             else wakeDueLoops({ quiet: /[?&](sweep|loop)=/.test(location.search) });
             resyncNudges();
+          } else if (!sessionError) {
+            // Signed out for real (not just a failed check): forget the account.
+            forgetAccount();
           }
         } catch(e) {
           console.error('Sync init error:', e);
@@ -10207,6 +10385,10 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         // Auth check complete. The app remains locked until a user signs in.
         authReady = true;
         if (!currentUser) {
+          // The first frame may have shown a remembered account's saved loops;
+          // take them down before the sign-in screen goes up.
+          if (currentLocalUserId) { setLocalUser(null); resetLocalAppState(); renderAll(); }
+          bootState = 'ready';
           renderAuthGate();
         } else if (!hasCompletedOnboarding()) {
           startOnboarding();
@@ -10396,6 +10578,20 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   loadTheme();
   Motion.init();
   BrandMascot.init();
+
+  // First frame: if this phone remembers who was signed in, show their saved
+  // loops right away instead of waiting for the sign-in check (which can wait
+  // on the network when the app sat closed for a while). Sync.init() confirms
+  // the session a moment later, and takes them down if nobody, or someone
+  // else, turns out to be signed in. Not when arriving from a sign-in link:
+  // that link may be for another account.
+  const remembered = hasSupabaseCfg() && !arrivedFromSignInLink() ? rememberedAccount() : null;
+  if (remembered) {
+    setLocalUser({ id: remembered });
+    load();
+    bootState = data.loops.length ? 'cached' : 'loading';
+    hideSplash();
+  }
   renderAll(); // First paint
 
   // Kick off auth check. Sign-in is required because Supabase is the
@@ -10403,6 +10599,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   if (!hasSupabaseCfg()) {
     setTimeout(() => {
       authReady = true;
+      bootState = 'ready';
       renderAuthGate();
     }, 0);
   } else {
