@@ -57,12 +57,15 @@ Open Loops is built around one personal workflow:
 - **Drying out** - Cards dry out when nobody touches them. A loop untouched for 10 days goes matte; after 21 days it cracks and asks **Still yours?** (Yes, keep it / Park it until… / Let it go). Keeping it makes it fresh again. Parked loops with a wake time are asleep on purpose and never dry.
 - **Music that builds** - Each loop you close in one sitting adds a note on top of the landing chord. Clearing Active after two or more closes plays the whole chord and shows the mascot closed into a ring.
 - **The mascot** - The open C from the logo, with a face. It is the logo in the header (it blinks, closes into a ring when you close a loop, goes calm when you let one go, and looks up when you capture), the home-screen icon, the picture on notifications, and the face on every empty screen (calm on a clear Active, asleep in an empty Parked, winking at Inbox zero, curious before your first close). It's still asleep when a nudge opens the sweep, and wakes up as you arrive.
+- **Schedule loops: one question, when is it?** - A day and a time, both required, never pre-filled with a guess (a time in the note, like "Saturday 10am", is read in). The loop then waits in Parked and comes back to Up next 30 minutes before, with a nudge; closer than that, it goes straight to Up next. "Not yet" means it moved, so it opens the same picker, never quick presets. Once its time has passed, the card asks **Did it happen?**. A calendar is optional: *Put it on my calendar too*.
+- **Opens honestly** - The app never shows an empty list it hasn't confirmed. Your saved loops appear instantly, a logo covers only the moment before it knows who you are, loop bars show while a new phone loads, and offline with nothing saved it says it can't reach your loops. A fresh open always starts on Active. See [docs/loop-behavior.md](docs/loop-behavior.md).
 - **A date in a new loop becomes an offer** - Type "call the bank friday" and Capture offers "Wake it Fri 9:00 AM?". Accept it and the loop goes to Parked until then instead of Inbox. Nothing changes unless you tap it. (A Schedule loop doesn't get the offer: its time is when it happens, which Define asks for.)
 - **Your head** - Your profile, opened from the one account button in the header (your initial, with the sync status as a small dot: green synced, amber syncing, red stuck), the Closed shelf, or Settings. At the top: your email, sync status (Retry when it's stuck) and Sign out. Below it, a look back built from loops you've already closed: your shelf of rings and pebbles, the longest-held loop you finally closed, how long each kind typically takes, and the decisions you made.
 - **Share card** - "Share your October" draws a 1080×1350 card of your month: counts and colours only, never what your loops say. Share it through the phone's share sheet or save the image.
 - **Tell a friend** - Asked once, at a high point: after ten closes, clearing Active shows "Know someone with a crowded head?" with **Send them Open Loops** and **Not now**. Either answer retires it for good. Settings → Tell a friend shares the link any time, and Settings mentions Morning Brief, the other Auxila app. The share card carries `openloops.auxila.cc` small in a corner.
 - **Nudges** - Optional web push, in one cheeky voice with copy that doesn't repeat and never streaks:
   - **When a loop wakes up**, right on time (within a minute): "Knock knock. “Call the bank” just woke up." with **Done** and **Tomorrow** buttons, or "Did Bilal reply?" for an Ask you're waiting on. Loops that wake together share one nudge.
+  - **Before a Schedule loop happens**, 30 minutes ahead: "“Dentist” in 30 min.", from the minutes actually left, on its own, with **Done**. It never arrives after the event has started.
   - **A check-in** at a time you pick (any minute of the day, kept exactly), only when there's something to say: the Sunday recap or a weekly "Still yours?". At most one a day; a time that has already passed today starts tomorrow, and Settings says when the next one comes.
   - If the app is open on screen, the nudge shows inside the app instead of buzzing the phone (on iPhone and Safari it also shows briefly, because those browsers drop nudges that never show). Settings → Nudges has Send a test. On iPhone, nudges need Open Loops on the Home Screen.
   - **One switch.** Settings → Nudges → On this device. Every way it can fail says what happened and what to do, right under the switch: offline, still loading, the prompt dismissed, the server unreachable, a browser with push turned off (Brave says which setting). If the browser has blocked notifications, the page can't ask again, so the switch shows how to allow them in this browser (iPhone, Android app, Android Chrome, Chrome/Edge, Firefox, Safari) with Check again, and nudges turn on by themselves the moment notifications are allowed.
@@ -192,7 +195,7 @@ https://YOUR_USERNAME.github.io/REPO_NAME/open-loops.html
 
 ## Upgrade / Upload Checklist
 
-**Run `open-loops-supabase.sql` in the Supabase SQL editor first.** Version 17 added two columns (`wake_at`, `details`); version 19 added `push_subscriptions` and the nudge schedule; version 20 adds wake-up nudges (`push_due_wakeups`, `wake_checked_at`), check-ins at any time of day (`quiet_on`, `last_run_at`), and runs the schedule every minute. Then redeploy `supabase/functions/push`. The statements are idempotent, so running the whole file again is safe. If the app is deployed before the SQL runs, it keeps syncing everything else; wake times stay on the device until the columns exist, and nudges can't be turned on until the table exists.
+**Run `open-loops-supabase.sql` in the Supabase SQL editor first.** Version 27 adds one idempotent update that gives open Schedule loops still ahead their 30-minute heads-up (older versions saved the time without a wake time); deploy order for 27 is the SQL, then `supabase/functions/push`, then the app. Version 17 added two columns (`wake_at`, `details`); version 19 added `push_subscriptions` and the nudge schedule; version 20 adds wake-up nudges (`push_due_wakeups`, `wake_checked_at`), check-ins at any time of day (`quiet_on`, `last_run_at`), and runs the schedule every minute. Then redeploy `supabase/functions/push`. The statements are idempotent, so running the whole file again is safe. If the app is deployed before the SQL runs, it keeps syncing everything else; wake times stay on the device until the columns exist, and nudges can't be turned on until the table exists.
 
 When deploying this version, upload the full app folder or at least:
 
@@ -207,6 +210,7 @@ open-loops-nudge-192.png
 open-loops-badge-96.png
 open-loops-supabase.sql
 supabase/functions/push/
+docs/loop-behavior.md
 index.html
 README.md
 ```
@@ -225,7 +229,7 @@ open-loops-icon-512-v3.png
 The service worker cache is currently:
 
 ```js
-open-loops-v26-delight
+open-loops-v27-honest-start
 ```
 
 **On every release, bump both** `CACHE` in `open-loops-sw.js` and `APP_VERSION` in `open-loops.html` (number and date). The new cache name is what tells installed apps there's a new version; `APP_VERSION` is what Settings → App version shows, so you can see which version a phone is running.
@@ -287,7 +291,7 @@ After deploying, test on the real URL:
 9. Confirm no stale "Still saving" banner remains when sync is healthy.
 10. Park a loop with "Pick a day and time" set a minute or two ahead. Confirm it comes back to Up next (not Now) on both devices.
 11. Ask: Reach out → Send… → In 3 days. Confirm it shows "Waiting on …" in Parked, and `wake_at` / `details.sentAt` are set in Supabase.
-12. Schedule: Define asks "When is it?". Add to calendar → Google Calendar opens with that day and time; the .ics file opens in Apple Calendar. Back in the app it asks "On your calendar?" and Yes closes it.
+12. Schedule: Define asks "When is it?" with empty Day and Time (no default). Pick a time 40 minutes ahead: the note under it says when it comes back, Park is suggested, and the loop lands in Parked with "Back …, 30 min before". Lock the phone: the heads-up "“…” in 30 min." arrives about 10 minutes later, and the loop is in Up next. Not yet on a Schedule loop shows only a day-and-time picker. From the card, Put it on my calendar too → Google Calendar opens with that day and time; the .ics file opens in Apple Calendar; back in the app it asks "On your calendar?" and Yes closes it.
 13. Let go of a loop and confirm a pebble (not a ring) appears on the Closed shelf.
 14. On the installed phone app, open Settings → App version and confirm it shows the version you just released (tap Check for update if not).
 15. Park two loops for a minute ahead, wait, and open Active: the sweep banner appears. Sweep them; each card's choice lands where it says.
@@ -297,6 +301,7 @@ After deploying, test on the real URL:
 18a. On a second browser, flip the switch and choose **Block** in the prompt: the switch stays off and shows the unblock steps for that browser. Allow notifications in its site settings and come back: nudges turn on by themselves.
 19. Park a loop with "Pick a day and time" two minutes ahead and lock the phone. A wake-up nudge arrives within a minute of that time; Done closes the loop without opening the app.
 20. Set the check-in time to a minute that has already passed: Settings says the next check-in is tomorrow, and nothing arrives today.
+21. Opening: close the installed app completely and reopen it on a slow connection. Your loops appear at once, never "Your head is clear" first, and it opens on Active even if you last left it on Parked. On a browser where you've never signed in, signing in shows loop bars until your loops arrive.
 
 ---
 
@@ -313,6 +318,7 @@ open-loops-icon-512-v4.png   Current large PWA icon (the mascot)
 open-loops-nudge-192.png     The mascot (winking) shown on notifications
 open-loops-badge-96.png      Small one-colour icon Android shows in the status bar for nudges
 supabase/functions/push/     The nudge sender (Edge Function): what to say, when, and Web Push
+docs/loop-behavior.md        How loops behave: lifecycle, kinds, times, nudges, opening the app
 open-loops-icon-192-v3.png   Previous icon (Clay C) kept for cache compatibility
 open-loops-icon-512-v3.png   Previous large icon kept for cache compatibility
 open-loops-icon-192-v2.png   Older icon kept for cache compatibility

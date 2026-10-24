@@ -19,6 +19,18 @@
 <!-- Only the letters of the Auxila wordmark -->
 <link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@100..125,500..900&text=auxilc.&display=swap" rel="stylesheet">
 <script src="./open-loops-config.js"></script>
+<script>
+// Theme before the first paint, so a dark-mode phone never flashes cream.
+// Same key and fallback as loadTheme() below.
+(function () {
+  try {
+    var c = window.OL_CONFIG || {};
+    var t = localStorage.getItem(c.STORAGE_KEY ? c.STORAGE_KEY + '_theme' : 'open_loops_theme');
+    if (t !== 'light' && t !== 'dark') t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.103.3/dist/umd/supabase.js"
   integrity="sha384-hCWGwlkWlatZlBB+xRL7caQ0wei4AIvA80dQT3CEhafaMinAJQdfdb99y48Oai+Q"
   crossorigin="anonymous"></script>
@@ -3275,9 +3287,41 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
 .aux-credit:hover .aux-word { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .auth-gate-card .aux-credit { margin-top: 28px; align-self: flex-start; }
 .settings-credit { padding: 14px 0 4px; border-top: 1px solid var(--border-soft); }
+
+/* ── v27: opening the app ──
+   The splash covers only "which account is this?". It matches the phone's
+   own launch screen (manifest background #fffaf0) so the two read as one.
+   Loop bars cover "signed in, nothing saved on this phone yet". Neither is
+   ever an empty state. */
+.boot-splash { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: var(--bg); transition: opacity .22s ease; }
+.boot-splash.gone { opacity: 0; pointer-events: none; }
+.boot-splash svg { width: 84px; height: 84px; }
+.loop-bars { display: flex; flex-direction: column; gap: 12px; }
+.loop-bars span { display: block; height: 92px; border-radius: var(--r-lg); background: var(--surface-strong); }
+.loop-bars span:first-child { height: 132px; }
+.empty-state .btn { margin-top: 14px; }
+@media (prefers-reduced-motion: no-preference) {
+  .boot-splash svg { animation: boot-breathe 1.6s ease-in-out infinite; }
+  .loop-bars span { animation: bars-pulse 1.4s ease-in-out infinite; }
+  .loop-bars span:nth-child(2) { animation-delay: .18s; }
+  .loop-bars span:nth-child(3) { animation-delay: .36s; }
+}
+@keyframes boot-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes bars-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 </style>
 </head>
 <body>
+
+<div class="boot-splash" id="boot-splash" aria-hidden="true">
+  <svg viewBox="71 22 180 180" focusable="false"><path d="M 196 72 A 58 58 0 1 0 200 150" fill="none" stroke="#ffb084" stroke-width="32" stroke-linecap="round"/><circle cx="236" cy="104" r="10" fill="#ff4d8b"/></svg>
+</div>
+<script>
+// Failsafe: the app removes the splash as soon as it knows who you are. If
+// that hasn't happened in 3 seconds (a slow sign-in check, or the app's code
+// failed to load), lift it anyway. What's underneath is loop bars, never a
+// false "Your head is clear".
+setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) s.classList.add('gone'); }, 3000);
+</script>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
@@ -3360,13 +3404,19 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   const THEME_KEY      = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_theme'      : 'open_loops_theme';
   const LOOP_CAP_KEY_BASE   = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_cap'        : 'open_loops_cap';
   const REENTRY_KEY_BASE    = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_reentry_dismissed' : 'open_loops_reentry_dismissed';
+  // The account last signed in on this phone (its id only), so the first
+  // frame can show its saved loops. Removed on sign-out.
+  const LAST_USER_KEY       = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_last_user'  : 'open_loops_last_user';
+  // The tab for this sitting only (sessionStorage): a reload stays put, a
+  // fresh open starts on Active.
+  const TAB_KEY_BASE        = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_tab'        : 'open_loops_tab';
   const LEGACY_STORAGE_KEY  = STORAGE_KEY_BASE;
   const LEGACY_STORAGE_QUARANTINE_KEY = `${STORAGE_KEY_BASE}_legacy_unscoped`;
   const IS_FILE = location.protocol === 'file:';
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 26, date: '20 Oct 2026' };
+  const APP_VERSION = { number: 27, date: '24 Oct 2026' };
   let swRegistration = null;
   let swState = 'pending';   // 'ready' once the service worker registers, 'failed' if it can't
 
@@ -3536,6 +3586,96 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     return loop.kind === 'let_go';
   }
 
+  // ── SCHEDULE ──
+  // A Schedule loop has one time: when it happens (details.at). Everything
+  // else follows from it, and only schedulePatch() writes it:
+  //   • it waits in Parked and comes back to Up next HEADS_UP_MIN before,
+  //     which is when the nudge goes out (wake_at = at − HEADS_UP_MIN);
+  //   • closer than that, it goes straight to Up next with no heads-up;
+  //   • once the time has passed, its card asks "Did it happen?".
+  // "Not yet" on a Schedule loop means "it's at a different time", so it
+  // opens the same day-and-time picker, never quick presets.
+  const HEADS_UP_MIN = 30;
+  function scheduleAt(loop) {
+    const at = loop && loop.kind === 'schedule' && loop.details && loop.details.at;
+    const t = at ? new Date(at).getTime() : NaN;
+    return Number.isFinite(t) ? t : null;
+  }
+  // When the heads-up goes out for an event at atMs, or null when it's too
+  // close for one (less than a minute of notice left).
+  function headsUpFor(atMs, now = Date.now()) {
+    const w = atMs - HEADS_UP_MIN * 60000;
+    return w > now + 60000 ? new Date(w).toISOString() : null;
+  }
+  function schedulePassed(loop) { const t = scheduleAt(loop); return t !== null && t <= Date.now(); }
+  // Was this loop's wake time put there by its event time?
+  function wakeIsHeadsUp(loop) {
+    const t = scheduleAt(loop);
+    return t !== null && !!loop.wakeAt && Math.abs(new Date(loop.wakeAt).getTime() - (t - HEADS_UP_MIN * 60000)) < 1000;
+  }
+  // The one place a Schedule loop's time is set. Returns the patch: the time,
+  // the heads-up wake time that follows from it, and where the loop waits.
+  //   opts.status — a route the person chose (Define's Up next / Park);
+  //   otherwise: Parked when a heads-up is ahead, Up next when it's too close.
+  function schedulePatch(loop, atIso, opts = {}) {
+    const details = { ...((loop && loop.details) || {}) };
+    if (atIso) {
+      if (details.at !== atIso) delete details.calAt;   // a new time: the calendar has the old one
+      details.at = atIso;
+    } else {
+      delete details.at;
+      delete details.calAt;
+    }
+    delete details.outcome;
+    const wakeAt = atIso ? headsUpFor(new Date(atIso).getTime()) : null;
+    let status = opts.status || (atIso ? (wakeAt ? 'waiting' : 'active') : (loop && loop.status === 'waiting' ? 'waiting' : 'active'));
+    if (status === 'waiting' && atIso && !wakeAt) status = 'active';   // too close to park
+    return { details: cleanDetails(details), wakeAt, status, completedAt: null };
+  }
+  // A day and a time, both required (no 9:00 filled in behind your back).
+  function fromScheduleInputs(dateStr, timeStr) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || '') || !/^\d{1,2}:\d{2}/.test(timeStr || '')) return null;
+    return fromLocalInputs(dateStr, timeStr);
+  }
+  function readSchedulePick(prefix) {
+    const d = fromScheduleInputs(document.getElementById(`${prefix}-date`)?.value, document.getElementById(`${prefix}-time`)?.value);
+    if (!d) { toast('Pick a day and a time.'); return null; }
+    if (d.getTime() <= Date.now()) { toast('Pick a time that is still ahead.'); return null; }
+    return d.toISOString();
+  }
+  // The honest line under every Schedule picker: what will actually happen.
+  function scheduleNoteText(atMs) {
+    if (atMs === null || !Number.isFinite(atMs)) return `Pick a day and a time. It comes back ${HEADS_UP_MIN} minutes before.`;
+    if (atMs <= Date.now()) return 'That time has already passed. Pick one that is still ahead.';
+    const heads = headsUpFor(atMs);
+    if (!heads) return `Less than ${HEADS_UP_MIN} minutes away, so it goes straight to Up next.`;
+    const at = clockText(new Date(heads));
+    let nudges = false;
+    try { nudges = nudgeState() === 'on' && Push.prefs().wakeups !== false; } catch (_) {}
+    return nudges
+      ? `I'll nudge you at ${at}, ${HEADS_UP_MIN} minutes before.`
+      : `It comes back to Up next at ${at}. Nudges are off on this phone, so turn them on in Settings to get a ping too.`;
+  }
+  // Day + time fields for a Schedule picker. Empty unless there's a real
+  // time to start from (one already set, or read from the note).
+  function scheduleFieldsHtml(prefix, start, autofocus = false) {
+    const af = autofocus ? '' : ' no-autofocus';
+    const atMs = start ? start.getTime() : null;
+    return `
+      <div class="act-row">
+        ${actField(`${prefix}-date`, 'Day', `<input class="big-input act-input sched-input${af}" id="${prefix}-date" type="date" value="${start ? localDateValue(start) : ''}" min="${localDateValue(new Date())}" data-sched="${prefix}">`)}
+        ${actField(`${prefix}-time`, 'Time', `<input class="big-input act-input sched-input no-autofocus" id="${prefix}-time" type="time" value="${start ? localTimeValue(start) : ''}" data-sched="${prefix}">`)}
+      </div>
+      <p class="input-hint sched-note" id="${prefix}-note" aria-live="polite">${esc(scheduleNoteText(atMs))}</p>`;
+  }
+  function refreshScheduleNote(input) {
+    const prefix = input && input.dataset.sched;
+    if (!prefix) return;
+    const d = fromScheduleInputs(document.getElementById(`${prefix}-date`)?.value, document.getElementById(`${prefix}-time`)?.value);
+    const note = document.getElementById(`${prefix}-note`);
+    if (note) note.textContent = scheduleNoteText(d ? d.getTime() : null);
+  }
+
   // ── STATE ──
   let data = seedState();
   let view = {
@@ -3566,6 +3706,57 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   // Set to true once Sync.init() resolves so we don't flash the lock screen
   // during the async auth check on cold start.
   let authReady = false;
+
+  // ── BOOT ──
+  // What the app knows about your loops right now. "Not loaded yet" is its
+  // own state, never an empty list: nothing on screen may say a list is empty
+  // until real data says so.
+  //   starting    — which account is this? (splash)
+  //   loading     — signed in, nothing saved on this phone yet (loop bars)
+  //   cached      — showing the copy saved on this phone; the server is checking
+  //   ready       — the server has answered (or nobody is signed in)
+  //   unreachable — nothing saved here and the server couldn't be reached
+  // Loops that exist are always shown; only emptiness waits for the truth.
+  let bootState = 'starting';
+  function dataKnown() { return bootState === 'cached' || bootState === 'ready'; }
+  function hideSplash() {
+    const s = document.getElementById('boot-splash');
+    if (!s || s.dataset.leaving) return;
+    s.dataset.leaving = '1';
+    s.classList.add('gone');
+    setTimeout(() => s.remove(), 260);
+  }
+  function setBoot(state) {
+    if (state !== 'starting') hideSplash();
+    if (bootState === state) return;
+    bootState = state;
+    // Only the list, its counts and the header: an open sheet (someone typing
+    // a capture while the first sync runs) must not be re-rendered.
+    try { renderHeader(); renderBottomNav(); renderMain(); } catch (_) {}
+  }
+  // A saved copy with loops in it is real data; an empty one proves nothing
+  // (it could have been saved before the first sync), so it waits for the server.
+  // Always redraws: the saved copy may belong to a different account than the
+  // one on screen, even when both boot states are the same.
+  function bootFromSavedCopy() {
+    const next = data.loops.length ? 'cached' : 'loading';
+    if (bootState !== next) { setBoot(next); return; }
+    hideSplash();
+    try { renderHeader(); renderBottomNav(); renderMain(); } catch (_) {}
+  }
+
+  function rememberAccount(id) { try { if (id) localStorage.setItem(LAST_USER_KEY, id); } catch (_) {} }
+  function forgetAccount() { try { localStorage.removeItem(LAST_USER_KEY); } catch (_) {} }
+  function rememberedAccount() { try { return localStorage.getItem(LAST_USER_KEY) || null; } catch (_) { return null; } }
+  // Arriving from a sign-in link: the link may be for a different account
+  // than the one this phone remembers, so wait for the real session.
+  function arrivedFromSignInLink() {
+    try {
+      if (/(^|[#&])(access_token|refresh_token|error)=/.test(location.hash.slice(1))) return true;
+      const q = new URLSearchParams(location.search);
+      return q.has('code') || q.has('token_hash') || q.has('error_description');
+    } catch (_) { return false; }
+  }
   // Magic-link cooldown: Supabase rate-limits magic link sends (3/hour/email
   // on free tier). A user tapping "Send link" repeatedly can lock themselves
   // out. Enforce a 60s client-side cooldown between sends.
@@ -3630,10 +3821,12 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         const parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.loops)) {
           data = { version: 2, lastLoopId: parsed.lastLoopId || null, activeTab: 'now', loops: parsed.loops.map(sanitize) };
-          view.activeTab = parsed.activeTab || 'now';
         }
       }
     } catch(e) {}
+    // A fresh open always starts on Active, the app's home. Only a reload
+    // within the same sitting (an update, a pull-to-refresh) keeps the tab.
+    view.activeTab = sittingTab() || 'now';
     // Reentry dismissal (survives reload)
     try {
       const r = localStorage.getItem(scopedKey(REENTRY_KEY_BASE));
@@ -3652,6 +3845,15 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     try {
       localStorage.setItem(key, JSON.stringify({ version: 2, lastLoopId: data.lastLoopId, activeTab: view.activeTab, loops: data.loops }));
     } catch(e) {}
+    try { sessionStorage.setItem(scopedKey(TAB_KEY_BASE), view.activeTab); } catch(e) {}
+  }
+
+  const SITTING_TABS = new Set(['now', 'later', 'inbox', 'done']);
+  function sittingTab() {
+    try {
+      const t = sessionStorage.getItem(scopedKey(TAB_KEY_BASE));
+      return SITTING_TABS.has(t) ? t : null;
+    } catch(e) { return null; }
   }
 
   function saveReentryDismissed(id) {
@@ -4185,9 +4387,13 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     // On Active the sweep banner already says what woke up.
     const bannerSaysIt = view.activeTab === 'now' && sweepBannerItems().length > 0;
     if (!opts.quiet && !bannerSaysIt) {
-      const first = due[due.length - 1].rawText || '';
+      const firstLoop = due[due.length - 1];
+      const first = firstLoop.rawText || '';
       const short = first.length > 42 ? first.slice(0, 40).trimEnd() + '…' : first;
-      toast(due.length === 1 ? `Back in Up next: ${short}` : `${due.length} loops woke up. They're in Up next.`);
+      const schedAt = scheduleAt(firstLoop);
+      toast(due.length !== 1 ? `${due.length} loops woke up. They're in Up next.`
+        : schedAt !== null && schedAt > now ? `Coming up at ${clockText(new Date(schedAt))}: ${short}`
+        : `Back in Up next: ${short}`);
     }
     return due;
   }
@@ -4283,6 +4489,14 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     const d = loop.details || {};
     const wake = loop.wakeAt ? new Date(loop.wakeAt).getTime() : null;
     const isSentAsk = loop.kind === 'ask' && !!d.sentAt;
+    // A timed Schedule loop: say when it comes back (the nudge) or starts.
+    const schedAt = scheduleAt(loop);
+    if (schedAt !== null && (loop.status === 'waiting' || loop.status === 'active') && schedAt > Date.now()) {
+      if (wakeIsHeadsUp(loop) && wake > Date.now()) {
+        return { icon: 'cal', text: loop.status === 'waiting' ? `Back ${formatWake(loop.wakeAt)}, ${HEADS_UP_MIN} min before` : `Nudge ${formatWake(loop.wakeAt)}` };
+      }
+      return { icon: 'cal', text: `Starts ${formatEvent(new Date(schedAt).toISOString())}` };
+    }
     if (loop.status === 'waiting') {
       if (isSentAsk) {
         const who = parseAsk(loop.promptAnswer).who || 'them';
@@ -4321,6 +4535,9 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   function dryness(loop) {
     if (!loop || (loop.status !== 'active' && loop.status !== 'waiting')) return null;
     if (loop.status === 'waiting' && loop.wakeAt) return null;
+    // Waiting for its date is not neglect.
+    const schedAt = scheduleAt(loop);
+    if (schedAt !== null && schedAt > Date.now()) return null;
     const days = untouchedDays(loop);
     if (days >= CRACK_DAYS) return { level: 'cracked', days };
     if (days >= DRY_DAYS) return { level: 'drying', days };
@@ -4547,6 +4764,19 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     if (!loop) return '';
     const dots = items.map((_, i) => `<span class="sweep-dot${i < ov.idx ? ' done' : i === ov.idx ? ' on' : ''}"></span>`).join('');
     const progress = `<div class="sweep-dots" role="img" aria-label="Loop ${ov.idx + 1} of ${items.length}">${dots}</div>`;
+    if (ov.step === 'park' && loop.kind === 'schedule') {
+      // It moved: when is it now? A day and a time, no presets.
+      const at = scheduleAt(loop);
+      return sheet(`
+        ${progress}
+        <h2 class="sweep-h small" id="sweep-title">When is “${esc(shortText(loop.rawText, 40))}” now?</h2>
+        ${scheduleFieldsHtml('sweep-sched', at !== null && at > Date.now() ? new Date(at) : null)}
+        <div class="act-list">
+          ${actBtn({ action: 'sweep-park', label: 'Save the time', primary: true, loopId: loop.id, attrs: 'data-when="schedule"', icon: ACT_ICON.clock })}
+          ${actBtn({ action: 'sweep-park', label: 'Not sure yet', sub: 'It waits in Parked until you bring it back', loopId: loop.id, attrs: 'data-when=""', icon: ACT_ICON.next })}
+        </div>
+        <button type="button" class="btn btn-ghost sweep-back" data-action="sweep-back">Back</button>`);
+    }
     if (ov.step === 'park') {
       const presets = wakePresets('park')
         .filter(p => p.label !== 'Tonight' && p.label !== 'In 3 hours')
@@ -4566,9 +4796,12 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     let reason;
     if (it.why === 'woke') {
       const d = loop.details || {};
+      const schedAt = scheduleAt(loop);
       reason = loop.kind === 'ask' && d.sentAt
         ? { icon: 'person', text: `Checking back on ${parseAsk(loop.promptAnswer).who || 'them'}` }
-        : { icon: 'sun', text: `You parked it until ${formatWake(loop.wakeAt)}` };
+        : schedAt !== null
+          ? { icon: 'cal', text: `${schedAt > Date.now() ? 'Starts' : 'Was'} ${formatEvent(new Date(schedAt).toISOString())}` }
+          : { icon: 'sun', text: `You parked it until ${formatWake(loop.wakeAt)}` };
     } else {
       reason = { icon: 'dry', text: `Untouched ${untouchedDays(loop)} days. Still yours?` };
     }
@@ -4588,7 +4821,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         <div class="sweep-grid">
           <button type="button" class="btn btn-primary" data-action="sweep-pick" data-pick="now">Make it Now</button>
           <button type="button" class="btn btn-ghost" data-action="sweep-pick" data-pick="next">${dry ? 'Keep it' : 'Up next'}</button>
-          <button type="button" class="btn btn-ghost" data-action="sweep-pick" data-pick="park">${dry ? 'Park it' : 'Park again'}</button>
+          <button type="button" class="btn btn-ghost" data-action="sweep-pick" data-pick="park">${dry ? 'Park it' : loop.kind === 'schedule' ? 'Move it' : 'Park again'}</button>
           <button type="button" class="btn btn-ghost" data-action="sweep-pick" data-pick="go">Let go</button>
         </div>
         <p class="sweep-note">${hasOtherNow ? 'Make it Now puts it above your current Now. Up next leaves your Now as it is.' : 'Make it Now puts it at the top of Active.'}</p>`);
@@ -4605,7 +4838,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     }, 900);
   }
   // One card's choice, applied to the loop. Returns what to sync.
-  function sweepApply(loop, pick, wakeAt) {
+  function sweepApply(loop, pick, wakeAt, schedIso) {
     const top = byStatus('active')[0];
     const isNow = !!(top && top.id === loop.id);
     let patch;
@@ -4615,6 +4848,10 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     } else if (pick === 'next') {
       if (isNow) patch = { position: loop.position };
       else { const up = upNextPosition(loop.id); patch = { status: 'active', position: up.position }; rebalance = up.rebalance; }
+    } else if (pick === 'park' && loop.kind === 'schedule') {
+      // Moved to a new time (or no time yet): where it waits follows from it.
+      patch = schedulePatch(loop, schedIso || null, schedIso ? {} : { status: 'waiting' });
+      if (patch.status === 'active') { const up = upNextPosition(loop.id); patch.position = up.position; rebalance = up.rebalance; }
     } else if (pick === 'park') {
       patch = { status: 'waiting', wakeAt: wakeAt || null };
     } else {
@@ -5452,7 +5689,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     const DAY = 86400000;
     if (p.recap && at.getDay() === 0 && data.loops.some(l => l.status === 'released' && l.completedAt && new Date(l.completedAt).getTime() > t - 7 * DAY)) return 'recap';
     const staleLately = p.lastStaleAt && new Date(p.lastStaleAt).getTime() > t - 6.5 * DAY;
-    if (p.stale && !staleLately && data.loops.some(l => (l.status === 'active' || (l.status === 'waiting' && !l.wakeAt)) && new Date(l.updatedAt).getTime() <= t - CRACK_DAYS * DAY)) return 'stale';
+    // Same rule as the sender: a Schedule loop waiting for its date isn't stale.
+    if (p.stale && !staleLately && data.loops.some(l => (l.status === 'active' || (l.status === 'waiting' && !l.wakeAt)) && !(scheduleAt(l) > t) && new Date(l.updatedAt).getTime() <= t - CRACK_DAYS * DAY)) return 'stale';
     return '';
   }
   function nextWakeLoop() {
@@ -5525,7 +5763,11 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   // What the card's main button says. An Ask that was sent asks the real
   // question: did they reply?
   function actionLabel(loop) {
-    if (loop.kind === 'schedule' && loop.details && loop.details.calAt) return 'On your calendar?';
+    if (loop.kind === 'schedule') {
+      if (schedulePassed(loop)) return 'Did it happen?';
+      if (loop.details && loop.details.calAt) return 'On your calendar?';
+      return scheduleAt(loop) !== null ? 'Change the time' : 'Set the time';
+    }
     if (loop.kind === 'ask' && loop.details && loop.details.sentAt) {
       const who = parseAsk(loop.promptAnswer).who;
       return who ? `Did ${who} reply?` : 'Did they reply?';
@@ -5537,7 +5779,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   // when it happens.
   function nextLineHtml(loop, label = 'Next', empty = 'No next step set.') {
     const at = loop.kind === 'schedule' && loop.details && loop.details.at;
-    if (at) return `<div class="loop-next"><span class="loop-next-label">When</span><span>${esc(formatEvent(at))}</span></div>`;
+    if (at) return `<div class="loop-next"><span class="loop-next-label">${schedulePassed(loop) ? 'Was' : 'When'}</span><span>${esc(formatEvent(at))}</span></div>`;
     const fallback = loop.kind === 'schedule' && label === 'Next' ? 'No time set yet.' : empty;
     return `<div class="loop-next"><span class="loop-next-label">${label}</span><span>${esc(loop.promptAnswer || fallback)}</span></div>`;
   }
@@ -5659,6 +5901,15 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       </article>`;
   }
 
+  // Where an empty list would go while the app doesn't know yet: loop bars,
+  // or, when nothing is saved here and the server can't be reached, say so.
+  function notKnownYetHtml() {
+    if (bootState === 'unreachable') {
+      return `<div class="empty-state">${mascotSvg('sleepy', { width: 170 })}<strong>Can't reach your loops right now.</strong>They're safe in your account. Check your connection, then try again.<div><button class="btn btn-ghost" type="button" data-action="boot-retry">Try again</button></div></div>`;
+    }
+    return `<div class="loop-bars" role="status" aria-label="Loading your loops"><span></span><span></span><span></span></div>`;
+  }
+
   // ── HOME RENDER ──
   function renderHome() {
     const active = byStatus('active');
@@ -5680,13 +5931,16 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     const tabKey = view.activeTab === 'waiting' ? 'later' : view.activeTab === 'released' ? 'done' : view.activeTab;
     const head = HEAD[tabKey] || HEAD.now;
     let meter = '';
-    if (tabKey === 'now') {
+    const known = dataKnown();
+    // Counts are claims too: "0" while loading is as false as an empty state.
+    const count = n => known ? ` <span class="tab-count">${n}</span>` : '';
+    if (tabKey === 'now' && known) {
       const used = Math.min(active.length, cap);
       const dots = Array.from({ length: cap }, (_, i) => `<span class="cap-meter-dot${i < used ? ' on' : ''}"></span>`).join('');
       const over = active.length > cap ? ` · +${active.length - cap} waiting` : '';
       meter = `<div class="cap-meter" title="Focus cap"><div class="cap-meter-dots">${dots}</div><div class="cap-meter-label">${used} of ${cap} focus slots${over}</div></div>`;
     }
-    if (tabKey === 'done') {
+    if (tabKey === 'done' && known) {
       const week = closedThisWeek();
       if (week.length) {
         const shown = week.slice(-21);
@@ -5708,13 +5962,13 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     html += `
       <div class="tabs">
         <button class="tab ${view.activeTab === 'now' ? 'active' : ''}" data-action="set-tab" data-tab="now">
-          ${TAB_LABEL.active} <span class="tab-count">${active.length}</span>
+          ${TAB_LABEL.active}${count(active.length)}
         </button>
         <button class="tab ${view.activeTab === 'later' ? 'active' : ''}" data-action="set-tab" data-tab="later">
-          ${TAB_LABEL.waiting} <span class="tab-count">${waiting.length}</span>
+          ${TAB_LABEL.waiting}${count(waiting.length)}
         </button>
         <button class="tab ${view.activeTab === 'inbox' ? 'active' : ''}" data-action="set-tab" data-tab="inbox">
-          ${TAB_LABEL.inbox} <span class="tab-count">${inbox.length}</span>
+          ${TAB_LABEL.inbox}${count(inbox.length)}
         </button>
       </div>`;
 
@@ -5727,9 +5981,14 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         if (hidden > 0 && !view.expanded) {
           html += `<button class="show-more" data-action="show-more">Show ${hidden} more loop${hidden > 1 ? 's' : ''}</button>`;
         }
+      } else if (!known) {
+        html += notKnownYetHtml();
       } else if (Combo.count() >= 2) {
         const n = Combo.count();
         html += `<div class="empty-state cleared">${mascotSvg('proud', { width: 210, className: Combo.fresh() ? 'mascot-sealing' : '', label: 'The mascot, proud, closed into a ring' })}<strong>Active is clear.</strong>${n} closes, one full chord. Enjoy the quiet.${sharePromptHtml()}</div>`;
+      } else if (inbox.length) {
+        // Unsorted captures are still open loops, so the head isn't clear.
+        html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Active is clear.</strong>${inbox.length} in Inbox to sort.<div><button class="btn btn-ghost" type="button" data-action="set-tab" data-tab="inbox">Sort Inbox</button></div></div>`;
       } else {
         html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Your head is clear.</strong>Capture a loop, then define it when you're ready.</div>`;
       }
@@ -5761,6 +6020,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             </article>`;
         });
         html += `</div>`;
+      } else if (!known) {
+        html += notKnownYetHtml();
       } else {
         html += `<div class="empty-state">${mascotSvg('sleepy', { width: 190 })}<strong>Nothing parked.</strong>Park loops here when the next move isn't yours yet.</div>`;
       }
@@ -5786,6 +6047,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             </article>`;
         });
         html += `</div>`;
+      } else if (!known) {
+        html += notKnownYetHtml();
       } else {
         html += `<div class="empty-state">${mascotSvg('curious', { width: 190 })}<strong>Nothing closed yet.</strong>When a loop is done, close it here.</div>`;
       }
@@ -5808,6 +6071,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             </article>`;
         });
         html += `</div>`;
+      } else if (!known) {
+        html += notKnownYetHtml();
       } else {
         html += `<div class="empty-state">${mascotSvg('cheeky', { width: 190 })}<strong>Inbox zero.</strong>Captured loops land here before you define where they belong.</div>`;
       }
@@ -5925,13 +6190,14 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   };
 
   // Where Define's "When is it?" starts: the time already picked, else what
-  // the note says, else tomorrow at 9:00.
+  // the note says, else empty. Never an invented default: a "tomorrow 9:00"
+  // you didn't choose is a false answer one tap away from being saved.
   function defineWhen(loop, ov) {
     const picked = ov.at ? new Date(ov.at) : (loop.details && loop.details.at ? new Date(loop.details.at) : null);
-    if (picked && !Number.isNaN(picked.getTime())) return { date: picked, hint: 'You’ll put it on your calendar from its card.' };
+    if (picked && !Number.isNaN(picked.getTime())) return { date: picked, readFrom: null };
     const parsed = parseWhen(ov.rawText ?? loop.rawText) || parseWhen(loop.promptAnswer);
-    if (parsed) return { date: parsed.date, hint: `I read “${parsed.text}” from your note. Change it if that’s wrong.` };
-    return { date: atTime(addDays(new Date(), 1), 9), hint: 'You’ll put it on your calendar from its card.' };
+    if (parsed && parsed.date.getTime() > Date.now()) return { date: parsed.date, readFrom: parsed.text };
+    return { date: null, readFrom: null };
   }
 
   function renderDefineRaw(loop) {
@@ -5965,11 +6231,10 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       body = `
         <div class="step-kind">${kindChip}</div>
         <h3 class="step-q" id="define-when-q">When is it?</h3>
-        <div class="act-row define-when" role="group" aria-labelledby="define-when-q">
-          ${actField('define-date', 'Day', `<input class="big-input act-input" id="define-date" type="date" value="${localDateValue(when.date)}">`)}
-          ${actField('define-time', 'Time', `<input class="big-input act-input" id="define-time" type="time" value="${localTimeValue(when.date)}">`)}
+        <div class="define-when" role="group" aria-labelledby="define-when-q">
+          ${scheduleFieldsHtml('define', when.date, true)}
         </div>
-        <p class="input-hint">${esc(when.hint)}</p>
+        ${when.readFrom ? `<p class="input-hint">I read “${esc(when.readFrom)}” from your note. Change it if that’s wrong.</p>` : ''}
         <div class="overlay-actions">
           <button class="btn btn-ghost" data-action="define-next" data-skip="1">Not sure yet</button>
           <button class="btn btn-primary" data-action="define-next">Next</button>
@@ -5994,10 +6259,21 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       const cap = view.loopCap || DEFAULT_LOOP_CAP;
       const full = active >= cap;
       const wasActive = loop.status === 'active';
-      const suggest = kind === 'let_go' ? 'released' : (full && !wasActive ? 'waiting' : 'active');
+      // A timed Schedule loop is out of your head until just before it
+      // happens, so Park is the natural home and says when it comes back.
+      const schedAt = kind === 'schedule' && ov.at ? new Date(ov.at).getTime() : null;
+      const schedHeads = schedAt ? headsUpFor(schedAt) : null;
+      const headsClock = schedHeads ? clockText(new Date(schedHeads)) : '';
+      const suggest = kind === 'let_go' ? 'released' : schedHeads ? 'waiting' : (full && !wasActive ? 'waiting' : 'active');
+      const activeHint = schedHeads
+        ? `${wasActive ? 'Stays in Active' : 'Into Active now'}, with a nudge at ${headsClock}.`
+        : wasActive ? 'Stays where it is in Active.' : 'Into Active, right under your Now card.';
+      const parkHint = schedHeads
+        ? `Out of your head until ${headsClock}, ${HEADS_UP_MIN} minutes before.`
+        : schedAt ? `Less than ${HEADS_UP_MIN} minutes away, so it goes to Up next.` : 'Not now. It waits in Parked.';
       const routes = [
-        { key: 'active',   title: wasActive ? 'Keep in Active' : 'Up next', hint: wasActive ? 'Stays where it is in Active.' : 'Into Active, right under your Now card.' },
-        { key: 'waiting',  title: 'Park',  hint: 'Not now. It waits in Parked.' },
+        { key: 'active',   title: wasActive ? 'Keep in Active' : 'Up next', hint: activeHint },
+        { key: 'waiting',  title: 'Park',  hint: parkHint },
         { key: 'released', title: 'Close', hint: kind === 'let_go' ? 'Let it go. It lands on your shelf.' : 'Already done. It lands on your shelf.' }
       ].map(r => `
         <button type="button" class="route-big ${r.key}${suggest === r.key ? ' suggested' : ''}" data-action="finish-define-raw" data-status="${r.key}" data-loop-id="${esc(loop.id)}">
@@ -6608,6 +6884,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   function renderAuthGate() {
     const root = document.getElementById('auth-gate-root');
     if (!root) return;
+    hideSplash();
     const app = document.getElementById('app');
     if (app) app.classList.add('app-locked');
 
@@ -6891,7 +7168,9 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     const sentAsk = kind === 'ask' && !!d.sentAt && loop.status === 'active';
     // Sent to a calendar already: the first question is whether it made it.
     const sentToCal = kind === 'schedule' && !!d.calAt && loop.status === 'active';
-    const step = ov.step || (sentAsk ? 'reply' : sentToCal ? 'confirm' : 'main');
+    // Its time has come and gone: the only question left is whether it happened.
+    const happened = kind === 'schedule' && schedulePassed(loop);
+    const step = ov.step || (sentAsk ? 'reply' : happened ? 'happened' : sentToCal ? 'confirm' : 'main');
     const editLink = `<button type="button" class="act-link" data-action="complete-update" data-loop-id="${esc(id)}">Edit the note</button>`;
     let title = '', sub = '', body = '';
 
@@ -6958,8 +7237,31 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
           </div>${ov.nudge ? '' : editLink}`;
       }
     } else if (kind === 'schedule') {
+      const atMs = scheduleAt(loop);
+      const upcoming = atMs !== null && atMs > Date.now();
       const { start, parsed, saved } = scheduleStart(loop, ov);
-      if (step === 'confirm') {
+      if (step === 'happened') {
+        title = 'Did it happen?';
+        sub = atMs !== null ? `It was ${formatEvent(new Date(atMs).toISOString())}.` : '';
+        body = actLoopBox(loop.rawText, loop.promptAnswer) + `
+          <div class="act-list">
+            ${actBtn({ action: 'complete-done', label: 'Yes, close the loop', primary: true, loopId: id, icon: ACT_ICON.ring })}
+            ${actBtn({ action: 'act-step', label: 'It moved', sub: 'Pick its new day and time', loopId: id, attrs: 'data-step="main"', icon: ACT_ICON.clock })}
+            ${actBtn({ action: 'move-released', label: 'It isn’t happening', sub: 'Let it go', loopId: id, icon: ACT_ICON.drift })}
+          </div>`;
+      } else if (step === 'main') {
+        // The time is the whole job: pick it (or change it), and the app
+        // brings it back before it happens. A calendar is optional.
+        const typed = fromScheduleInputs(ov.schedDate, ov.schedTime);
+        const pickStart = typed || (upcoming ? new Date(atMs) : null);
+        title = upcoming ? 'Change the time' : 'When is it?';
+        body = actLoopBox(loop.rawText, loop.promptAnswer) + scheduleFieldsHtml('sched', pickStart) + `
+          <div class="act-list">
+            ${actBtn({ action: 'sched-save', label: 'Save the time', primary: true, loopId: id, icon: ACT_ICON.clock })}
+            ${upcoming ? actBtn({ action: 'act-step', label: 'Put it on my calendar too', sub: 'Google, Apple, Outlook or other', loopId: id, attrs: 'data-step="cal"', icon: ACT_ICON.cal }) : ''}
+            ${actBtn({ action: 'complete-done', label: 'It’s done', sub: 'Close the loop now', loopId: id, icon: ACT_ICON.ring })}
+          </div>${editLink}`;
+      } else if (step === 'confirm') {
         title = 'On your calendar?';
         sub = 'Once it’s saved there, your calendar holds it and this loop can close.';
         const when = `${start.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}, ${clockText(start)}`;
@@ -6982,8 +7284,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             ${actBtn({ action: 'cal-google', label: 'Google Calendar', sub: 'Opens a ready-made event, 30 minutes', primary: true, loopId: id, icon: ACT_ICON.cal })}
             ${actBtn({ action: 'cal-ics', label: 'Apple, Outlook or other', sub: 'Downloads an event file', loopId: id, icon: ACT_ICON.file })}
             ${actBtn({ action: 'complete-done', label: 'It’s already on my calendar', sub: 'Close the loop now', loopId: id, icon: ACT_ICON.ring })}
-            ${notYetBtn(loop)}
-          </div>`;
+          </div>
+          <button type="button" class="act-link" data-action="act-step" data-step="main">Back</button>`;
       }
     } else if (kind === 'let_go') {
       title = 'Ready to let it go?';
@@ -7026,6 +7328,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   function renderWhen(loop) {
     if (!loop) return '';
     const ov = view.overlay || {};
+    if ((ov.define ? ov.define.kind : loop.kind) === 'schedule') return renderScheduleWhen(loop);
     const rawText = ov.define ? ov.define.rawText : loop.rawText;
     const current = loop.status === 'waiting' && loop.wakeAt ? ` Right now it's set for ${formatWake(loop.wakeAt)}.` : '';
     const presets = wakePresets('park').map(p => actBtn({
@@ -7056,10 +7359,28 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     });
   }
 
+  // "Not yet" for a Schedule loop: it's happening at a different time, so
+  // the only question is when. A day and a time, no quick presets.
+  function renderScheduleWhen(loop) {
+    const at = scheduleAt(loop);
+    const start = at !== null && at > Date.now() ? new Date(at) : null;
+    const body = actLoopBox(loop.rawText, at !== null ? `${at > Date.now() ? 'Now' : 'Was'} ${formatEvent(new Date(at).toISOString())}` : '') + `
+      <div class="act-pick">
+        ${scheduleFieldsHtml('when-sched', start)}
+        <button type="button" class="btn btn-primary act-pick-go" data-action="park-until" data-when="schedule" data-loop-id="${esc(loop.id)}">Save the time</button>
+      </div>
+      <button type="button" class="act-link" data-action="park-until" data-when="schedule-clear" data-loop-id="${esc(loop.id)}">Not sure yet</button>`;
+    return actSheet({
+      kind: 'schedule', titleId: 'when-title', step: 'when',
+      title: at !== null ? 'When is it now?' : 'When is it?',
+      body
+    });
+  }
+
   // Keep what the person typed when the sheet changes step.
   function readActInputs(ov) {
     const val = id => { const el = document.getElementById(id); return el ? el.value : null; };
-    const map = { 'act-next': 'nextText', 'act-decision': 'decision', 'act-spawn': 'spawnText', 'act-msg': 'message', 'cal-title': 'calTitle', 'cal-date': 'calDate', 'cal-time': 'calTime' };
+    const map = { 'act-next': 'nextText', 'act-decision': 'decision', 'act-spawn': 'spawnText', 'act-msg': 'message', 'cal-title': 'calTitle', 'cal-date': 'calDate', 'cal-time': 'calTime', 'sched-date': 'schedDate', 'sched-time': 'schedTime' };
     Object.keys(map).forEach(id => { const v = val(id); if (v !== null) ov[map[id]] = v; });
   }
 
@@ -7146,7 +7467,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     ];
     nav.innerHTML = items.map(item => `
       <button class="bottom-nav-btn ${view.activeTab === item.key ? 'active' : ''}" type="button" data-action="set-tab" data-tab="${item.key}">
-        ${counts[item.key] ? `<span class="bottom-nav-badge">${counts[item.key]}</span>` : ''}
+        ${counts[item.key] && dataKnown() ? `<span class="bottom-nav-badge">${counts[item.key]}</span>` : ''}
         <svg class="bottom-nav-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true">${item.icon}</svg>
         <span>${item.label}</span>
       </button>
@@ -8063,7 +8384,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         badge.className = 'archive-count';
         archive.appendChild(badge);
       }
-      const n = closedThisWeek().length;
+      const n = dataKnown() ? closedThisWeek().length : 0;
       badge.textContent = String(n);
       archive.classList.toggle('has-count', n > 0);
       archive.setAttribute('aria-label', n ? `Closed loops, ${n} this week` : 'Closed loops');
@@ -8119,9 +8440,34 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   // see the auth gate and cannot mutate state.
   function requireLogin() {
     if (Sync.isLoggedIn()) return false;
+    // Showing this phone's saved loops while the sign-in check finishes:
+    // you are signed in, the app just hasn't confirmed it yet.
+    if (!authReady && currentLocalUserId) { toast('Still opening. One moment.'); return true; }
     toast('Sign in to save your loops.');
     if (authReady) renderAuthGate();
     return true;
+  }
+
+  // Save a Schedule loop's time from any picker (Not yet, the card's sheet):
+  // schedulePatch() decides where it waits, then the usual save and sync.
+  async function saveScheduleTime(target, atIso, opts = {}, extra = null) {
+    const base = extra ? { ...target, ...extra, kind: 'schedule' } : target;
+    const patch = schedulePatch(base, atIso, opts);
+    if (extra) Object.assign(patch, extra);
+    const up = patch.status === 'active' && target.status !== 'active' ? upNextPosition(target.id) : null;
+    if (up) patch.position = up.position;
+    updateLoop(target.id, patch);
+    const positionChanges = up && up.rebalance ? rebalanceActivePositions() : null;
+    view.activeTab = patch.status === 'waiting' ? 'later' : 'now';
+    view.highlightedId = target.id;
+    saveReentryDismissed(null);
+    closeOverlay();
+    await persistAndRender();
+    Sync.updateLoop(target.id, patch);
+    if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
+    announce(!atIso ? 'Parked, no time yet.'
+      : patch.wakeAt ? `Parked. Back at ${clockText(new Date(patch.wakeAt))}, ${HEADS_UP_MIN} minutes before.`
+      : `Less than ${HEADS_UP_MIN} minutes away, so it's in Up next.`);
   }
 
   // ── EVENT DELEGATION ──
@@ -8187,6 +8533,11 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     // Overlay management
 
     // Tabs
+    if (action === 'boot-retry') {
+      setBoot('loading');
+      Sync.retry();
+      return;
+    }
     if (action === 'set-tab') {
       view.activeTab = el.dataset.tab;
       if (view.activeTab === 'done') view.expanded = false;
@@ -8299,8 +8650,9 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             ov.at = null;
             ov.atCleared = true;
           } else {
-            const picked = fromLocalInputs(document.getElementById('define-date')?.value, document.getElementById('define-time')?.value);
-            if (!picked) { toast('Pick a day, or tap Not sure yet.'); return; }
+            const picked = fromScheduleInputs(document.getElementById('define-date')?.value, document.getElementById('define-time')?.value);
+            if (!picked) { toast('Pick a day and a time, or tap Not sure yet.'); return; }
+            if (picked.getTime() <= Date.now()) { toast('Pick a time that is still ahead.'); return; }
             ov.at = picked.toISOString();
             ov.atCleared = false;
           }
@@ -8336,15 +8688,24 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       // A new note means a new ask: forget that the old one was sent.
       const details = { ...((prevLoop && prevLoop.details) || {}) };
       if (prevLoop && ans !== (prevLoop.promptAnswer || '')) { delete details.sentAt; delete details.nudges; }
-      // A Schedule keeps its time; a new time means the calendar has the old one.
+      // A Schedule loop's time decides where it waits and when it comes back,
+      // so it never goes through the "when should it come back?" presets:
+      // schedulePatch() works it out. Every other kind drops the Schedule
+      // time, along with any heads-up that time had set.
+      let sched = null;
       if (ov.kind === 'schedule') {
-        if (ov.at) { if (details.at !== ov.at) delete details.calAt; details.at = ov.at; }
-        else if (ov.atCleared) { delete details.at; delete details.calAt; }
+        const atIso = ov.at || (ov.atCleared ? null : (details.at || null));
+        if (status === 'released') {
+          if (atIso) { if (details.at !== atIso) delete details.calAt; details.at = atIso; }
+          else { delete details.at; delete details.calAt; }
+        } else {
+          sched = schedulePatch({ ...(prevLoop || {}), kind: 'schedule', details }, atIso, { status });
+        }
       } else {
         delete details.at;
         delete details.calAt;
       }
-      if (status === 'waiting') {
+      if (status === 'waiting' && !sched) {
         // Parking asks "when?" first; the define choices are applied then.
         view.overlay = { type: 'when', loopId: ov.loopId, define: { rawText: raw, kind: ov.kind, promptAnswer: ans, details: cleanDetails(details) } };
         renderOverlay();
@@ -8353,23 +8714,36 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       if (status === 'released') details.outcome = ov.kind === 'let_go' ? 'let_go' : 'done';
       else delete details.outcome;
       const patch = { rawText: raw, kind: ov.kind, promptAnswer: ans, status, completedAt: status === 'released' ? nowIso() : null, details: cleanDetails(details) };
-      // In Active now: a wake time still ahead would only send a nudge for nothing.
-      if (status === 'active' && prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now()) patch.wakeAt = null;
+      if (sched) {
+        Object.assign(patch, { status: sched.status, details: sched.details, wakeAt: sched.wakeAt });
+      } else if (prevLoop && wakeIsHeadsUp(prevLoop)) {
+        // No longer a timed Schedule: its heads-up would nudge for nothing.
+        patch.wakeAt = null;
+      } else if (status === 'active' && prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now()) {
+        // In Active now: a wake time still ahead would only send a nudge for nothing.
+        patch.wakeAt = null;
+      }
+      const finalStatus = patch.status;
       const prevStatus = prevLoop?.status;
-      const upNext = status === 'active' && prevStatus !== 'active' ? upNextPosition(ov.loopId) : null;
+      const upNext = finalStatus === 'active' && prevStatus !== 'active' ? upNextPosition(ov.loopId) : null;
       if (upNext) patch.position = upNext.position;
       updateLoop(ov.loopId, patch);
       const positionChanges = upNext && upNext.rebalance ? rebalanceActivePositions() : null;
-      view.highlightedId = status === 'active' ? ov.loopId : null;
+      view.highlightedId = finalStatus === 'active' ? ov.loopId : null;
       // Closing stays on the current view so the loop visibly lands in the
       // Closed archive in the header instead of jumping tabs.
-      if (status !== 'released') view.activeTab = status === 'waiting' ? 'later' : 'now';
+      if (finalStatus !== 'released') view.activeTab = finalStatus === 'waiting' ? 'later' : 'now';
       saveReentryDismissed(null);
       closeOverlay();
       await persistAndRender();
       Sync.updateLoop(ov.loopId, patch);
       if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
-      announce(status === 'active' ? 'Defined. Now in Up next.' : status === 'waiting' ? 'Defined and parked.' : 'Defined and closed.');
+      if (sched && sched.wakeAt) {
+        const back = clockText(new Date(sched.wakeAt));
+        announce(finalStatus === 'waiting' ? `Parked. Back at ${back}, ${HEADS_UP_MIN} minutes before.` : `In Up next. Nudge at ${back}.`);
+      } else {
+        announce(finalStatus === 'active' ? 'Defined. Now in Up next.' : finalStatus === 'waiting' ? 'Defined and parked.' : 'Defined and closed.');
+      }
       return;
     }
 
@@ -8539,6 +8913,15 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       announce(`Parked. Checking back with ${who} ${formatWake(wakeAt)}.`);
       return;
     }
+    if (action === 'sched-save') {
+      if (requireLogin()) return;
+      const target = getLoop(loopId);
+      if (!target) { closeOverlay(); return; }
+      const atIso = readSchedulePick('sched');
+      if (!atIso) return;
+      await saveScheduleTime(target, atIso);
+      return;
+    }
     if (action === 'cal-google' || action === 'cal-ics') {
       const ov = view.overlay;
       const target = getLoop(loopId);
@@ -8555,7 +8938,10 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       }
       // Remember it went to a calendar: the card asks "On your calendar?",
       // and so does the app when you come back, even if this sheet is gone.
-      const patch = { details: cleanDetails({ ...target.details, at: start.toISOString(), calAt: nowIso() }) };
+      // The time may have been changed here, so it goes through
+      // schedulePatch() like every other time, keeping the loop where it is.
+      const sched = schedulePatch(target, start.toISOString(), { status: target.status === 'waiting' ? 'waiting' : 'active' });
+      const patch = { details: cleanDetails({ ...sched.details, calAt: nowIso() }), wakeAt: sched.wakeAt };
       updateLoop(target.id, patch);
       save();
       Sync.updateLoop(target.id, patch);
@@ -8593,6 +8979,14 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       if (!ov || ov.type !== 'when') return;
       const target = getLoop(ov.loopId);
       if (!target) { closeOverlay(); return; }
+      if (el.dataset.when === 'schedule' || el.dataset.when === 'schedule-clear') {
+        // A Schedule loop's new time: where it waits follows from it.
+        const atIso = el.dataset.when === 'schedule' ? readSchedulePick('when-sched') : null;
+        if (el.dataset.when === 'schedule' && !atIso) return;
+        const extra = ov.define ? { rawText: ov.define.rawText, kind: ov.define.kind, promptAnswer: ov.define.promptAnswer } : null;
+        await saveScheduleTime(target, atIso, atIso ? {} : { status: 'waiting' }, extra);
+        return;
+      }
       let wakeAt = null;
       if (el.dataset.when === 'pick') {
         const picked = fromLocalInputs(document.getElementById('when-date')?.value, document.getElementById('when-time')?.value);
@@ -8656,8 +9050,9 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       const details = { ...((prevLoop && prevLoop.details) || {}) };
       delete details.outcome;
       const patch = { status: 'active', position: upNext.position, completedAt: null, details: cleanDetails(details) };
-      // Brought back early: drop the wake time it no longer needs.
-      if (prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now()) patch.wakeAt = null;
+      // Brought back early: drop the wake time it no longer needs. A Schedule
+      // loop's heads-up stays: you still want the nudge before it happens.
+      if (prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now() && !wakeIsHeadsUp(prevLoop)) patch.wakeAt = null;
       updateLoop(loopId, patch);
       const positionChanges = upNext.rebalance ? rebalanceActivePositions() : null;
       closeOverlay();
@@ -8728,11 +9123,20 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       if (requireLogin()) return;
       const newKind = el.dataset.kind;
       const patch = { kind: newKind };
+      // Leaving Schedule: its time goes, and so does the heads-up it set.
+      const before = getLoop(loopId);
+      if (before && before.kind === 'schedule' && newKind !== 'schedule') {
+        const d = { ...(before.details || {}) };
+        delete d.at;
+        delete d.calAt;
+        patch.details = cleanDetails(d);
+        if (wakeIsHeadsUp(before)) patch.wakeAt = null;
+      }
       // Match capture-flow behavior: choosing "Let go" releases the loop.
       if (newKind === 'let_go') {
         patch.status = 'released';
         patch.completedAt = nowIso();
-        patch.details = cleanDetails({ ...(getLoop(loopId)?.details || {}), outcome: 'let_go' });
+        patch.details = cleanDetails({ ...(patch.details || getLoop(loopId)?.details || {}), outcome: 'let_go' });
       }
       updateLoop(loopId, patch);
       closeOverlay();
@@ -8958,10 +9362,15 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       const loop = it && getLoop(it.id);
       const pick = action === 'sweep-park' ? 'park' : el.dataset.pick;
       if (loop && action === 'sweep-pick' && pick === 'park') { ov.step = 'park'; renderOverlay(); return; }
+      let schedIso = null;
+      if (loop && action === 'sweep-park' && loop.kind === 'schedule' && el.dataset.when === 'schedule') {
+        schedIso = readSchedulePick('sweep-sched');
+        if (!schedIso) return;
+      }
       let result = null;
       if (loop && sweepable(it)) {
-        const wakeAt = action === 'sweep-park' && el.dataset.when ? validIso(el.dataset.when) : null;
-        result = sweepApply(loop, pick, wakeAt);
+        const wakeAt = action === 'sweep-park' && el.dataset.when && el.dataset.when !== 'schedule' ? validIso(el.dataset.when) : null;
+        result = sweepApply(loop, pick, wakeAt, schedIso);
         if (pick === 'now') ov.nowId = loop.id;
       }
       ov.picks.push(pick);
@@ -9240,7 +9649,13 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   }
 
   // Input binding for capture + auth gate email tracking
+  // Schedule pickers: keep the "what will happen" line true as you pick.
+  // Phones' native pickers fire 'change' rather than 'input', so both.
+  document.addEventListener('change', e => {
+    if (e.target.classList && e.target.classList.contains('sched-input')) refreshScheduleNote(e.target);
+  });
   document.addEventListener('input', e => {
+    if (e.target.classList && e.target.classList.contains('sched-input')) refreshScheduleNote(e.target);
     // Track auth gate email typing in view state
     if (e.target.id === 'auth-gate-email') {
       view.authGateEmail = e.target.value;
@@ -9492,6 +9907,11 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     let channelSeq = 0;
     let retryTimer  = null;
     let draining    = false;
+    // True while a full pull is in flight. Edits made meanwhile wait in the
+    // queue (the pull keeps queued edits on top of what it downloads), then
+    // go out the moment it lands. Sent earlier, the pull's older snapshot
+    // would paint over them.
+    let pulling     = false;
     let deadQueueDirty = false;
 
     // Echo suppression: when we write a row, the realtime subscription will
@@ -9780,6 +10200,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     async function processQueue() {
       if (!currentUser) return { ok: true, pending: true };
       if (draining) return { ok: true, pending: loadQueue().length > 0 };
+      if (pulling) return { ok: true, pending: loadQueue().length > 0 };
       if (!loadQueue().length) return settleSyncStatus();
       draining = true;
       let chainAfterRun = true;
@@ -9908,6 +10329,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
       const pullForUser = currentUser;
       if (!pullForUser) return;
       setSyncStatus('syncing', 'Syncing…');
+      pulling = true;
       try {
         const { data: rows, error } = await db
           .from('loops')
@@ -9972,6 +10394,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             save();
             renderMain();
           }
+          setBoot('ready');
           settleSyncStatus();
           return;
         }
@@ -9986,13 +10409,25 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
           loops:      remoteLoops
         };
         save();
-        renderMain();
+        bootState === 'ready' ? renderMain() : setBoot('ready');
         settleSyncStatus();
       } catch(e) {
         if (currentUser !== pullForUser) return;   // ignore errors from a stale pull
         console.error('Pull error:', e);
-        setSyncStatus('error', 'Still saving');
-        showSyncErrorBanner();
+        // Nothing saved here to show instead: the page says it can't reach
+        // your loops, rather than "empty". The "Still saving" banner is about
+        // queued edits, so it stays out of that screen unless edits are queued.
+        if (bootState === 'loading' || bootState === 'unreachable') {
+          setSyncStatus('error', 'Offline');
+          if (loadQueue().length) showSyncErrorBanner();
+          setBoot('unreachable');
+        } else {
+          setSyncStatus('error', 'Still saving');
+          showSyncErrorBanner();
+        }
+      } finally {
+        pulling = false;
+        if (currentUser && currentUser === pullForUser && navigator.onLine && loadQueue().length) processQueue();
       }
     }
 
@@ -10122,6 +10557,9 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         const foundLegacyQueue = quarantineLegacyQueueData();
         const foundLegacy = foundLegacyData || foundLegacyQueue;
         load();
+        rememberAccount(currentUser.id);
+        // Draw this phone's saved loops now; the pull below corrects them.
+        bootFromSavedCopy();
         cleanUrl();
         setSyncStatus('syncing', 'Syncing…');
         // Drain only this user's offline queue, then pull server truth.
@@ -10163,6 +10601,9 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
         if (realtimeReconnectTimer) { clearTimeout(realtimeReconnectTimer); realtimeReconnectTimer = null; }
         resetLocalAppState();
+        // A signed-out phone must never paint the previous person's loops.
+        forgetAccount();
+        bootState = 'ready';
         setSyncStatus('idle', 'Sync');
         hideSyncErrorBanner();
         renderAll();
@@ -10182,14 +10623,19 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
     return {
       async init() {
         try {
-          const { data: { session } } = await db.auth.getSession();
+          const { data: { session }, error: sessionError } = await db.auth.getSession();
           if (session) {
             currentUser = session.user;
+            const sameAsShown = currentLocalUserId === currentUser.id && bootState !== 'starting';
             setLocalUser(currentUser);
             const foundLegacyData = quarantineLegacyLocalData();
             const foundLegacyQueue = quarantineLegacyQueueData();
             const foundLegacy = foundLegacyData || foundLegacyQueue;
-            load();
+            // Already showing this account's saved copy from the first frame:
+            // keep it (and whatever tab or sheet you've touched since). Otherwise
+            // load it now and draw it before going to the network.
+            if (!sameAsShown) { load(); bootFromSavedCopy(); }
+            rememberAccount(currentUser.id);
             cleanUrl();
             setSyncStatus('syncing', 'Syncing…');
             if (loadQueue().length) await processQueue();
@@ -10198,6 +10644,9 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
             if (foundLegacy) toast('We kept an older copy of your loops on this device, just in case.');
             else wakeDueLoops({ quiet: /[?&](sweep|loop)=/.test(location.search) });
             resyncNudges();
+          } else if (!sessionError) {
+            // Signed out for real (not just a failed check): forget the account.
+            forgetAccount();
           }
         } catch(e) {
           console.error('Sync init error:', e);
@@ -10207,6 +10656,10 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
         // Auth check complete. The app remains locked until a user signs in.
         authReady = true;
         if (!currentUser) {
+          // The first frame may have shown a remembered account's saved loops;
+          // take them down before the sign-in screen goes up.
+          if (currentLocalUserId) { setLocalUser(null); resetLocalAppState(); renderAll(); }
+          bootState = 'ready';
           renderAuthGate();
         } else if (!hasCompletedOnboarding()) {
           startOnboarding();
@@ -10396,6 +10849,20 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   loadTheme();
   Motion.init();
   BrandMascot.init();
+
+  // First frame: if this phone remembers who was signed in, show their saved
+  // loops right away instead of waiting for the sign-in check (which can wait
+  // on the network when the app sat closed for a while). Sync.init() confirms
+  // the session a moment later, and takes them down if nobody, or someone
+  // else, turns out to be signed in. Not when arriving from a sign-in link:
+  // that link may be for another account.
+  const remembered = hasSupabaseCfg() && !arrivedFromSignInLink() ? rememberedAccount() : null;
+  if (remembered) {
+    setLocalUser({ id: remembered });
+    load();
+    bootState = data.loops.length ? 'cached' : 'loading';
+    hideSplash();
+  }
   renderAll(); // First paint
 
   // Kick off auth check. Sign-in is required because Supabase is the
@@ -10403,6 +10870,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
   if (!hasSupabaseCfg()) {
     setTimeout(() => {
       authReady = true;
+      bootState = 'ready';
       renderAuthGate();
     }, 0);
   } else {
