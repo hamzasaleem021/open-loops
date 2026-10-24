@@ -370,22 +370,22 @@ select cron.schedule(
   $job$ delete from cron.job_run_details where end_time < now() - interval '2 days' $job$
 );
 
--- ── SCHEDULE HEADS-UPS (version 27) ─────────────────────────────────────
--- From version 27 the app sets a Schedule loop's wake_at to 30 minutes
--- before its time (details.at), so the wake-up above doubles as its
--- heads-up. Older versions saved the time without a wake_at, so those loops
--- never nudged. This gives the ones still ahead their heads-up. It only
--- adds a wake time (where each loop waits is left alone), only where there
--- is none, and only while the heads-up is still ahead, so running the file
--- again changes nothing.
+-- ── SCHEDULE NUDGES (version 28) ────────────────────────────────────────
+-- A Schedule loop nudges at its time: the app sets wake_at to details.at, so
+-- the wake-up above is the nudge. Versions before 27 saved the time with no
+-- wake_at (those loops never nudged), and version 27 set it 30 minutes
+-- early. This moves both to the time itself, for loops still ahead. It only
+-- changes the wake time (where each loop waits is left alone) and leaves any
+-- other wake time alone, so running the file again changes nothing.
 update public.loops
-   set wake_at = (details->>'at')::timestamptz - interval '30 minutes'
+   set wake_at = (details->>'at')::timestamptz
  where deleted_at is null
    and kind = 'schedule'
    and status in ('active', 'waiting')
-   and wake_at is null
    and case when (details->>'at') ~ '^\d{4}-\d{2}-\d{2}T'
-            then (details->>'at')::timestamptz - interval '30 minutes' > now()
+            then (details->>'at')::timestamptz > now()
+                 and (wake_at is null
+                      or wake_at = (details->>'at')::timestamptz - interval '30 minutes')
             else false end;
 
 -- ── REALTIME ─────────────────────────────────────────────────────────────

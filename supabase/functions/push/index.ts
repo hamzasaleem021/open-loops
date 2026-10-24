@@ -16,7 +16,7 @@
 // only the service role may call.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { b64u, sendWebPush, unb64u, type Vapid } from './webpush.ts';
-import { composeHeadsUp, composeNudge, composeTest, composeWake, headsUpTtl, isHeadsUp, type Loop, type Nudge } from './compose.ts';
+import { composeNudge, composeScheduleNudge, composeTest, composeWake, isScheduleNudge, scheduleNudgeTtl, type Loop, type Nudge } from './compose.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -142,8 +142,8 @@ async function run(req: Request, cfg: Config): Promise<Response> {
   };
 
   // Wake-ups: whatever woke since this phone last checked, in one nudge.
-  // Schedule heads-ups are the exception: each goes on its own, and only
-  // while it can still arrive before the event starts.
+  // Schedule nudges are the exception: each goes on its own, at its time,
+  // and only while it's still timely.
   for (const sub of wakes) {
     const from = Date.parse(sub.checked_from);
     const to = Date.parse(sub.checked_to);
@@ -152,14 +152,14 @@ async function run(req: Request, cfg: Config): Promise<Response> {
       .filter(l => (l.status === 'waiting' || l.status === 'active') && l.wake_at &&
         Date.parse(l.wake_at) > from && Date.parse(l.wake_at) <= to)
       .sort((a, b) => Date.parse(a.wake_at as string) - Date.parse(b.wake_at as string));
-    for (const l of woke.filter(isHeadsUp)) {
+    for (const l of woke.filter(isScheduleNudge)) {
       if (gone.has(sub.endpoint)) break;
-      const ttl = headsUpTtl(l, now);
-      const nudge = ttl >= 60 ? composeHeadsUp({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines, tz: sub.tz }, l, now) : null;
+      const ttl = scheduleNudgeTtl(l, now);
+      const nudge = ttl >= 60 ? composeScheduleNudge({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines, tz: sub.tz }, l, now) : null;
       if (nudge) await send(sub, nudge, { ttl, urgency: 'high' });
     }
     if (gone.has(sub.endpoint)) continue;
-    const nudge = composeWake({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines }, woke.filter(l => !isHeadsUp(l)), now);
+    const nudge = composeWake({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines }, woke.filter(l => !isScheduleNudge(l)), now);
     if (nudge) await send(sub, nudge, { ttl: 3 * 3600, urgency: 'high' });
     if (gone.has(sub.endpoint)) continue;
     const patch: Record<string, unknown> = { wake_checked_at: sub.checked_to };

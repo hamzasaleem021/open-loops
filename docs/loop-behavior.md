@@ -2,7 +2,7 @@
 
 A map of every rule a loop follows: where it lives, how it moves, what each kind does, which times it carries, and when it nudges. Use it to check how something is meant to work before changing it.
 
-The code is the source of truth. Each section names the function or SQL that enforces the rule, so you can search for it; line numbers drift, names don't. Rules marked **v27** arrived in version 27.
+The code is the source of truth. Each section names the function or SQL that enforces the rule, so you can search for it; line numbers drift, names don't. Rules marked **v27** or **v28** arrived in that version.
 
 ---
 
@@ -74,7 +74,7 @@ stateDiagram-v2
 | `inbox` | any | Define: kind → note (Schedule: the time) → route (Up next, Park, Close). Let go skips the note and closes. | | `renderDefineRaw()`, `finish-define-raw` |
 | `active` | `waiting` | Not yet, or menu → Park. Every park asks "when?" ("No date" is allowed). | `wakeAt` | `renderWhen()`, `park-until` |
 | `waiting` | `active` | Its wake time passes (while the app is open, on open, and once a minute) | Lands in Up next | `wakeDueLoops()` |
-| `waiting` | `active` | Make active | Drops a wake time still ahead, except a Schedule heads-up (**v27**) | `restore-active` |
+| `waiting` | `active` | Make active | Drops a wake time still ahead, except a Schedule loop's nudge (**v27**) | `restore-active` |
 | `active` | `released` | The kind's main action (section 4), Let go, or Done on a notification | `completedAt`, `details.outcome` | `complete-done`, `move-released`, `push_apply_action` |
 | `released` | `active` | Reopen | Lands in Up next, `outcome` cleared | `restore-active` |
 | any | gone | Delete | Soft delete; Undo for 8 seconds | `confirm-delete` |
@@ -90,7 +90,7 @@ Each card has one main button. It does what it says, and every "not yet" asks "w
 | Do | Done | Did the step (write the next one, `details.steps` + 1), or All done, close it | All done |
 | Decide | I decided | Name the decision (options parsed from the note), optionally start a Do from it (`origin: decision`) | The decision is named |
 | Ask | Reach out → Did they reply? | Draft the message, send or "I already asked", then park until checking back (Tomorrow, In 3 days, Next week, all at 9:00). On waking: Got it, Nudge them, Wait longer. | They answered |
-| Schedule | Set the time / Change the time / On your calendar? / Did it happen? | **v27**: see section 6 | It happened, or it's on your calendar |
+| Schedule | Set the time / Change the time / On your calendar? / Did it happen? | **v27–v28**: see section 6 | It happened, or it's on your calendar |
 | Let go | Let go | Confirm | Right away |
 
 Not yet presets for parking (`wakePresets('park')`): Tonight at 8:00 PM (or In 3 hours when it's later than about 7:15 PM), Tomorrow morning at 9:00, This weekend (Saturday 10:00), Next week (Monday 9:00), or a day and time you pick. **v27**: Schedule loops never get these presets.
@@ -101,7 +101,7 @@ Not yet presets for parking (`wakePresets('park')`): Tonight at 8:00 PM (or In 3
 
 | Time | Field | Meaning | Who reads it |
 |---|---|---|---|
-| Event time | `details.at` | When a Schedule loop happens. Schedule only. | The card ("When" / "Was"), the heads-up copy, "Did it happen?" |
+| Event time | `details.at` | When a Schedule loop happens. Schedule only. | The card ("When" / "Was"), the nudge, "Did it happen?" |
 | Wake time | `wake_at` | When a parked loop comes back to Up next, and when its wake-up nudge goes out | `wakeDueLoops()`, `push_due_wakeups()`, the sweep, drying |
 | Last touched | `updated_at` | Any write, from any device or the server | Drying and the stale check |
 | Closed | `completed_at` | When it was closed | The shelf, the Sunday recap |
@@ -110,28 +110,27 @@ Not yet presets for parking (`wakePresets('park')`): Tonight at 8:00 PM (or In 3
 
 ---
 
-## 6. Schedule loops (v27)
+## 6. Schedule loops (v27, nudge timing v28)
 
 **One question: when is it?** A day and a time, both required. There are no quick presets, and the picker starts empty unless there's a real time to start from: one already set, or one read from the note ("Saturday 10am"). A "tomorrow 9:00" you didn't choose would be a false answer one tap from being saved. Times in the past are refused.
 
-**The app does the rest.** `schedulePatch()` is the only code that writes a Schedule loop's time. Everything else follows from it.
+**The nudge comes at exactly the time you pick, never before (v28).** `schedulePatch()` is the only code that writes a Schedule loop's time, and it sets `wake_at` to that same time. At that moment the loop comes back to Up next and the nudge goes out, together. However close the time is, it still nudges.
 
 | Situation | Where it waits | `wake_at` |
 |---|---|---|
-| More than 30 minutes away | Parked (Define suggests Park) | Event time − 30 min: the heads-up |
-| Up next chosen in Define | Active | Still event time − 30 min, so the nudge still comes |
-| 30 minutes away or less | Up next | None, since you just set it |
+| A time is picked (Define suggests Park) | Parked until that time | The event time itself |
+| Up next chosen in Define | Active | The event time itself, so the nudge still comes |
 | "Not sure yet" | Parked or Active, no time | None |
 
-The 30 minutes is `HEADS_UP_MIN`, in the app and in `compose.ts`.
+Version 27 nudged 30 minutes early (`wake_at` = time − 30 min). The version-28 SQL moves those to the time itself. Until a phone updates, the app and the sender still recognise the old early ones (`LEGACY_EARLY_MIN`), so they keep working.
 
 **What the card says over time:**
 
 | Moment | Reason chip | "When" line | Button |
 |---|---|---|---|
 | No time yet | | No time set yet. | Set the time |
-| Parked, ahead | Back Sat 9:30 AM, 30 min before | When: Sat 10:00 AM | Change time (opens the picker) |
-| In Active, ahead | Nudge Sat 9:30 AM, or Starts today 10:00 AM once it's back | When: … | Change the time |
+| Parked, ahead | Nudge Sat 10:00 AM | When: Sat 10:00 AM | Change time (opens the picker) |
+| In Active, ahead | Nudge Sat 10:00 AM | When: … | Change the time |
 | Sent to a calendar, ahead | Sent to your calendar | When: … | On your calendar? |
 | Time has passed | | Was: … | Did it happen? (Yes, close it / It moved / It isn't happening) |
 
@@ -144,8 +143,8 @@ The 30 minutes is `HEADS_UP_MIN`, in the app and in `compose.ts`.
 
 **Guards:**
 - A new time clears `calAt`, because the calendar has the old one.
-- Make active keeps the heads-up.
-- Switching the kind away from Schedule removes both the time and the heads-up it set (`set-kind-direct`, `finish-define-raw`).
+- Make active keeps the nudge.
+- Switching the kind away from Schedule removes both the time and the nudge it set (`set-kind-direct`, `finish-define-raw`).
 - A Schedule loop waiting for its date never dries out and never counts as stale, in the app or in the sender.
 - Confirming "On your calendar?" closes the loop, so a calendared event never gets a second ping from Open Loops.
 
@@ -158,7 +157,7 @@ All server-side, all on the free plan. `pg_cron` runs every minute inside Postgr
 | Nudge | When | Says | Buttons | Expires | Tap opens |
 |---|---|---|---|---|---|
 | Wake-up | A loop's `wake_at` passes. Loops that wake together share one nudge. | "“X” is back." / "3 loops just woke up." / for a sent Ask, "Did Bilal reply?" | Done, Tomorrow (single loop) | 3 h | The sweep |
-| **Heads-up (v27)** | A wake-up whose `wake_at` is exactly 30 min before a Schedule loop's `details.at` | "“Dentist” in 30 min." from the real minutes left, with the clock time in the phone's time zone. Always on its own, never folded into a group. | Done | When the event starts. None once it has started. | The loop |
+| **Schedule (v28)** | A wake-up whose `wake_at` is a Schedule loop's own time (`details.at`) | "“Dentist” is now." / "It's 10:00 AM. Time for “Dentist”.", with the clock in the phone's time zone. Always on its own, never folded into a group. A version-27 early one still says "in 30 min". | Done | 15 min after the time (`NOW_GRACE_MIN`). Later than that it isn't sent; the card asks "Did it happen?". | The loop |
 | Check-in: recap | Sunday, at the phone's check-in time, if anything closed this week | "4 things out of your head." | | 6 h | Your head |
 | Check-in: stale | At the check-in time, at most weekly, if a loop has been untouched for 21 days | "Rent-free for 23 days." | Done, Tomorrow | 6 h | That loop ("Still yours?") |
 | Test | Settings → Nudges → Send a test | "Hello from your loops." | | 10 min | The sweep |
@@ -227,7 +226,7 @@ Every change is saved on the phone first, queued, and sent to Supabase. A full p
 | What `details` may hold | `cleanDetails()` |
 | Up next placement | `upNextPosition()`, `rebalanceActivePositions()` |
 | Park presets | `wakePresets()` |
-| Schedule time, heads-up and route | `schedulePatch()`, `headsUpFor()`, `wakeIsHeadsUp()` |
+| Schedule time, nudge and route | `schedulePatch()`, `scheduleNudgeFor()`, `wakeIsScheduleNudge()` |
 | Schedule pickers and their honest note | `scheduleFieldsHtml()`, `scheduleNoteText()` |
 | A parked loop waking in the app | `wakeDueLoops()` |
 | Card button, reason chip, "When" line | `actionLabel()`, `reasonFor()`, `nextLineHtml()` |
@@ -244,12 +243,12 @@ Every change is saved on the phone first, queued, and sent to Supabase. A full p
 
 ## 12. Changing a rule safely
 
-- **A new place that sets a Schedule time** must go through `schedulePatch()`, or the heads-up goes stale.
+- **A new place that sets a Schedule time** must go through `schedulePatch()`, or the nudge stays at the old time.
 - **A new kind of nudge** must be added to the `pg_cron` gate in `open-loops-supabase.sql`, or the function is never called.
-- **Anything that writes `wake_at`** should ask whether it's a Schedule heads-up (`wakeIsHeadsUp()`) before clearing it.
+- **Anything that writes `wake_at`** should ask whether it's a Schedule loop's nudge (`wakeIsScheduleNudge()`) before clearing it.
 - **A new empty state or count** must check `dataKnown()`, so it can't show while loading.
 - **A new `details` key** has to be added to `cleanDetails()`, or it's silently dropped. Older app versions will still drop it when they write.
 - **A new column** has to be added to the "missing column" fallback in the Sync module (`NEW_COLUMNS`) if the app may ship before the SQL. Run the SQL first anyway.
 - **A new table:** from 30 Oct 2026, Supabase no longer gives new `public` tables Data API access by default. Grant it in the same migration (`grant select, insert, update, delete on public.<table> to authenticated;`), or the app gets "permission denied".
 - **Every release:** bump `CACHE` in `open-loops-sw.js` and `APP_VERSION` in `open-loops.html` together.
-- **Deploy order:** SQL first, then the `push` function, then the app.
+- **Deploy order:** usually SQL first, then the `push` function, then the app. A release's upgrade note in the README says when it differs (version 28 deploys the function first).

@@ -3416,7 +3416,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 27, date: '24 Oct 2026' };
+  const APP_VERSION = { number: 28, date: '24 Oct 2026' };
   let swRegistration = null;
   let swState = 'pending';   // 'ready' once the service worker registers, 'failed' if it can't
 
@@ -3589,34 +3589,37 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // ── SCHEDULE ──
   // A Schedule loop has one time: when it happens (details.at). Everything
   // else follows from it, and only schedulePatch() writes it:
-  //   • it waits in Parked and comes back to Up next HEADS_UP_MIN before,
-  //     which is when the nudge goes out (wake_at = at − HEADS_UP_MIN);
-  //   • closer than that, it goes straight to Up next with no heads-up;
+  //   • the nudge goes out at exactly that time (wake_at = at), never before;
+  //   • until then it waits in Parked, and at that moment it comes back to
+  //     Up next together with the nudge;
   //   • once the time has passed, its card asks "Did it happen?".
   // "Not yet" on a Schedule loop means "it's at a different time", so it
   // opens the same day-and-time picker, never quick presets.
-  const HEADS_UP_MIN = 30;
+  // Version 27 nudged 30 minutes early. Loops it set still carry that wake
+  // time until the SQL moves it, so it's still recognised (and still works).
+  const LEGACY_EARLY_MIN = 30;
   function scheduleAt(loop) {
     const at = loop && loop.kind === 'schedule' && loop.details && loop.details.at;
     const t = at ? new Date(at).getTime() : NaN;
     return Number.isFinite(t) ? t : null;
   }
-  // When the heads-up goes out for an event at atMs, or null when it's too
-  // close for one (less than a minute of notice left).
-  function headsUpFor(atMs, now = Date.now()) {
-    const w = atMs - HEADS_UP_MIN * 60000;
-    return w > now + 60000 ? new Date(w).toISOString() : null;
+  // When a Schedule loop nudges: at its time, exactly. Null once it's past.
+  function scheduleNudgeFor(atMs, now = Date.now()) {
+    return atMs > now ? new Date(atMs).toISOString() : null;
   }
   function schedulePassed(loop) { const t = scheduleAt(loop); return t !== null && t <= Date.now(); }
-  // Was this loop's wake time put there by its event time?
-  function wakeIsHeadsUp(loop) {
+  // Was this loop's wake time put there by its event time? (At the time, or
+  // version 27's 30 minutes early.)
+  function wakeIsScheduleNudge(loop) {
     const t = scheduleAt(loop);
-    return t !== null && !!loop.wakeAt && Math.abs(new Date(loop.wakeAt).getTime() - (t - HEADS_UP_MIN * 60000)) < 1000;
+    if (t === null || !loop.wakeAt) return false;
+    const w = new Date(loop.wakeAt).getTime();
+    return Math.abs(w - t) < 1000 || Math.abs(w - (t - LEGACY_EARLY_MIN * 60000)) < 1000;
   }
   // The one place a Schedule loop's time is set. Returns the patch: the time,
-  // the heads-up wake time that follows from it, and where the loop waits.
+  // the nudge (wake) time that follows from it, and where the loop waits.
   //   opts.status — a route the person chose (Define's Up next / Park);
-  //   otherwise: Parked when a heads-up is ahead, Up next when it's too close.
+  //   otherwise: Parked until its time.
   function schedulePatch(loop, atIso, opts = {}) {
     const details = { ...((loop && loop.details) || {}) };
     if (atIso) {
@@ -3627,9 +3630,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       delete details.calAt;
     }
     delete details.outcome;
-    const wakeAt = atIso ? headsUpFor(new Date(atIso).getTime()) : null;
+    const wakeAt = atIso ? scheduleNudgeFor(new Date(atIso).getTime()) : null;
     let status = opts.status || (atIso ? (wakeAt ? 'waiting' : 'active') : (loop && loop.status === 'waiting' ? 'waiting' : 'active'));
-    if (status === 'waiting' && atIso && !wakeAt) status = 'active';   // too close to park
+    if (status === 'waiting' && atIso && !wakeAt) status = 'active';   // its time has passed: nothing to wait for
     return { details: cleanDetails(details), wakeAt, status, completedAt: null };
   }
   // A day and a time, both required (no 9:00 filled in behind your back).
@@ -3645,16 +3648,14 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   }
   // The honest line under every Schedule picker: what will actually happen.
   function scheduleNoteText(atMs) {
-    if (atMs === null || !Number.isFinite(atMs)) return `Pick a day and a time. It comes back ${HEADS_UP_MIN} minutes before.`;
+    if (atMs === null || !Number.isFinite(atMs)) return 'Pick a day and a time. I’ll nudge you right then.';
     if (atMs <= Date.now()) return 'That time has already passed. Pick one that is still ahead.';
-    const heads = headsUpFor(atMs);
-    if (!heads) return `Less than ${HEADS_UP_MIN} minutes away, so it goes straight to Up next.`;
-    const at = clockText(new Date(heads));
+    const when = formatWake(new Date(atMs).toISOString());
     let nudges = false;
     try { nudges = nudgeState() === 'on' && Push.prefs().wakeups !== false; } catch (_) {}
     return nudges
-      ? `I'll nudge you at ${at}, ${HEADS_UP_MIN} minutes before.`
-      : `It comes back to Up next at ${at}. Nudges are off on this phone, so turn them on in Settings to get a ping too.`;
+      ? `I’ll nudge you right then: ${when}.`
+      : `It comes back to Up next ${when}. Nudges are off on this phone, so turn them on in Settings to get a ping too.`;
   }
   // Day + time fields for a Schedule picker. Empty unless there's a real
   // time to start from (one already set, or read from the note).
@@ -4393,6 +4394,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const schedAt = scheduleAt(firstLoop);
       toast(due.length !== 1 ? `${due.length} loops woke up. They're in Up next.`
         : schedAt !== null && schedAt > now ? `Coming up at ${clockText(new Date(schedAt))}: ${short}`
+        : schedAt !== null && now - schedAt < 15 * 60000 ? `It’s time: ${short}`
         : `Back in Up next: ${short}`);
     }
     return due;
@@ -4492,8 +4494,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     // A timed Schedule loop: say when it comes back (the nudge) or starts.
     const schedAt = scheduleAt(loop);
     if (schedAt !== null && (loop.status === 'waiting' || loop.status === 'active') && schedAt > Date.now()) {
-      if (wakeIsHeadsUp(loop) && wake > Date.now()) {
-        return { icon: 'cal', text: loop.status === 'waiting' ? `Back ${formatWake(loop.wakeAt)}, ${HEADS_UP_MIN} min before` : `Nudge ${formatWake(loop.wakeAt)}` };
+      if (wakeIsScheduleNudge(loop) && wake > Date.now()) {
+        return { icon: 'cal', text: `Nudge ${formatWake(loop.wakeAt)}` };
       }
       return { icon: 'cal', text: `Starts ${formatEvent(new Date(schedAt).toISOString())}` };
     }
@@ -4800,7 +4802,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       reason = loop.kind === 'ask' && d.sentAt
         ? { icon: 'person', text: `Checking back on ${parseAsk(loop.promptAnswer).who || 'them'}` }
         : schedAt !== null
-          ? { icon: 'cal', text: `${schedAt > Date.now() ? 'Starts' : 'Was'} ${formatEvent(new Date(schedAt).toISOString())}` }
+          ? { icon: 'cal', text: `${schedAt > Date.now() ? 'Starts' : Date.now() - schedAt < 15 * 60000 ? 'It’s time:' : 'Was'} ${formatEvent(new Date(schedAt).toISOString())}` }
           : { icon: 'sun', text: `You parked it until ${formatWake(loop.wakeAt)}` };
     } else {
       reason = { icon: 'dry', text: `Untouched ${untouchedDays(loop)} days. Still yours?` };
@@ -6262,15 +6264,15 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       // A timed Schedule loop is out of your head until just before it
       // happens, so Park is the natural home and says when it comes back.
       const schedAt = kind === 'schedule' && ov.at ? new Date(ov.at).getTime() : null;
-      const schedHeads = schedAt ? headsUpFor(schedAt) : null;
-      const headsClock = schedHeads ? clockText(new Date(schedHeads)) : '';
-      const suggest = kind === 'let_go' ? 'released' : schedHeads ? 'waiting' : (full && !wasActive ? 'waiting' : 'active');
-      const activeHint = schedHeads
-        ? `${wasActive ? 'Stays in Active' : 'Into Active now'}, with a nudge at ${headsClock}.`
+      const schedNudge = schedAt ? scheduleNudgeFor(schedAt) : null;
+      const nudgeWhen = schedNudge ? formatWake(schedNudge) : '';
+      const suggest = kind === 'let_go' ? 'released' : schedNudge ? 'waiting' : (full && !wasActive ? 'waiting' : 'active');
+      const activeHint = schedNudge
+        ? `${wasActive ? 'Stays in Active' : 'Into Active now'}, with a nudge ${nudgeWhen}.`
         : wasActive ? 'Stays where it is in Active.' : 'Into Active, right under your Now card.';
-      const parkHint = schedHeads
-        ? `Out of your head until ${headsClock}, ${HEADS_UP_MIN} minutes before.`
-        : schedAt ? `Less than ${HEADS_UP_MIN} minutes away, so it goes to Up next.` : 'Not now. It waits in Parked.';
+      const parkHint = schedNudge
+        ? `Out of your head until ${nudgeWhen}, then back with a nudge.`
+        : 'Not now. It waits in Parked.';
       const routes = [
         { key: 'active',   title: wasActive ? 'Keep in Active' : 'Up next', hint: activeHint },
         { key: 'waiting',  title: 'Park',  hint: parkHint },
@@ -8466,8 +8468,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     Sync.updateLoop(target.id, patch);
     if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
     announce(!atIso ? 'Parked, no time yet.'
-      : patch.wakeAt ? `Parked. Back at ${clockText(new Date(patch.wakeAt))}, ${HEADS_UP_MIN} minutes before.`
-      : `Less than ${HEADS_UP_MIN} minutes away, so it's in Up next.`);
+      : patch.status === 'waiting' && patch.wakeAt ? `Parked. Back with a nudge ${formatWake(patch.wakeAt)}.`
+      : patch.wakeAt ? `In Up next. Nudge ${formatWake(patch.wakeAt)}.`
+      : 'In Up next.');
   }
 
   // ── EVENT DELEGATION ──
@@ -8716,7 +8719,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const patch = { rawText: raw, kind: ov.kind, promptAnswer: ans, status, completedAt: status === 'released' ? nowIso() : null, details: cleanDetails(details) };
       if (sched) {
         Object.assign(patch, { status: sched.status, details: sched.details, wakeAt: sched.wakeAt });
-      } else if (prevLoop && wakeIsHeadsUp(prevLoop)) {
+      } else if (prevLoop && wakeIsScheduleNudge(prevLoop)) {
         // No longer a timed Schedule: its heads-up would nudge for nothing.
         patch.wakeAt = null;
       } else if (status === 'active' && prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now()) {
@@ -8739,8 +8742,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       Sync.updateLoop(ov.loopId, patch);
       if (positionChanges) syncPositionChanges({ ok: true, changes: positionChanges });
       if (sched && sched.wakeAt) {
-        const back = clockText(new Date(sched.wakeAt));
-        announce(finalStatus === 'waiting' ? `Parked. Back at ${back}, ${HEADS_UP_MIN} minutes before.` : `In Up next. Nudge at ${back}.`);
+        const when = formatWake(sched.wakeAt);
+        announce(finalStatus === 'waiting' ? `Parked. Back with a nudge ${when}.` : `In Up next. Nudge ${when}.`);
       } else {
         announce(finalStatus === 'active' ? 'Defined. Now in Up next.' : finalStatus === 'waiting' ? 'Defined and parked.' : 'Defined and closed.');
       }
@@ -9052,7 +9055,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const patch = { status: 'active', position: upNext.position, completedAt: null, details: cleanDetails(details) };
       // Brought back early: drop the wake time it no longer needs. A Schedule
       // loop's heads-up stays: you still want the nudge before it happens.
-      if (prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now() && !wakeIsHeadsUp(prevLoop)) patch.wakeAt = null;
+      if (prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now() && !wakeIsScheduleNudge(prevLoop)) patch.wakeAt = null;
       updateLoop(loopId, patch);
       const positionChanges = upNext.rebalance ? rebalanceActivePositions() : null;
       closeOverlay();
@@ -9130,7 +9133,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         delete d.at;
         delete d.calAt;
         patch.details = cleanDetails(d);
-        if (wakeIsHeadsUp(before)) patch.wakeAt = null;
+        if (wakeIsScheduleNudge(before)) patch.wakeAt = null;
       }
       // Match capture-flow behavior: choosing "Let go" releases the loop.
       if (newKind === 'let_go') {
