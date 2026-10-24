@@ -20,7 +20,10 @@ import { composeNudge, composeScheduleNudge, composeTest, composeWake, isSchedul
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const APP_URL = 'https://hamzasaleem021.github.io/open-loops/open-loops.html';
+// Relative on purpose: the service worker resolves it against its own scope,
+// so a tapped nudge opens the installed app on whatever address it lives at
+// (openloops.auxila.cc today) instead of a page outside it.
+const APP_URL = './open-loops.html';
 const SUBJECT = 'https://hamzasaleem021.github.io/open-loops/';
 const ACTION_URL = `${SUPABASE_URL}/functions/v1/push`;
 const TOKEN_DAYS = 3;
@@ -98,10 +101,12 @@ type DueSub = {
   endpoint: string; user_id: string; p256dh: string; auth: string; tz: string;
   stale: boolean; recap: boolean; last_stale_at: string | null;
   recent_lines: string[] | null; local_date: string; local_dow: number;
+  hide_text?: boolean;
 };
 type WakeDue = {
   endpoint: string; user_id: string; p256dh: string; auth: string; tz: string;
   recent_lines: string[] | null; checked_from: string; checked_to: string;
+  hide_text?: boolean;
 };
 
 async function run(req: Request, cfg: Config): Promise<Response> {
@@ -155,11 +160,11 @@ async function run(req: Request, cfg: Config): Promise<Response> {
     for (const l of woke.filter(isScheduleNudge)) {
       if (gone.has(sub.endpoint)) break;
       const ttl = scheduleNudgeTtl(l, now);
-      const nudge = ttl >= 60 ? composeScheduleNudge({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines, tz: sub.tz }, l, now) : null;
+      const nudge = ttl >= 60 ? composeScheduleNudge({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines, tz: sub.tz, hide_text: sub.hide_text }, l, now) : null;
       if (nudge) await send(sub, nudge, { ttl, urgency: 'high' });
     }
     if (gone.has(sub.endpoint)) continue;
-    const nudge = composeWake({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines }, woke.filter(l => !isScheduleNudge(l)), now);
+    const nudge = composeWake({ recent_lines: recent.get(sub.endpoint) ?? sub.recent_lines, hide_text: sub.hide_text }, woke.filter(l => !isScheduleNudge(l)), now);
     if (nudge) await send(sub, nudge, { ttl: 3 * 3600, urgency: 'high' });
     if (gone.has(sub.endpoint)) continue;
     const patch: Record<string, unknown> = { wake_checked_at: sub.checked_to };

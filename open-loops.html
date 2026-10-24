@@ -54,7 +54,7 @@
   --border-soft: #f0ebdd;
   --text: #0a0a0a;
   --text-2: #3a3a3a;
-  --text-3: #8a857a;
+  --text-3: #6b665c;  /* 4.5:1 or better on every light surface */
   --accent: #0a0a0a;
   --accent-hot: #1f1f1f;
   --accent-deep: #000;
@@ -66,14 +66,15 @@
   /* kind palette (fills) */
   --do: #1a3a3a;       --do-ink: #ffffff;   --do-dim: #d9e6e2;
   --decide: #e8b94a;   --decide-ink: #0a0a0a; --decide-dim: #f7e7bd;
-  --ask: #ff4d8b;      --ask-ink: #ffffff;  --ask-dim: #ffd6e5;
+  --ask: #ff4d8b;      --ask-ink: #0a0a0a;  --ask-dim: #ffd6e5;
   --schedule: #b8a4ed; --schedule-ink: #0a0a0a; --schedule-dim: #e6def9;
   --let_go: #ffb084;   --let_go-ink: #0a0a0a; --let_go-dim: #ffe2d1;
   --inbox: #f5f0e0;    --inbox-ink: #0a0a0a;
 
   --success: #22c55e;
   --warning: #f59e0b;
-  --error: #ef4444;
+  --error: #dc2626;      /* 4.6:1 or better as text or under white */
+  --error-ink: #ffffff;
 
   --r-xs: 6px;
   --r-sm: 8px;
@@ -88,7 +89,7 @@
   color-scheme: light;
 }
 
-/* Night: Clay's surface-dark (teal-black). Kind fills stay saturated. */
+/* Night: Clay’s surface-dark (teal-black). Kind fills stay saturated. */
 :root[data-theme="dark"] {
   --bg: #0a1a1a;
   --surface: #11221f;
@@ -99,7 +100,9 @@
   --border-soft: rgba(255,250,240,0.06);
   --text: #fffaf0;
   --text-2: rgba(255,250,240,0.72);
-  --text-3: rgba(255,250,240,0.42);
+  --text-3: rgba(255,250,240,0.58);  /* 4.5:1 or better on every dark surface */
+  --error: #f87171;
+  --error-ink: #0a0a0a;
   --accent: #fffaf0;
   --accent-hot: #ffffff;
   --accent-ink: #0a0a0a;
@@ -908,6 +911,11 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 0 6px 8px rgba(0,0,0,0.3), 0 16px 40px var(--focus-ring);
 }
 .fab:active { transform: translateX(-50%) translateY(0); }
+@media (hover: none) and (pointer: coarse) {
+  .reorder-controls, .drag-handle { display: none; }
+}
+.settings-row-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.fab.tucked { transform: translateX(-50%) translateY(calc(100% + 96px)); opacity: 0; pointer-events: none; }
 
 /* ── BOTTOM NAV ── */
 .bottom-nav {
@@ -2052,7 +2060,7 @@ body {
 .pill-btn.syncing .dot { background: var(--warning); }
 .pill-btn.offline { color: var(--text); border: none; }
 .pill-btn.offline .dot { background: var(--schedule); }
-.pill-btn.error   { color: #fff; background: var(--error); border: none; }
+.pill-btn.error   { color: var(--error-ink); background: var(--error); border: none; }
 .pill-btn.idle    { color: var(--text-2); border: none; }
 
 /* ── PAGE HEAD (new) ── */
@@ -2936,7 +2944,7 @@ button.brand { min-width: 0; flex: 0 1 auto; overflow: hidden; }
 .loop-card.is-focus .loop-reason { border-color: color-mix(in srgb, currentColor 32%, transparent); color: inherit; }
 .loop-card-bottom { gap: 8px; flex-wrap: wrap; }
 
-/* ── ACTION SHEETS: each kind's button does what it says ── */
+/* ── ACTION SHEETS: each kind’s button does what it says ── */
 .act-body { display: grid; gap: 12px; }
 .act-title { margin-bottom: 0; }
 .act-sub { margin: -6px 0 0; }
@@ -3220,7 +3228,7 @@ button.closed-shelf:hover .shelf-more { color: var(--text); }
 .nudge-help .nudge-help-foot { color: var(--text-2); }
 .nudge-steps { margin: 0 0 10px; padding-left: 20px; display: grid; gap: 6px; }
 ol.nudge-help.nudge-steps { padding-left: 34px; }
-/* Night: an off switch's knob was dark on dark. Light it, like the track's edge. */
+/* Night: an off switch’s knob was dark on dark. Light it, like the track’s edge. */
 :root[data-theme="dark"] .nudge-switch:not(.on) .switch { box-shadow: inset 0 0 0 1px var(--border); }
 :root[data-theme="dark"] .nudge-switch:not(.on) .switch::after { background: rgba(255,250,240,0.78); }
 
@@ -3275,7 +3283,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
 .share-nudge-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .settings-credit .settings-helper a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 
-/* ── Press feedback on the controls that didn't have it ── */
+/* ── Press feedback on the controls that didn’t have it ── */
 .icon-btn, .tab, .bottom-nav-btn, .seg-row button, .show-more, .inline-link { transition: transform .12s ease, background-color .15s ease, color .15s ease; }
 .icon-btn:active, .bottom-nav-btn:active, .seg-row button:active { transform: scale(.94); }
 .tab:active, .show-more:active { transform: scale(.97); }
@@ -3289,7 +3297,7 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
 .settings-credit { padding: 14px 0 4px; border-top: 1px solid var(--border-soft); }
 
 /* ── v27: opening the app ──
-   The splash covers only "which account is this?". It matches the phone's
+   The splash covers only "which account is this?". It matches the phone’s
    own launch screen (manifest background #fffaf0) so the two read as one.
    Loop bars cover "signed in, nothing saved on this phone yet". Neither is
    ever an empty state. */
@@ -3317,8 +3325,8 @@ ol.nudge-help.nudge-steps { padding-left: 34px; }
 </div>
 <script>
 // Failsafe: the app removes the splash as soon as it knows who you are. If
-// that hasn't happened in 3 seconds (a slow sign-in check, or the app's code
-// failed to load), lift it anyway. What's underneath is loop bars, never a
+// that hasn’t happened in 3 seconds (a slow sign-in check, or the app’s code
+// failed to load), lift it anyway. What’s underneath is loop bars, never a
 // false "Your head is clear".
 setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) s.classList.add('gone'); }, 3000);
 </script>
@@ -3416,9 +3424,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   // Shown in Settings so you can tell which version a phone is running.
   // Bump together with CACHE in open-loops-sw.js on every release.
-  const APP_VERSION = { number: 28, date: '24 Oct 2026' };
+  const APP_VERSION = { number: 29, date: '24 Oct 2026' };
   let swRegistration = null;
-  let swState = 'pending';   // 'ready' once the service worker registers, 'failed' if it can't
+  let swState = 'pending';   // 'ready' once the service worker registers, 'failed' if it can’t
 
   // UX constraints
   const MAX_LOOP_TEXT_LEN = 500;
@@ -3464,7 +3472,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return !supabaseConfigIssue();
   }
 
-  // A sign-in email that didn't go out, in plain words. The raw error goes
+  // A sign-in email that didn’t go out, in plain words. The raw error goes
   // to the console.
   function linkErrorText(e) {
     console.warn('[open-loops] Sign-in link failed:', e);
@@ -3476,7 +3484,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return 'Couldn’t send the link. Try again in a minute.';
   }
 
-  // What people see when sign-in can't start. The technical reason goes to
+  // What people see when sign-in can’t start. The technical reason goes to
   // the console for whoever runs this copy of the app.
   function supabaseClientIssue() {
     if (!hasSupabaseCfg()) {
@@ -3492,11 +3500,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   const kindMeta = {
     do:       { label: 'Do',       action: 'Done',            question: 'What is the one next visible step?', helper: 'Concrete enough that you could start right now without planning.' },
-    decide:   { label: 'Decide',   action: 'I decided',       question: 'What decision needs to be made?',    helper: 'Name the decision cleanly — stop holding the whole swirl.' },
+    decide:   { label: 'Decide',   action: 'I decided',       question: 'What decision needs to be made?',    helper: 'Name the choice in one line.' },
     ask:      { label: 'Ask',      action: 'Reach out',       question: 'Who do you need something from?',    helper: 'One person, one ask. Nothing more.' },
-    schedule: { label: 'Schedule', action: 'Add to calendar', question: 'What needs time on a calendar?',     helper: 'Treat time as the missing ingredient.' },
-    let_go:   { label: 'Let go',   action: 'Let go',          question: 'What are you choosing to release?',  helper: 'The goal is relief, not proving the thought was silly.' },
-    inbox:    { label: 'Inbox', action: 'Define',    question: '',                                   helper: '' }
+    schedule: { label: 'Schedule', action: 'Add to calendar', question: 'What needs time on a calendar?',     helper: 'Give it a day and a time.' },
+    let_go:   { label: 'Let go',   action: 'Let go',          question: 'What are you choosing to release?',  helper: 'Letting go counts as an ending.' },
+    inbox:    { label: 'Inbox', action: 'Sort it',    question: '',                                   helper: '' }
   };
 
   function nowIso() { return new Date().toISOString(); }
@@ -3554,6 +3562,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   // details: small, known facts about how a loop is moving or how it ended.
   //   sentAt   — an Ask was sent; it now waits on someone else
+  //   sentText — the message as it was sent (follow-ups refer back to it)
   //   nudges   — follow-ups sent for that Ask
   //   steps    — next steps finished on a Do
   //   decision — what a Decide loop settled on
@@ -3561,11 +3570,16 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   //   origin   — 'decision' when a Do was born from a decision
   //   at       — when a Schedule loop happens
   //   calAt    — when it was sent to a calendar (it then asks "On your calendar?")
+  //   repeat   — 'day', 'week' or 'month': closing it sets up the next one
+  //   repeatFrom — the first time in the series; every next time counts from it
+  //   series   — the id of the series' first loop (next ids are built from it)
+  //   next     — on a closed repeating loop: the id of the one it set up
   function cleanDetails(d) {
     const src = d && typeof d === 'object' && !Array.isArray(d) ? d : {};
     const out = {};
     const sentAt = validIso(src.sentAt);
     if (sentAt) out.sentAt = sentAt;
+    if (sentAt && typeof src.sentText === 'string' && src.sentText.trim()) out.sentText = src.sentText.trim().slice(0, MAX_LOOP_TEXT_LEN);
     const nudges = parseInt(src.nudges, 10);
     if (nudges > 0) out.nudges = Math.min(nudges, 99);
     const steps = parseInt(src.steps, 10);
@@ -3577,6 +3591,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (at) out.at = at;
     const calAt = validIso(src.calAt);
     if (calAt) out.calAt = calAt;
+    if (REPEATS[src.repeat]) {
+      out.repeat = src.repeat;
+      const from = validIso(src.repeatFrom);
+      if (from) out.repeatFrom = from;
+    }
+    if (typeof src.series === 'string' && /^[\w~.-]{1,120}$/.test(src.series)) out.series = src.series;
+    if (typeof src.next === 'string' && /^[\w~.-]{1,160}$/.test(src.next)) out.next = src.next;
     return out;
   }
 
@@ -3593,22 +3614,97 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   //   • until then it waits in Parked, and at that moment it comes back to
   //     Up next together with the nudge;
   //   • once the time has passed, its card asks "Did it happen?".
-  // "Not yet" on a Schedule loop means "it's at a different time", so it
+  // "Not yet" on a Schedule loop means "it’s at a different time", so it
   // opens the same day-and-time picker, never quick presets.
   // Version 27 nudged 30 minutes early. Loops it set still carry that wake
-  // time until the SQL moves it, so it's still recognised (and still works).
+  // time until the SQL moves it, so it’s still recognised (and still works).
   const LEGACY_EARLY_MIN = 30;
   function scheduleAt(loop) {
     const at = loop && loop.kind === 'schedule' && loop.details && loop.details.at;
     const t = at ? new Date(at).getTime() : NaN;
     return Number.isFinite(t) ? t : null;
   }
-  // When a Schedule loop nudges: at its time, exactly. Null once it's past.
+  // ── REPEATS ──
+  // A Do or Schedule loop can repeat. Closing it (not letting it go) sets up
+  // the next one, parked until its time. Every time counts from the series'
+  // first time, so "the 31st, monthly" stays the last day of short months
+  // instead of drifting. The next loop's id is built from the series and its
+  // time, so two phones (or the server, closing it from a nudge) setting it
+  // up at once make the same loop, not two.
+  const REPEATS = { day: 'Every day', week: 'Every week', month: 'Every month' };
+  const REPEAT_MAX_DAYS = { day: 1, week: 7, month: 31 };
+  function canRepeat(loop) { return !!loop && (loop.kind === 'do' || loop.kind === 'schedule') && loop.status !== 'released'; }
+  function repeatNth(anchor, unit, k) {
+    const a = new Date(anchor);
+    if (unit === 'day') return addDays(a, k);
+    if (unit === 'week') return addDays(a, 7 * k);
+    const y = a.getFullYear(), m = a.getMonth() + k;
+    const last = new Date(y, m + 1, 0).getDate();
+    return new Date(y, m, Math.min(a.getDate(), last), a.getHours(), a.getMinutes(), a.getSeconds(), a.getMilliseconds());
+  }
+  // The first time in the series after both now and this loop's own time.
+  function nextOccurrence(loop, now = new Date()) {
+    const d = loop.details || {};
+    if (!REPEATS[d.repeat]) return null;
+    const anchor = validIso(d.repeatFrom) || validIso(d.at) || loop.wakeAt;
+    if (!anchor) return null;
+    const after = Math.max(now.getTime(), scheduleAt(loop) || 0, loop.wakeAt ? new Date(loop.wakeAt).getTime() : 0);
+    const a = new Date(anchor).getTime();
+    let k = Math.max(1, Math.floor((after - a) / (REPEAT_MAX_DAYS[d.repeat] * 86400000)));
+    for (let i = 0; i < 1000; i++, k++) {
+      const t = repeatNth(anchor, d.repeat, k);
+      if (t.getTime() > after) return t;
+    }
+    return null;
+  }
+  // Where a series starts when you first say it repeats: its time if it has
+  // one, else 9:00 this morning.
+  function repeatAnchor(loop) {
+    const d = loop.details || {};
+    return validIso(d.repeatFrom) || validIso(d.at) || loop.wakeAt || atTime(new Date(), 9).toISOString();
+  }
+  // Closed repeating loops that haven't set up their next one yet: do it now.
+  // Runs after every change made here and whenever the app checks wake-ups,
+  // so a loop closed from a nudge's Done button (or on an older version of
+  // the server) still gets its next one.
+  function ensureRepeats() {
+    if (!Sync.isLoggedIn()) return false;
+    const writes = [];
+    for (const l of data.loops.slice()) {
+      const d = l.details || {};
+      if (l.status !== 'released' || !REPEATS[d.repeat] || d.next || isLetGo(l)) continue;
+      if (l.kind !== 'do' && l.kind !== 'schedule') continue;   // changed to another kind since
+      const when = nextOccurrence(l);
+      if (!when) continue;
+      const series = d.series || l.id;
+      const id = `${series}~${when.getTime()}`;
+      const patch = { details: cleanDetails({ ...d, next: id }) };
+      Object.assign(l, patch);
+      writes.push(['update', l.id, patch]);
+      if (!getLoop(id)) {
+        const iso = when.toISOString();
+        const next = sanitize({
+          id, rawText: l.rawText, kind: l.kind, promptAnswer: l.promptAnswer, status: 'waiting', wakeAt: iso,
+          details: { repeat: d.repeat, repeatFrom: d.repeatFrom || repeatAnchor(l), series, ...(l.kind === 'schedule' ? { at: iso } : {}) },
+          position: nowPosition(), createdAt: nowIso(), updatedAt: nowIso()
+        });
+        data.loops.unshift(next);
+        writes.push(['create', next]);
+        toast(`The next “${shortText(l.rawText, 30)}” comes back ${formatWake(iso)}.`);
+      }
+    }
+    if (!writes.length) return false;
+    // Write after this turn, once the close that caused it has been queued.
+    setTimeout(() => writes.forEach(w => w[0] === 'create' ? Sync.createLoop(w[1]) : Sync.updateLoop(w[1], w[2])), 0);
+    return true;
+  }
+
+  // When a Schedule loop nudges: at its time, exactly. Null once it’s past.
   function scheduleNudgeFor(atMs, now = Date.now()) {
     return atMs > now ? new Date(atMs).toISOString() : null;
   }
   function schedulePassed(loop) { const t = scheduleAt(loop); return t !== null && t <= Date.now(); }
-  // Was this loop's wake time put there by its event time? (At the time, or
+  // Was this loop’s wake time put there by its event time? (At the time, or
   // version 27's 30 minutes early.)
   function wakeIsScheduleNudge(loop) {
     const t = scheduleAt(loop);
@@ -3616,10 +3712,16 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const w = new Date(loop.wakeAt).getTime();
     return Math.abs(w - t) < 1000 || Math.abs(w - (t - LEGACY_EARLY_MIN * 60000)) < 1000;
   }
-  // The one place a Schedule loop's time is set. Returns the patch: the time,
+  // The one place a Schedule loop’s time is set. Returns the patch: the time,
   // the nudge (wake) time that follows from it, and where the loop waits.
-  //   opts.status — a route the person chose (Define's Up next / Park);
+  //   opts.status — a route the person chose (Sort’s Up next / Park);
   //   otherwise: Parked until its time.
+  //   opts.repeat — the picker’s Repeats choice ('' = doesn’t repeat; left
+  //   out = keep what it has). Turning it on, or changing it, starts the
+  //   series at this time.
+  //   opts.scope — for a loop that already repeats the same way: 'this'
+  //   moves just this one (the rest keep their days, as in a calendar);
+  //   'all' moves the series to this time from now on.
   function schedulePatch(loop, atIso, opts = {}) {
     const details = { ...((loop && loop.details) || {}) };
     if (atIso) {
@@ -3628,6 +3730,15 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     } else {
       delete details.at;
       delete details.calAt;
+    }
+    if ('repeat' in opts) {
+      if (atIso && REPEATS[opts.repeat]) {
+        if (details.repeat !== opts.repeat || !details.repeatFrom || opts.scope === 'all') details.repeatFrom = atIso;
+        details.repeat = opts.repeat;
+        details.series = details.series || (loop && loop.id) || undefined;
+      } else if (!opts.repeat) {
+        delete details.repeat; delete details.repeatFrom; delete details.series;
+      }
     }
     delete details.outcome;
     const wakeAt = atIso ? scheduleNudgeFor(new Date(atIso).getTime()) : null;
@@ -3640,6 +3751,40 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || '') || !/^\d{1,2}:\d{2}/.test(timeStr || '')) return null;
     return fromLocalInputs(dateStr, timeStr);
   }
+  // The Repeats choice under a Schedule picker; undefined when there isn't one.
+  function readScheduleRepeat(prefix) {
+    const el = document.getElementById(`${prefix}-repeat`);
+    return el ? (REPEATS[el.value] ? el.value : '') : undefined;
+  }
+  // For a loop that already repeats: move just this one, or the series.
+  function readScheduleScope(prefix) {
+    const el = document.getElementById(`${prefix}-scope`);
+    return el && !el.closest('[hidden]') && el.value === 'all' ? 'all' : 'this';
+  }
+  // The opts a picker's choices add up to, for schedulePatch().
+  function schedulePickOpts(prefix) {
+    const repeat = readScheduleRepeat(prefix);
+    return repeat === undefined ? {} : { repeat: repeat || '', scope: readScheduleScope(prefix) };
+  }
+  // "weekly", "every Tuesday", "every day", "monthly" in a note.
+  function parseRepeat(text) {
+    const t = String(text || '').toLowerCase().slice(0, WHEN_READ_CHARS);
+    if (/\b(daily|every\s+day|each\s+day|every\s+(morning|evening|night))\b/.test(t)) return 'day';
+    if (/\b(weekly|every\s+week|each\s+week|every\s+(mon|tue|wed|thu|fri|sat|sun)[a-z]*)\b/.test(t)) return 'week';
+    if (/\b(monthly|every\s+month|each\s+month)\b/.test(t)) return 'month';
+    return '';
+  }
+  function ordinal(n) {
+    const v = n % 100;
+    return n + (v >= 11 && v <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' })[n % 10] || 'th');
+  }
+  function repeatPhrase(unit, at) {
+    const clock = clockText(at);
+    if (unit === 'day') return `every day at ${clock}`;
+    if (unit === 'week') return `every ${at.toLocaleDateString(undefined, { weekday: 'long' })} at ${clock}`;
+    if (unit === 'month') return `on the ${ordinal(at.getDate())} of every month at ${clock}`;
+    return '';
+  }
   function readSchedulePick(prefix) {
     const d = fromScheduleInputs(document.getElementById(`${prefix}-date`)?.value, document.getElementById(`${prefix}-time`)?.value);
     if (!d) { toast('Pick a day and a time.'); return null; }
@@ -3647,34 +3792,56 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return d.toISOString();
   }
   // The honest line under every Schedule picker: what will actually happen.
-  function scheduleNoteText(atMs) {
-    if (atMs === null || !Number.isFinite(atMs)) return 'Pick a day and a time. I’ll nudge you right then.';
+  // series: { unit, from } when the loop already repeats; scope 'this' keeps
+  // the series where it was.
+  function scheduleNoteText(atMs, repeat = '', series = null, scope = 'this') {
+    if (atMs === null || !Number.isFinite(atMs)) return 'Pick a day and a time. The nudge comes right then.';
     if (atMs <= Date.now()) return 'That time has already passed. Pick one that is still ahead.';
     const when = formatWake(new Date(atMs).toISOString());
+    const keepsSeries = series && series.unit === repeat && scope !== 'all';
+    const then = !REPEATS[repeat] ? ''
+      : keepsSeries ? ` The rest stay ${repeatPhrase(repeat, new Date(series.from))}.`
+      : ` Then ${repeatPhrase(repeat, new Date(atMs))}.`;
     let nudges = false;
     try { nudges = nudgeState() === 'on' && Push.prefs().wakeups !== false; } catch (_) {}
     return nudges
-      ? `I’ll nudge you right then: ${when}.`
-      : `It comes back to Up next ${when}. Nudges are off on this phone, so turn them on in Settings to get a ping too.`;
+      ? `The nudge comes right then: ${when}.${then}`
+      : `It comes back to Up next ${when}.${then} Nudges are off on this phone, so turn them on in Settings to get a ping too.`;
   }
-  // Day + time fields for a Schedule picker. Empty unless there's a real
+  // Day + time fields for a Schedule picker. Empty unless there’s a real
   // time to start from (one already set, or read from the note).
-  function scheduleFieldsHtml(prefix, start, autofocus = false) {
+  // The series a picker's loop already belongs to, if any.
+  function seriesOf(loop) {
+    const d = (loop && loop.details) || {};
+    return REPEATS[d.repeat] && validIso(d.repeatFrom) ? { unit: d.repeat, from: d.repeatFrom } : null;
+  }
+  function scheduleFieldsHtml(prefix, start, autofocus = false, repeat = '', series = null) {
     const af = autofocus ? '' : ' no-autofocus';
     const atMs = start ? start.getTime() : null;
+    const options = [['', 'Doesn’t repeat']].concat(Object.keys(REPEATS).map(k => [k, REPEATS[k]]))
+      .map(([k, label]) => `<option value="${k}"${k === (repeat || '') ? ' selected' : ''}>${label}</option>`).join('');
+    const seriesAttrs = series ? ` data-series-unit="${series.unit}" data-series-from="${esc(series.from)}"` : '';
+    const scopeField = series ? `<div class="sched-scope"${series.unit === repeat ? '' : ' hidden'}>${actField(`${prefix}-scope`, 'Change', `<select class="big-input act-input sched-input no-autofocus" id="${prefix}-scope" data-sched="${prefix}"><option value="this">Just this one</option><option value="all">This one and the ones after</option></select>`)}</div>` : '';
     return `
       <div class="act-row">
         ${actField(`${prefix}-date`, 'Day', `<input class="big-input act-input sched-input${af}" id="${prefix}-date" type="date" value="${start ? localDateValue(start) : ''}" min="${localDateValue(new Date())}" data-sched="${prefix}">`)}
         ${actField(`${prefix}-time`, 'Time', `<input class="big-input act-input sched-input no-autofocus" id="${prefix}-time" type="time" value="${start ? localTimeValue(start) : ''}" data-sched="${prefix}">`)}
       </div>
-      <p class="input-hint sched-note" id="${prefix}-note" aria-live="polite">${esc(scheduleNoteText(atMs))}</p>`;
+      ${actField(`${prefix}-repeat`, 'Repeats', `<select class="big-input act-input sched-input sched-repeat no-autofocus" id="${prefix}-repeat" data-sched="${prefix}"${seriesAttrs}>${options}</select>`)}
+      ${scopeField}
+      <p class="input-hint sched-note" id="${prefix}-note" aria-live="polite">${esc(scheduleNoteText(atMs, repeat, series))}</p>`;
   }
   function refreshScheduleNote(input) {
     const prefix = input && input.dataset.sched;
     if (!prefix) return;
     const d = fromScheduleInputs(document.getElementById(`${prefix}-date`)?.value, document.getElementById(`${prefix}-time`)?.value);
     const note = document.getElementById(`${prefix}-note`);
-    if (note) note.textContent = scheduleNoteText(d ? d.getTime() : null);
+    const sel = document.getElementById(`${prefix}-repeat`);
+    const series = sel && sel.dataset.seriesUnit ? { unit: sel.dataset.seriesUnit, from: sel.dataset.seriesFrom } : null;
+    const repeat = readScheduleRepeat(prefix) || '';
+    const scopeBox = document.getElementById(`${prefix}-scope`)?.closest('.sched-scope');
+    if (scopeBox) scopeBox.hidden = !(series && series.unit === repeat);
+    if (note) note.textContent = scheduleNoteText(d ? d.getTime() : null, repeat, series, readScheduleScope(prefix));
   }
 
   // ── STATE ──
@@ -3702,9 +3869,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     overlayOpenerEl: null,
   };
   let toastTimer = null;
+  let fabTucked = false;   // the Capture button, tucked away while scrolling down
+  let shownActiveIds = null; // Active loops last on screen (see noteHiddenActive)
   let deferredInstallPrompt = null; // set by 'beforeinstallprompt' event
   let currentLocalUserId = null;
-  // Set to true once Sync.init() resolves so we don't flash the lock screen
+  // Set to true once Sync.init() resolves so we don’t flash the lock screen
   // during the async auth check on cold start.
   let authReady = false;
 
@@ -3716,7 +3885,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   //   loading     — signed in, nothing saved on this phone yet (loop bars)
   //   cached      — showing the copy saved on this phone; the server is checking
   //   ready       — the server has answered (or nobody is signed in)
-  //   unreachable — nothing saved here and the server couldn't be reached
+  //   unreachable — nothing saved here and the server couldn’t be reached
   // Loops that exist are always shown; only emptiness waits for the truth.
   let bootState = 'starting';
   function dataKnown() { return bootState === 'cached' || bootState === 'ready'; }
@@ -3825,7 +3994,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         }
       }
     } catch(e) {}
-    // A fresh open always starts on Active, the app's home. Only a reload
+    // A fresh open always starts on Active, the app’s home. Only a reload
     // within the same sitting (an update, a pull-to-refresh) keeps the tab.
     view.activeTab = sittingTab() || 'now';
     // Reentry dismissal (survives reload)
@@ -3845,8 +4014,18 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (!key) return;
     try {
       localStorage.setItem(key, JSON.stringify({ version: 2, lastLoopId: data.lastLoopId, activeTab: view.activeTab, loops: data.loops }));
-    } catch(e) {}
+    } catch(e) { noteStorageFull(); }
     try { sessionStorage.setItem(scopedKey(TAB_KEY_BASE), view.activeTab); } catch(e) {}
+  }
+
+  // The browser refused to store anything more (its storage is full, or it
+  // blocks storage for this site). Changes still go to the account while
+  // the app is open; say once that this device can’t keep its own copy.
+  let storageFullNoted = false;
+  function noteStorageFull() {
+    if (storageFullNoted) return;
+    storageFullNoted = true;
+    setTimeout(() => toast('This browser has no room to keep your loops offline. New changes still go to your account while the app is open.', { duration: 9000 }), 0);
   }
 
   const SITTING_TABS = new Set(['now', 'later', 'inbox', 'done']);
@@ -3895,12 +4074,12 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   }
 
   // ── MUTATIONS ──
-  // Return a position value strictly greater than every existing loop's
+  // Return a position value strictly greater than every existing loop’s
   // position — used when creating a new loop (it should land at the top).
   function topPosition() {
     if (!data.loops.length) return nowPosition();
     const max = data.loops.reduce((m, l) => (l.position > m ? l.position : m), -Infinity);
-    // Step by 1s so newly-created loops within the same second don't tie.
+    // Step by 1s so newly-created loops within the same second don’t tie.
     return Math.max(max, nowPosition()) + 1;
   }
 
@@ -3922,7 +4101,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (!l) return null;
     const wasReleased = l.status === 'released';
     Object.assign(l, patch, { updatedAt: nowIso() });
-    // A close made on this device adds a note to this sitting's tune.
+    // A close made on this device adds a note to this sitting’s tune.
     if (!wasReleased && l.status === 'released' && !isLetGo(l)) Combo.hit(l.kind);
     // Warn rather than silently coerce: a bad value here usually means a
     // schema drift, a future feature flag, or a corrupted sync payload.
@@ -4004,7 +4183,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const toIdx   = active.findIndex(l => l.id === targetId);
     if (fromIdx < 0 || toIdx < 0) return { ok: false };
 
-    // Simulate the move to figure out dragId's new neighbours.
+    // Simulate the move to figure out dragId’s new neighbours.
     const reordered = active.slice();
     const [moved] = reordered.splice(fromIdx, 1);
     reordered.splice(toIdx, 0, moved);
@@ -4064,7 +4243,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   }
 
   // ── TIME ──
-  // Wake times and calendar helpers. Choices are made in this device's local
+  // Wake times and calendar helpers. Choices are made in this device’s local
   // time; timestamps are stored as ISO strings so every device agrees.
   function atTime(d, h, m = 0) { const x = new Date(d); x.setHours(h, m, 0, 0); return x; }
   function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
@@ -4128,15 +4307,26 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         { label: 'Next week', when: atTime(addDays(now, 7), 9) }
       ];
     }
+    // Each choice names its real day ("Saturday", "Next Monday") so no two
+    // read alike, none lands in the middle of the night, and a choice within
+    // three hours of an earlier one is left out.
     const list = [];
     const tonight = atTime(now, 20);
-    if (tonight - now > 45 * 60000) list.push({ label: 'Tonight', when: tonight });
-    else list.push({ label: 'In 3 hours', when: new Date(now.getTime() + 3 * 3600000) });
-    list.push({ label: 'Tomorrow morning', when: atTime(addDays(now, 1), 9) });
-    const sat = nextWeekday(now, 6, 10, 2);
-    list.push({ label: (sat - now) / 86400000 < 7 ? 'This weekend' : 'Next weekend', when: sat });
-    list.push({ label: 'Next week', when: nextWeekday(now, 1, 9, 2) });
-    return list;
+    if (tonight - now > 45 * 60000) list.push({ id: 'tonight', label: 'Tonight', when: tonight });
+    else {
+      const later = new Date(now.getTime() + 3 * 3600000);
+      if (isSameDay(later, now) && later.getHours() >= 8 && later.getHours() < 22) list.push({ id: 'later', label: 'In 3 hours', when: later });
+    }
+    list.push({ id: 'morning', label: 'Tomorrow morning', when: atTime(addDays(now, 1), 9) });
+    // On a weekend, "Saturday" means the next one, not today or tomorrow.
+    const weekend = now.getDay() === 6 || now.getDay() === 0;
+    const named = (when, day) => ((when - atTime(now, 0)) / 86400000 < 7 ? day : `Next ${day}`);
+    const sat = nextWeekday(now, 6, 10, weekend ? 2 : 1);
+    list.push({ id: 'weekend', label: named(sat, 'Saturday'), when: sat });
+    const mon = nextWeekday(now, 1, 9, 1);
+    list.push({ id: 'week', label: named(mon, 'Monday'), when: mon });
+    return list.filter((p, i) => !list.slice(0, i).some(q => Math.abs(q.when - p.when) < 3 * 3600000))
+      .sort((a, b) => a.when - b.when);
   }
 
   function localDateValue(d) {
@@ -4156,20 +4346,64 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // Reads a day and a time out of a note like "Saturday 10am" or
   // "Oct 24, 4:30pm". Returns { date, text } or null when it finds neither.
   // Numeric dates (10/24) are skipped on purpose: day/month vs month/day
-  // is a coin flip, and a wrong guess is worse than no guess.
+  // is a coin flip, and a wrong guess is worse than no guess. A wrong guess
+  // is also why ordinary words are left alone: "2 decks" isn’t December 2,
+  // "sun cream" isn’t Sunday, "$15.00" isn’t 3 PM.
   const WEEKDAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const MONTH_NAMES = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  // Every spelling of each weekday, full name first. The short ones that are
+  // also ordinary words count only when the note clearly means the day.
+  const WEEKDAY_SPELLINGS = [
+    ['sunday', 'sun'], ['monday', 'mon'], ['tuesday', 'tues', 'tue'], ['wednesday', 'weds', 'wed'],
+    ['thursday', 'thurs', 'thur', 'thu'], ['friday', 'fri'], ['saturday', 'sat']
+  ];
+  const AMBIGUOUS_DAYS = new Set(['sun', 'sat', 'wed']);
+  // How much of a note to read for a time: a date buried deep in a long
+  // note is usually part of the story, not when to come back.
+  const WHEN_READ_CHARS = 120;
+  function findWeekday(t, i) {
+    const re = new RegExp(`\\b(next\\s+)?(${WEEKDAY_SPELLINGS[i].join('|')})\\b`, 'g');
+    let x;
+    while ((x = re.exec(t))) {
+      const word = x[2];
+      const before = t.slice(0, x.index);
+      if (/['’]$/.test(before)) continue;                     // c’mon
+      if (AMBIGUOUS_DAYS.has(word) && !x[1]) {
+        const after = t.slice(x.index + x[0].length);
+        const clear = /\b(on|by|this|until|till|before|from|every|due|for)\s+$/.test(before) ||
+          /^\s*(\d|noon\b|morning\b|afternoon\b|evening\b|night\b|at\b)/.test(after) ||
+          /^[\s.!?]*$/.test(after);
+        if (!clear) continue;
+      }
+      return x;
+    }
+    return null;
+  }
+  // "9.30" and "14:00" are times; "$15.00", "12.50%" and "2.10/mo" are not.
+  function findClockTime(t) {
+    const re = /\b([01]?\d|2[0-3])[:.]([0-5]\d)\b/g;
+    let x;
+    while ((x = re.exec(t))) {
+      const before = t.slice(Math.max(0, x.index - 4), x.index);
+      const after = t.slice(x.index + x[0].length, x.index + x[0].length + 2);
+      if (/[$£€¥₹]\s*$|\b(rs|pkr|usd|eur|gbp)\.?\s*$|[\d.,]$/.test(before)) continue;
+      if (/^\s*[%/]|^[.,]\d/.test(after)) continue;
+      return x;
+    }
+    return null;
+  }
   function parseWhen(text, now = new Date()) {
-    const src = String(text || '');
+    const src = String(text || '').slice(0, WHEN_READ_CHARS);
     const t = src.toLowerCase();
-    const MON = '(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?';
+    // A month only as a whole word: "dec", "dec.", "december", never "decks".
+    const MON = '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?(?![a-z])';
     let day = null, dayHit = null, kind = null, evening = false, m;
 
     let monthIdx = -1, dom = 0;
     if ((m = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+${MON}`).exec(t))) {
-      dom = +m[1]; monthIdx = MONTH_NAMES.indexOf(m[2]); dayHit = m;
+      dom = +m[1]; monthIdx = MONTH_NAMES.indexOf(m[2].slice(0, 3)); dayHit = m;
     } else if ((m = new RegExp(`\\b${MON}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`).exec(t))) {
-      dom = +m[2]; monthIdx = MONTH_NAMES.indexOf(m[1]); dayHit = m;
+      dom = +m[2]; monthIdx = MONTH_NAMES.indexOf(m[1].slice(0, 3)); dayHit = m;
     }
     if (dayHit) {
       const candidate = new Date(now.getFullYear(), monthIdx, dom);
@@ -4190,7 +4424,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         }
       }
       WEEKDAY_NAMES.forEach((name, i) => {
-        const x = new RegExp(`\\b(next\\s+)?(?:${name}|${name.slice(0, 3)})\\b`).exec(t);
+        const x = findWeekday(t, i);
         if (x && (!dayHit || x.index < dayHit.index)) {
           let n = (i - now.getDay() + 7) % 7;
           if (x[1] && n === 0) n = 7; // "next Monday", said on a Monday
@@ -4204,7 +4438,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const h = +m[1];
       hour = h > 12 ? Math.min(h, 23) : (h % 12) + (m[3][0] === 'p' ? 12 : 0);
       minute = m[2] ? Math.min(+m[2], 59) : 0; timeHit = m;
-    } else if ((m = /\b([01]?\d|2[0-3])[:.]([0-5]\d)\b/.exec(t))) {
+    } else if ((m = findClockTime(t))) {
       hour = +m[1]; minute = +m[2]; timeHit = m;
     } else if ((m = /\bnoon\b/.exec(t))) { hour = 12; timeHit = m; }
     else if ((m = /\bmorning\b/.exec(t))) { hour = 9; timeHit = m; }
@@ -4228,32 +4462,93 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   }
 
   // ── ASKS ──
-  // "Bilal: can he start before the 15th?" → { who: 'Bilal', ask: '…' }
-  function parseAsk(text) {
+  // Who an Ask is for, and what it asks, read from the note the way people
+  // write it:
+  //   "Bilal: can he start before the 15th?" · "Bilal - can he start…"
+  //   "Priya, can she intro us to Sana?"     · "Ask Sam if he can review my PR"
+  //   "Ask Sam to review my PR"              · "Ask mom for the recipe"
+  //   "Bilal" (just the name; the loop’s own text says what for)
+  // ask is written about them ("can he…"); askDraft turns it toward them.
+  const ASK_OPENERS = /^(can|could|would|will|should|might|did|does|do|is|are|was|were|has|have|had|please|when|what|where|who|how|any|just|quick)\b/i;
+  function parseAsk(text, nameAlone = true) {
     const s = String(text || '').trim();
-    const m = /^([^:\n]{1,40}?)\s*(?::|\s[\u2014\u2013-]\s)\s*([\s\S]+)$/.exec(s);
+    let m = /^([^:\n]{1,40}?)\s*(?::|\s[—–-]\s)\s*([\s\S]+)$/.exec(s);
     if (m && m[2].trim() && m[1].trim().split(/\s+/).length <= 4) return { who: m[1].trim(), ask: m[2].trim() };
+    m = /^([^\s,:\d][^,:\n\d]{0,30}?),\s+([\s\S]+)$/.exec(s);
+    if (m && m[1].trim().split(/\s+/).length <= 3 && ASK_OPENERS.test(m[2])) return { who: m[1].trim(), ask: m[2].trim() };
+    m = /^(?:ask|check with|ping|text|email|message)\s+(\S+(?:\s+[A-Z]\S*)?)\s+(if|whether|to|for|about)\s+([\s\S]+)$/i.exec(s);
+    if (m) {
+      const who = m[1].replace(/[,.]$/, '');
+      const rest = m[3].trim().replace(/[.?!]+$/, '');
+      const how = m[2].toLowerCase();
+      if (how === 'to') return { who, ask: `could you ${rest}?`, direct: true };
+      if (how === 'for') return { who, ask: `could you send me ${rest}?`, direct: true };
+      if (how === 'about') return { who, ask: `any news on ${rest}?`, direct: true };
+      const q = /^(he|she|they)\s+(can|could|will|would|should|is|are|was|were|has|have|had|did|does|do)\b\s*([\s\S]*)$/i.exec(rest);
+      return { who, ask: q ? `${q[2]} ${q[1]} ${q[3]}?`.replace(/\s+\?$/, '?') : `${rest}?` };
+    }
+    // Just a name: one word, or two or three capitalised ones. Only a note
+    // can be just a name; a one-word loop ("Groceries") is not a person.
+    const words = s.split(/\s+/);
+    if (nameAlone && s && /^[\p{L}'’.-]+(?:\s+[\p{L}'’.-]+){0,2}$/u.test(s) &&
+        (words.length === 1 || words.every(w => /^\p{Lu}/u.test(w)))) return { who: s, ask: '' };
     return { who: '', ask: s };
   }
+  // The person and the ask for a loop: the note first, then the loop’s own
+  // text ("Ask Bilal for the contract").
+  function askOf(loop) {
+    const note = parseAsk(loop && loop.promptAnswer);
+    if (note.who && note.ask) return note;
+    const raw = parseAsk(loop && loop.rawText, false);
+    if (!note.who) return raw.who ? raw : { who: '', ask: note.ask || '' };
+    if (raw.who && raw.who.toLowerCase() === note.who.toLowerCase()) return { ...raw, who: note.who };
+    return { who: note.who, ask: '' };
+  }
 
-  // Notes are written about the person ("can he start…"); the message is
-  // written to them ("can you start…"). Only the opening is rewritten.
+  // Notes are written about the person ("can she intro us to her fund?");
+  // the message is written to them ("can you intro us to your fund?"). Once
+  // the opening names them, the rest of the sentence follows.
+  const OBJECT_FOLLOWERS = /^(to|for|about|at|on|in|with|by|from|and|or|if|when|that|a|an|the|this|these|those|back|know|up|out|again|now|today|tomorrow|soon|a\s+call|[.,!?;:]|$)/i;
   function toSecondPerson(text) {
-    return text.replace(/^(can|could|would|will|should|might|did)\s+(he|she|they)\b/i, (m, aux) => `${aux} you`)
-      .replace(/^(is|are)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Are' : 'are'} you`)
-      .replace(/^(was|were)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Were' : 'were'} you`)
-      .replace(/^(does|do)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Do' : 'do'} you`)
-      .replace(/^(has|have)\s+(he|she|they)\b/i, (m, aux) => `${aux[0] === aux[0].toUpperCase() ? 'Have' : 'have'} you`);
+    const opening = /^(can|could|would|will|should|might|did|is|are|was|were|does|do|has|have)\s+(he|she|they)\b/i.exec(text);
+    if (!opening) return text;
+    const aux = opening[1], pron = opening[2].toLowerCase();
+    const cap = w => aux[0] === aux[0].toUpperCase() ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+    const AGREE = { is: 'are', was: 'were', does: 'do', has: 'have' };
+    let out = cap(AGREE[aux.toLowerCase()] || aux.toLowerCase()) + ' you' + text.slice(opening[0].length);
+    const forms = pron === 'she' ? { obj: 'her', poss: 'her', own: 'hers', self: 'herself' }
+      : pron === 'he' ? { obj: 'him', poss: 'his', own: 'his', self: 'himself' }
+      : { obj: 'them', poss: 'their', own: 'theirs', self: 'themselves' };
+    out = out.replace(new RegExp(`\\b${pron}\\s+(is|was|has|does)\\b`, 'gi'), (m, v) => `you ${AGREE[v.toLowerCase()]}`)
+      .replace(new RegExp(`\\b${pron}\\b`, 'gi'), 'you')
+      .replace(new RegExp(`\\b${forms.self}\\b`, 'gi'), 'yourself');
+    if (forms.own !== forms.poss) out = out.replace(new RegExp(`\\b${forms.own}\\b`, 'gi'), 'yours');
+    out = out.replace(new RegExp(`\\b(${forms.poss}|${forms.obj})\\b(\\s*)`, 'gi'), (m, w, sp, at, all) => {
+      const next = all.slice(at + m.length);
+      if (w.toLowerCase() === forms.obj && forms.obj !== forms.poss) return 'you' + sp;
+      return (OBJECT_FOLLOWERS.test(next) ? 'you' : 'your') + sp;
+    });
+    return out;
   }
 
   function askDraft(loop, nudge) {
-    const { who, ask } = parseAsk(loop.promptAnswer || '');
-    const body = who ? toSecondPerson((ask || '').trim()) : (ask || loop.rawText || '').trim();
-    // Lowercase the first word only when it's an ordinary question word, so
+    const { who, ask, direct } = askOf(loop);
+    const d = (loop && loop.details) || {};
+    if (nudge && who && d.sentText) {
+      const when = d.sentAt && isSameDay(new Date(d.sentAt), new Date()) ? 'earlier today' : relativeDay(d.sentAt);
+      return `Hi ${who}, just following up on my message ${when}.`;
+    }
+    let body = (ask || '').trim();
+    if (who && body && !direct) body = toSecondPerson(body);
+    if (!body) {
+      // Only the name is known: the loop’s own text says what it’s about.
+      body = String((loop && loop.rawText) || '').trim();
+      const first = body.split(/\s+/)[0] || '';
+      if (who && /^\p{Lu}\p{Ll}+$/u.test(first) && first.toLowerCase() !== who.split(/\s+/)[0].toLowerCase()) body = body.charAt(0).toLowerCase() + body.slice(1);
+    }
+    // Lowercase the first word only when it’s an ordinary word, so
     // "Can he start…" reads "Hi Bilal, can he start…" but names stay intact.
-    const soft = /^(can|could|would|will|is|are|do|does|did|when|what|where|who|how|please|any|have|has|just|quick)\b/i.test(body)
-      ? body.charAt(0).toLowerCase() + body.slice(1)
-      : body;
+    const soft = ASK_OPENERS.test(body) || /^(could|any)\b/i.test(body) ? body.charAt(0).toLowerCase() + body.slice(1) : body;
     if (nudge) return who ? `Hi ${who}, just checking in on this: ${soft}` : `Just checking in on this: ${soft}`;
     return who ? `Hi ${who}, ${soft}` : body;
   }
@@ -4290,13 +4585,20 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   // ── DECISIONS ──
   // "Air 15 or X1, decide by Friday" → ['Air 15', 'X1']
+  // "Stripe/Paddle" → ['Stripe', 'Paddle'], but "$19 or $29/mo" → ['$19', '$29/mo']:
+  // a slash only separates choices when no "or" does, and never before a unit.
+  const PER_UNIT = /^(mo|month|yr|year|wk|week|day|hr|hour|h|user|seat|person|head|unit|each|pp|night)\b/i;
   function decisionOptions(text) {
-    const first = String(text || '').split(/[,.;\n]|\b(?:decide|by|before)\s+(?:mon|tue|wed|thu|fri|sat|sun|tomorrow|today|next)/i)[0] || '';
-    const parts = first
-      .replace(/^(?:should i|do i|whether to|whether i|between|either)\s+/i, '')
-      .split(/\s+(?:or|vs\.?|versus)\s+|\s*\/\s*/i)
-      .map(s => s.trim().replace(/[?!]+$/, ''))
-      .filter(Boolean);
+    const first = String(text || '').split(/[,;\n]|\.(?!\d)|\b(?:decide|by|before)\s+(?:mon|tue|wed|thu|fri|sat|sun|tomorrow|today|next)/i)[0] || '';
+    const stripped = first.replace(/^[^:]{1,40}:\s*/, '').replace(/^(?:should i|do i|whether to|whether i|between|either)\s+/i, '');
+    const byWord = /\s+(?:or|vs\.?|versus)\s+/i;
+    let parts;
+    if (byWord.test(stripped)) parts = stripped.split(byWord);
+    else {
+      parts = stripped.split(/\s*\/\s*/);
+      if (parts.slice(1).some(p => PER_UNIT.test(p.trim()))) return [];
+    }
+    parts = parts.map(s => s.trim().replace(/[?!]+$/, '')).filter(Boolean);
     if (parts.length < 2 || parts.length > 4 || parts.some(p => p.length > 40)) return [];
     return parts;
   }
@@ -4362,9 +4664,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // ── WAKE-UPS ──
   // A parked loop with a wake time comes back on its own: into Up next,
   // never straight into Now. Runs when the app opens, when it returns to the
-  // foreground, and once a minute while it's open.
+  // foreground, and once a minute while it’s open.
   function wakeDueLoops(opts = {}) {
     if (!Sync.isLoggedIn()) return [];
+    if (ensureRepeats()) { save(); renderAll(); }
     const now = Date.now();
     // Latest first, so the earliest-due loop ends up right under Now.
     const due = data.loops
@@ -4392,7 +4695,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const first = firstLoop.rawText || '';
       const short = first.length > 42 ? first.slice(0, 40).trimEnd() + '…' : first;
       const schedAt = scheduleAt(firstLoop);
-      toast(due.length !== 1 ? `${due.length} loops woke up. They're in Up next.`
+      toast(due.length !== 1 ? `${due.length} loops woke up. They’re in Up next.`
         : schedAt !== null && schedAt > now ? `Coming up at ${clockText(new Date(schedAt))}: ${short}`
         : schedAt !== null && now - schedAt < 15 * 60000 ? `It’s time: ${short}`
         : `Back in Up next: ${short}`);
@@ -4410,6 +4713,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     span.textContent = msg;
     el.appendChild(span);
     const dur = (opts && opts.duration) || DEFAULT_TOAST_MS;
+    // A tip gives way as soon as a sheet opens, so it never covers a flow.
+    if (opts && opts.tip) el.dataset.tip = '1'; else delete el.dataset.tip;
     if (opts && opts.action && typeof opts.onAction === 'function') {
       el.classList.add('has-action');
       const btn = document.createElement('button');
@@ -4469,9 +4774,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
+  // Dates only on the Closed shelf, where "when" is the point. Elsewhere a
+  // card’s age shows only once it matters ("Untouched 12 days").
   function loopMetaHtml(loop) {
+    const rep = loop.details && REPEATS[loop.details.repeat];
+    if (loop.status !== 'released') return rep ? `<div class="loop-meta"><span>Repeats ${esc(rep.toLowerCase())}</span></div>` : '';
     const captured = formatLoopDate(loop.createdAt);
-    const closed = loop.status === 'released' ? formatLoopDate(loop.completedAt) : '';
+    const closed = formatLoopDate(loop.completedAt);
     const parts = [];
     if (captured) parts.push(`<span>Captured ${esc(captured)}</span>`);
     if (closed) parts.push(`<span>${isLetGo(loop) ? 'Let go' : 'Closed'} ${esc(closed)}</span>`);
@@ -4501,7 +4810,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
     if (loop.status === 'waiting') {
       if (isSentAsk) {
-        const who = parseAsk(loop.promptAnswer).who || 'them';
+        const who = askOf(loop).who || 'them';
         return { icon: 'person', text: wake ? `Waiting on ${who} · back ${formatWake(loop.wakeAt)}` : `Waiting on ${who}` };
       }
       if (wake) return { icon: 'sun', text: `Wakes ${formatWake(loop.wakeAt)}` };
@@ -4680,7 +4989,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       .concat(dry.map(l => ({ id: l.id, why: 'dry' })))
       .slice(0, 6);
   }
-  // The banner stays while there's something to sweep, unless you said
+  // The banner stays while there’s something to sweep, unless you said
   // "Later" today and nothing new has turned up since.
   function sweepBannerItems() {
     const items = sweepItems();
@@ -4772,7 +5081,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       return sheet(`
         ${progress}
         <h2 class="sweep-h small" id="sweep-title">When is “${esc(shortText(loop.rawText, 40))}” now?</h2>
-        ${scheduleFieldsHtml('sweep-sched', at !== null && at > Date.now() ? new Date(at) : null)}
+        ${scheduleFieldsHtml('sweep-sched', at !== null && at > Date.now() ? new Date(at) : null, false, (loop.details && loop.details.repeat) || '', seriesOf(loop))}
         <div class="act-list">
           ${actBtn({ action: 'sweep-park', label: 'Save the time', primary: true, loopId: loop.id, attrs: 'data-when="schedule"', icon: ACT_ICON.clock })}
           ${actBtn({ action: 'sweep-park', label: 'Not sure yet', sub: 'It waits in Parked until you bring it back', loopId: loop.id, attrs: 'data-when=""', icon: ACT_ICON.next })}
@@ -4781,9 +5090,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
     if (ov.step === 'park') {
       const presets = wakePresets('park')
-        .filter(p => p.label !== 'Tonight' && p.label !== 'In 3 hours')
+        .filter(p => p.id !== 'tonight' && p.id !== 'later')
         .map(p => actBtn({
-          action: 'sweep-park', label: p.label, sub: formatWake(p.when), loopId: loop.id,
+          action: 'sweep-park', label: p.label, sub: formatEvent(p.when.toISOString()), loopId: loop.id,
           attrs: `data-when="${p.when.toISOString()}"`, icon: ACT_ICON.clock
         })).join('');
       return sheet(`
@@ -4800,7 +5109,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const d = loop.details || {};
       const schedAt = scheduleAt(loop);
       reason = loop.kind === 'ask' && d.sentAt
-        ? { icon: 'person', text: `Checking back on ${parseAsk(loop.promptAnswer).who || 'them'}` }
+        ? { icon: 'person', text: `Checking back on ${askOf(loop).who || 'them'}` }
         : schedAt !== null
           ? { icon: 'cal', text: `${schedAt > Date.now() ? 'Starts' : Date.now() - schedAt < 15 * 60000 ? 'It’s time:' : 'Was'} ${formatEvent(new Date(schedAt).toISOString())}` }
           : { icon: 'sun', text: `You parked it until ${formatWake(loop.wakeAt)}` };
@@ -4839,8 +5148,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       Sound.play('wake');
     }, 900);
   }
-  // One card's choice, applied to the loop. Returns what to sync.
-  function sweepApply(loop, pick, wakeAt, schedIso) {
+  // One card’s choice, applied to the loop. Returns what to sync.
+  function sweepApply(loop, pick, wakeAt, schedIso, schedRepeat) {
     const top = byStatus('active')[0];
     const isNow = !!(top && top.id === loop.id);
     let patch;
@@ -4852,7 +5161,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       else { const up = upNextPosition(loop.id); patch = { status: 'active', position: up.position }; rebalance = up.rebalance; }
     } else if (pick === 'park' && loop.kind === 'schedule') {
       // Moved to a new time (or no time yet): where it waits follows from it.
-      patch = schedulePatch(loop, schedIso || null, schedIso ? {} : { status: 'waiting' });
+      patch = schedulePatch(loop, schedIso || null, schedIso ? (schedRepeat || {}) : { status: 'waiting' });
       if (patch.status === 'active') { const up = upNextPosition(loop.id); patch.position = up.position; rebalance = up.rebalance; }
     } else if (pick === 'park') {
       patch = { status: 'waiting', wakeAt: wakeAt || null };
@@ -4900,7 +5209,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     };
   })();
   // ── YOUR HEAD ──
-  // A look back, built only from loops you've already closed: your shelf,
+  // A look back, built only from loops you’ve already closed: your shelf,
   // how long things take, and what you decided. Nothing here leaves the app.
   const KIND_PLURAL = { do: 'Do loops', decide: 'Decisions', ask: 'Asks', schedule: 'Schedules' };
   const SHARE_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10V2.5M8 2.5 5 5.5M8 2.5l3 3M3 9v3.5A1.5 1.5 0 0 0 4.5 14h7a1.5 1.5 0 0 0 1.5-1.5V9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -4981,18 +5290,18 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const monthName = new Date().toLocaleDateString(undefined, { month: 'long' });
     body += monthCloses().length
       ? `<button type="button" class="btn btn-primary head-share no-autofocus" data-action="open-share">${SHARE_ICON}Share your ${esc(monthName)}</button>
-         <p class="head-fine">The card shows colours and counts. Never what your loops say.</p>`
+         <p class="head-fine">The card shows colors and counts. Never what your loops say.</p>`
       : `<p class="head-fine">Close something this month to make a card you can share.</p>`;
     return `
       <div class="overlay-card head-sheet" role="dialog" aria-modal="true" aria-labelledby="head-title">
-        <div class="overlay-header"><div class="overlay-meta"><div class="overlay-eyebrow">Profile</div></div>${SHEET_CLOSE}</div>
+        <div class="overlay-header"><div class="overlay-meta"></div>${SHEET_CLOSE}</div>
         ${body}
       </div>`;
   }
 
-  // Who's signed in, whether it's syncing, and the way out, at the top of
+  // Who’s signed in, whether it’s syncing, and the way out, at the top of
   // Your head. One header button (your initial, with the sync dot) opens it;
-  // there's no separate account or sign-out sheet.
+  // there’s no separate account or sign-out sheet.
   function accountInitial() {
     const m = /[a-z0-9]/i.exec(Sync.userEmail() || '');
     return m ? m[0].toUpperCase() : '';
@@ -5121,7 +5430,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       g.fillStyle = '#0a0a0a'; g.font = font(600, 56); g.fillText(big, x + 30, ty + 86);
       g.fillStyle = '#3a3a3a'; g.font = font(500, 30); g.fillText(small, x + 30, ty + 132);
     });
-    // Where it's from, small, so a shared card can bring someone back
+    // Where it’s from, small, so a shared card can bring someone back
     g.fillStyle = '#6b665b'; g.font = font(500, 26); g.textAlign = 'right';
     g.fillText('openloops.auxila.cc', W - P, H - 40);
     g.textAlign = 'left';
@@ -5135,7 +5444,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       <div class="overlay-card share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-title">
         <div class="overlay-header"><div class="overlay-meta"><div class="overlay-eyebrow">Share card</div></div>${SHEET_CLOSE}</div>
         <h2 class="overlay-title" id="share-title">Your ${esc(ov.month)} on one card.</h2>
-        <p class="overlay-subtitle">Colours and counts only. Never what your loops say.</p>
+        <p class="overlay-subtitle">Colors and counts only. Never what your loops say.</p>
         ${ov.img ? `<img class="share-preview" src="${ov.img}" alt="Share card: ${ov.count} things out of my head this ${esc(ov.month)}.">` : '<div class="share-preview is-loading" aria-hidden="true"></div>'}
         <div class="overlay-actions">
           <button type="button" class="btn btn-ghost" data-action="share-save" ${ov.img ? '' : 'disabled'}>Save image</button>
@@ -5143,6 +5452,50 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         </div>
       </div>`;
   }
+  // ── YOUR DATA ──
+  // Everything this account has, as JSON: what each loop says, where it is,
+  // its times and how it ended. On an iPhone, where a page can't download a
+  // file, the share sheet saves it instead.
+  function exportFile() {
+    const loops = data.loops.map(l => ({
+      id: l.id, text: l.rawText, kind: l.kind || null, status: l.status, note: l.promptAnswer || '',
+      createdAt: l.createdAt, closedAt: l.completedAt || null, wakeAt: l.wakeAt || null, details: l.details || {}
+    }));
+    const body = JSON.stringify({ app: 'Open Loops', version: APP_VERSION.number, exportedAt: nowIso(), account: Sync.userEmail(), loops }, null, 2);
+    return new File([body], `open-loops-${localDateValue(new Date())}.json`, { type: 'application/json' });
+  }
+  async function exportLoops() {
+    const file = exportFile();
+    try {
+      if (isIOS() && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'My loops' });
+        return 'shared';
+      }
+    } catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url; a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    return 'saved';
+  }
+  function renderDeleteAccount() {
+    const ov = view.overlay || {};
+    const n = data.loops.length;
+    return `
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+        <div class="overlay-header"><div class="overlay-meta"></div>${SHEET_CLOSE}</div>
+        <h2 class="overlay-title" id="delete-account-title">Delete your account?</h2>
+        <p class="overlay-subtitle">This deletes all ${n} loop${n === 1 ? '' : 's'}, open and closed, on every device, turns off nudges and signs you out. It can’t be undone.</p>
+        <p class="settings-helper">Signed in as <strong>${esc(Sync.userEmail())}</strong>. Want a copy first? Download your loops.</p>
+        ${ov.error ? `<p class="input-hint" role="alert">${esc(ov.error)}</p>` : ''}
+        <div class="overlay-actions">
+          <button class="btn btn-ghost" data-action="export-loops">Download first</button>
+          <button class="btn btn-primary" data-action="confirm-delete-account" style="background:var(--error);color:var(--error-ink)"${ov.busy ? ' disabled aria-busy="true"' : ''}>${ov.busy ? 'Deleting…' : 'Delete everything'}</button>
+        </div>
+      </div>`;
+  }
+
   function saveShareImage(name) {
     if (!shareBlob) return;
     const url = URL.createObjectURL(shareBlob);
@@ -5154,7 +5507,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   // ── NUDGES (web push) ──
   // Two kinds, both optional: one the moment a parked loop wakes up, and a
-  // check-in at a time you pick that only comes when there's something to
+  // check-in at a time you pick that only comes when there’s something to
   // say (the Sunday recap, or a loop that has gone stale). One voice: cheeky.
   // Each device that turns them on is a row in push_subscriptions; a small
   // Supabase function decides what to say and sends it.
@@ -5162,7 +5515,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const KEY_BASE = CFG.STORAGE_KEY ? CFG.STORAGE_KEY + '_push' : 'open_loops_push';
     // on: nudges are on for this device. wanted: the person asked for them but
     // the browser said no, so they turn on by themselves once it says yes.
-    const DEFAULTS = { on: false, wanted: false, time: '09:00', wakeups: true, stale: true, recap: true };
+    // hideText: nudges leave out what a loop says (a lock screen others see).
+    const DEFAULTS = { on: false, wanted: false, time: '09:00', wakeups: true, stale: true, recap: true, hideText: false };
     // How often an open app checks that the server still has this device.
     const VERIFY_MS = 20 * 3600000;
     const key = () => scopedKey(KEY_BASE);
@@ -5187,11 +5541,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const bin = atob(s + '='.repeat((4 - (s.length % 4)) % 4));
       return Uint8Array.from(bin, c => c.charCodeAt(0));
     }
-    // A subscription made with an older key can't receive anything we send.
+    // A subscription made with an older key can’t receive anything we send.
     function sameKey(sub) {
       try {
         const k = sub && sub.options && sub.options.applicationServerKey;
-        if (!k) return true;   // the browser doesn't say: assume it matches
+        if (!k) return true;   // the browser doesn’t say: assume it matches
         const a = new Uint8Array(k), b = keyBytes(CFG.VAPID_PUBLIC_KEY);
         return a.length === b.length && a.every((x, i) => x === b[i]);
       } catch (_) { return true; }
@@ -5200,7 +5554,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     async function registration() {
       if (swRegistration) return swRegistration;
       if (swState === 'failed') throw fail('no-sw');
-      // ready never settles if the service worker can't register; don't hang.
+      // ready never settles if the service worker can’t register; don’t hang.
       return Promise.race([
         navigator.serviceWorker.ready,
         new Promise((_, reject) => setTimeout(() => reject(fail('not-ready')), 8000))
@@ -5222,7 +5576,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         throw fail(navigator.onLine === false ? 'offline' : 'push-service', e);
       }
     }
-    // This device's subscription: the one it has if it still fits, else a new one.
+    // This device’s subscription: the one it has if it still fits, else a new one.
     async function ensureSubscription(reg) {
       let sub = await reg.pushManager.getSubscription();
       if (sub && !sameKey(sub)) { await sub.unsubscribe().catch(() => {}); sub = null; }
@@ -5246,7 +5600,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       catch (e) {
         const reason = saveReason(e);
         if (reason !== 'conflict') throw fail(reason, e);
-        // The browser's subscription still belongs to an account that signed
+        // The browser’s subscription still belongs to an account that signed
         // out without tidying up. A fresh one belongs to this account.
         await sub.unsubscribe().catch(() => {});
         const fresh = await subscribe(reg);
@@ -5254,7 +5608,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         catch (e2) { const r = saveReason(e2); throw fail(r === 'conflict' ? 'server' : r, e2); }
       }
     }
-    // Keep what the server said back: whether today's check-in already went.
+    // Keep what the server said back: whether today’s check-in already went.
     function remember(p, sub, server) {
       store({
         ...p, on: true, wanted: false, endpoint: sub.endpoint, tz: timeZone(), dirty: false, verifiedAt: Date.now(),
@@ -5276,8 +5630,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         } catch (_) { finish(permission()); }
       });
     }
-    // Permission is granted: make (or reuse) this device's subscription and
-    // save it. Never throws; says why when it can't. `quiet` is for background
+    // Permission is granted: make (or reuse) this device’s subscription and
+    // save it. Never throws; says why when it can’t. `quiet` is for background
     // repairs: a passing failure leaves nudges on and marked to retry, and
     // only a lasting one (blocked) switches them off.
     // Only one at a time: a second tap, a late prompt answer and a background
@@ -5302,13 +5656,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         return { ok: false, reason };
       }
     }
-    // The switch, flipped on. `onWaiting` fires if the browser's prompt is
-    // still open after a few seconds (Chrome's quiet prompt hides in the
+    // The switch, flipped on. `onWaiting` fires if the browser’s prompt is
+    // still open after a few seconds (Chrome’s quiet prompt hides in the
     // address bar). Returns { ok } or { ok: false, reason }.
     async function enable({ onWaiting } = {}) {
       if (!supported()) return { ok: false, reason: 'unsupported' };
       if (navigator.onLine === false) return { ok: false, reason: 'offline' };
-      // Check before asking: a yes we can't act on would be a broken promise.
+      // Check before asking: a yes we can’t act on would be a broken promise.
       if (!swRegistration) return { ok: false, reason: swState === 'failed' ? 'no-sw' : 'not-ready' };
       let perm = permission();
       if (perm !== 'granted') {
@@ -5391,7 +5745,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       return { ok: true, repaired: true };
     }
     // On every open, return to the app, permission change and reconnect:
-    // keep the server's copy in step with this device. Says what changed:
+    // keep the server’s copy in step with this device. Says what changed:
     // 'resumed' (allowed at last, so on), 'lost' (no longer allowed, so off),
     // 'saved', or null.
     let running = null;
@@ -5420,7 +5774,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         // The server drops a device when its push service says the address
         // is gone. Check now and then that this one is still there.
         const exists = await Sync.pushRowExists(sub.endpoint);
-        if (exists === null) return null;   // couldn't tell; next time
+        if (exists === null) return null;   // couldn’t tell; next time
         if (exists) { patch({ verifiedAt: Date.now() }); return null; }
       }
       const saved = await saveRow(reg, sub, p);
@@ -5445,7 +5799,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // ── The Nudges switch ──
   // One switch. Every way it can fail ends in a sentence that says what
   // happened and what to do next, right under it, never a dead end. A browser
-  // that has blocked notifications can't be asked again by the page, so the
+  // that has blocked notifications can’t be asked again by the page, so the
   // switch shows how to allow them for this browser, and nudges turn on by
   // themselves the moment they are allowed.
   const nudgeUi = { busy: false, waiting: false, testing: false, disabling: null, note: null };
@@ -5565,10 +5919,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const sw = (k, label, sub) => `<button type="button" class="nudge-switch${p[k] ? ' on' : ''}" data-action="push-toggle" data-key="${k}" role="switch" aria-checked="${!!p[k]}"><span class="nudge-switch-text"><span>${label}</span><span class="nudge-switch-sub">${sub}</span></span><span class="switch" aria-hidden="true"></span></button>`;
       const none = !p.wakeups && !p.stale && !p.recap;
       html += `
-          <div class="nudge-switches">${sw('wakeups', 'When a loop wakes up', 'Right on time, with Done and Tomorrow')}${sw('stale', 'Stale loop check-ins', '“Still yours?”, at most once a week')}${sw('recap', 'Sunday recap', 'What you closed this week')}</div>
+          <div class="nudge-switches">${sw('wakeups', 'When a loop wakes up', 'Right on time, with Done and Tomorrow')}${sw('stale', 'Stale loop check-ins', '“Still yours?”, at most once a week')}${sw('recap', 'Sunday recap', 'What you closed this week')}${sw('hideText', 'Hide what loops say', 'Nudges say “A loop is back” instead of its words, for a lock screen others can see')}</div>
           ${p.stale || p.recap ? `<div class="nudge-row"><label for="nudge-time">Check-in time</label><input type="time" id="nudge-time" class="nudge-time" step="60" value="${esc(p.time)}"></div>` : ''}
           ${none ? '<p class="nudge-next" id="nudge-next">Every kind is switched off, so nothing will arrive. Turn one back on, or switch nudges off above.</p>' : nudgeNextHtml(p)}
-          <p class="nudge-sample">Like: Knock knock. “Call the bank” just woke up. Where does it go now?</p>
+          <p class="nudge-sample">${p.hideText ? 'Like: A loop is back. It’s in Up next.' : 'Like: Knock knock. “Call the bank” just woke up. Where does it go now?'}</p>
           <div class="nudge-actions">
             <button type="button" class="btn btn-ghost" data-action="push-test"${nudgeUi.testing ? ' aria-busy="true" aria-disabled="true"' : ''}>${nudgeUi.testing ? 'Sending…' : 'Send a test'}</button>
           </div>`;
@@ -5606,14 +5960,14 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     setTimeout(() => { const sec = document.getElementById('nudge-settings'); if (sec) sec.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 80);
   }
   // Turn on from the switch (or Check again). Called straight from the tap so
-  // the browser's prompt is allowed to show.
+  // the browser’s prompt is allowed to show.
   async function turnNudgesOn() {
     nudgeUi.busy = true; nudgeUi.waiting = false; nudgeUi.note = null;
     refreshNudgeSettings();
     const r = await Push.enable({
       onWaiting: () => {
-        // The prompt may never be answered (Chrome's quiet prompt sits
-        // behind a bell in the address bar). Unlock the switch so it's never
+        // The prompt may never be answered (Chrome’s quiet prompt sits
+        // behind a bell in the address bar). Unlock the switch so it’s never
         // stuck; a late answer still finishes the job below.
         if (!nudgeUi.busy) return;
         nudgeUi.busy = false;
@@ -5643,7 +5997,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (help) help.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
   }
-  // Blocked: the page can't ask again, so check whether it's been allowed
+  // Blocked: the page can’t ask again, so check whether it’s been allowed
   // since. Called straight from the tap, like turnNudgesOn.
   function nudgeRecheck() {
     Push.want();
@@ -5677,21 +6031,21 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   function resyncNudges() { return Push.resync().then(afterNudgeResync).catch(() => {}); }
 
   // When the next check-in can come: today if its time is still ahead and
-  // today's hasn't gone yet, otherwise tomorrow.
+  // today’s hasn’t gone yet, otherwise tomorrow.
   function nextCheckIn(p, now = new Date()) {
     const m = /^(\d{1,2}):(\d{2})/.exec(p.time || '') || [null, '9', '00'];
     let at = atTime(now, +m[1], +m[2]);
     if (at <= now || p.lastRunOn === localDateValue(now)) at = addDays(at, 1);
     return at;
   }
-  // What a check-in at that moment would say, by the sender's own rules:
+  // What a check-in at that moment would say, by the sender’s own rules:
   // the Sunday recap, or a loop untouched for three weeks (at most weekly).
   function checkInHas(p, at) {
     const t = at.getTime();
     const DAY = 86400000;
     if (p.recap && at.getDay() === 0 && data.loops.some(l => l.status === 'released' && l.completedAt && new Date(l.completedAt).getTime() > t - 7 * DAY)) return 'recap';
     const staleLately = p.lastStaleAt && new Date(p.lastStaleAt).getTime() > t - 6.5 * DAY;
-    // Same rule as the sender: a Schedule loop waiting for its date isn't stale.
+    // Same rule as the sender: a Schedule loop waiting for its date isn’t stale.
     if (p.stale && !staleLately && data.loops.some(l => (l.status === 'active' || (l.status === 'waiting' && !l.wakeAt)) && !(scheduleAt(l) > t) && new Date(l.updatedAt).getTime() <= t - CRACK_DAYS * DAY)) return 'stale';
     return '';
   }
@@ -5762,7 +6116,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     setTimeout(() => { if (view.highlightedId === l.id) { view.highlightedId = null; renderMain(); } }, 2400);
   }
 
-  // What the card's main button says. An Ask that was sent asks the real
+  // What the card’s main button says. An Ask that was sent asks the real
   // question: did they reply?
   function actionLabel(loop) {
     if (loop.kind === 'schedule') {
@@ -5771,13 +6125,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       return scheduleAt(loop) !== null ? 'Change the time' : 'Set the time';
     }
     if (loop.kind === 'ask' && loop.details && loop.details.sentAt) {
-      const who = parseAsk(loop.promptAnswer).who;
+      const who = askOf(loop).who;
       return who ? `Did ${who} reply?` : 'Did they reply?';
     }
     return (kindMeta[loop.kind] || kindMeta.inbox).action;
   }
 
-  // The line under a card's title: the next step, or for a Schedule loop,
+  // The line under a card’s title: the next step, or for a Schedule loop,
   // when it happens.
   function nextLineHtml(loop, label = 'Next', empty = 'No next step set.') {
     const at = loop.kind === 'schedule' && loop.details && loop.details.at;
@@ -5822,6 +6176,21 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return `<span class="kind-chip ${cls}"><span class="kind-dot"></span>${m.label}</span>`;
   }
 
+  // A loop that was on screen and is still active but now sits behind
+  // "Show more" (the focus cap went down, or something landed above it):
+  // say so once, by name, so nothing disappears without a word.
+  function noteHiddenActive(visible, known) {
+    // While everything is shown there’s nothing to compare against.
+    if (!known || view.expanded) return;
+    const now = new Set(visible.map(l => l.id));
+    if (shownActiveIds) {
+      const pushed = data.loops.filter(l => l.status === 'active' && shownActiveIds.has(l.id) && !now.has(l.id));
+      if (pushed.length === 1) toast(`“${shortText(pushed[0].rawText, 40)}” moved behind Show more.`);
+      else if (pushed.length > 1) toast(`${pushed.length} loops moved behind Show more.`);
+    }
+    shownActiveIds = now;
+  }
+
   // ── LOOP CARD ──
   function dragHandleHtml(enabled) {
     if (!enabled) return '';
@@ -5836,7 +6205,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const hl = view.highlightedId === loop.id ? ' highlighted' : '';
     const delay = `animation-delay:${idx*0.04}s`;
     // Suppress drag while this card is in inline-edit mode. Otherwise a
-    // mid-edit drag triggers re-render before save and the user's typed
+    // mid-edit drag triggers re-render before save and the user’s typed
     // (but not yet saved) text is silently discarded.
     const isEditing = view.inlineEditId === loop.id;
     const dragEnabled = opts.draggable && !isEditing;
@@ -5903,11 +6272,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       </article>`;
   }
 
-  // Where an empty list would go while the app doesn't know yet: loop bars,
-  // or, when nothing is saved here and the server can't be reached, say so.
+  // Where an empty list would go while the app doesn’t know yet: loop bars,
+  // or, when nothing is saved here and the server can’t be reached, say so.
   function notKnownYetHtml() {
     if (bootState === 'unreachable') {
-      return `<div class="empty-state">${mascotSvg('sleepy', { width: 170 })}<strong>Can't reach your loops right now.</strong>They're safe in your account. Check your connection, then try again.<div><button class="btn btn-ghost" type="button" data-action="boot-retry">Try again</button></div></div>`;
+      return `<div class="empty-state">${mascotSvg('sleepy', { width: 170 })}<strong>Can’t reach your loops right now.</strong>They’re safe in your account. Check your connection, then try again.<div><button class="btn btn-ghost" type="button" data-action="boot-retry">Try again</button></div></div>`;
     }
     return `<div class="loop-bars" role="status" aria-label="Loading your loops"><span></span><span></span><span></span></div>`;
   }
@@ -5978,6 +6347,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       html += `<div class="tab-panel active" id="tab-now">`;
       const sweepNow = sweepBannerItems();
       if (sweepNow.length) html += sweepBannerHtml(sweepNow);
+      noteHiddenActive(visible, known);
       if (visible.length) {
         html += `<div class="loop-stack" data-active-stack="1">${visible.map((l,i) => (i === 1 ? `<div class="up-next-label">Up next</div>` : '') + cardHtml(l,i, { draggable: true, total: visible.length, focus: i === 0 })).join('')}</div>`;
         if (hidden > 0 && !view.expanded) {
@@ -5987,12 +6357,12 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         html += notKnownYetHtml();
       } else if (Combo.count() >= 2) {
         const n = Combo.count();
-        html += `<div class="empty-state cleared">${mascotSvg('proud', { width: 210, className: Combo.fresh() ? 'mascot-sealing' : '', label: 'The mascot, proud, closed into a ring' })}<strong>Active is clear.</strong>${n} closes, one full chord. Enjoy the quiet.${sharePromptHtml()}</div>`;
+        html += `<div class="empty-state cleared">${mascotSvg('proud', { width: 210, className: Combo.fresh() ? 'mascot-sealing' : '', label: 'The mascot, proud, closed into a ring' })}<strong>Active is clear.</strong>${n} closes, one full chord.${sharePromptHtml()}</div>`;
       } else if (inbox.length) {
-        // Unsorted captures are still open loops, so the head isn't clear.
+        // Unsorted captures are still open loops, so the head isn’t clear.
         html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Active is clear.</strong>${inbox.length} in Inbox to sort.<div><button class="btn btn-ghost" type="button" data-action="set-tab" data-tab="inbox">Sort Inbox</button></div></div>`;
       } else {
-        html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Your head is clear.</strong>Capture a loop, then define it when you're ready.</div>`;
+        html += `<div class="empty-state">${mascotSvg('calm', { width: 190 })}<strong>Your head is clear.</strong>Capture a loop, then sort it when you’re ready.</div>`;
       }
       html += `</div>`;
     }
@@ -6025,7 +6395,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       } else if (!known) {
         html += notKnownYetHtml();
       } else {
-        html += `<div class="empty-state">${mascotSvg('sleepy', { width: 190 })}<strong>Nothing parked.</strong>Park loops here when the next move isn't yours yet.</div>`;
+        html += `<div class="empty-state">${mascotSvg('sleepy', { width: 190 })}<strong>Nothing parked.</strong>Park loops here when the next move isn’t yours yet.</div>`;
       }
       html += `</div>`;
     }
@@ -6068,7 +6438,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
               <p class="loop-title">${esc(loop.rawText)}</p>
               ${loopMetaHtml(loop)}
               <div class="loop-card-bottom">
-                <button class="btn-action btn-primary" data-action="define-raw" data-loop-id="${esc(loop.id)}">Define and route</button>
+                <button class="btn-action" data-action="define-raw" data-loop-id="${esc(loop.id)}">Sort it</button>
               </div>
             </article>`;
         });
@@ -6076,13 +6446,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       } else if (!known) {
         html += notKnownYetHtml();
       } else {
-        html += `<div class="empty-state">${mascotSvg('cheeky', { width: 190 })}<strong>Inbox zero.</strong>Captured loops land here before you define where they belong.</div>`;
+        html += `<div class="empty-state">${mascotSvg('cheeky', { width: 190 })}<strong>Inbox zero.</strong>New loops wait here until you sort them.</div>`;
       }
       html += `</div>`;
     }
 
     html += `
-      <button class="fab" data-action="open-capture" type="button">
+      <button class="fab${fabTucked ? ' tucked' : ''}" data-action="open-capture" type="button">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         Capture
       </button>`;
@@ -6129,7 +6499,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // offer, never an automatic change: "Wake it Fri 9:00 AM?". Accepting it
   // parks the loop until then instead of adding it to Inbox.
   function captureWhen(ov) {
-    // A Schedule loop's time is when it happens, not when to bring it back.
+    // A Schedule loop’s time is when it happens, not when to bring it back.
     if (!ov || ov.kind === 'schedule') return null;
     const text = (ov.rawText || '').trim();
     if (!text) return null;
@@ -6174,10 +6544,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // ── DEFINE AND ROUTE ──
   // Three short steps, one question each:
   //   1. What kind of attention?  (tap = next)
-  //   2. The kind's own next-step question  (the part that quiets the loop)
+  //   2. The kind’s own next-step question  (the part that quiets the loop)
   //   3. Where does it go?  (tap = done)
   const DEFINE_Q = {
-    do:       { q: "What's the very next step you can see?", ph: 'e.g. Open the doc and write the first line' },
+    do:       { q: "What’s the very next step you can see?", ph: 'e.g. Open the doc and write the first line' },
     decide:   { q: 'What exactly are you deciding?',          ph: 'e.g. Air 15 or X1, decide by Friday' },
     ask:      { q: 'Who do you need, and for what?',          ph: 'e.g. Bilal: can he start before the 15th?' },
     schedule: { q: 'When will it happen?',                    ph: 'e.g. Saturday 10am, book it on Thursday' },
@@ -6185,15 +6555,15 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   };
   const KIND_HINT = {
     do: 'A concrete action you can start now',
-    decide: "A choice you're holding open",
+    decide: "A choice you’re holding open",
     ask: 'Something you need from someone',
     schedule: 'Needs a real time on the calendar',
     let_go: 'Choose to release it'
   };
 
-  // Where Define's "When is it?" starts: the time already picked, else what
+  // Where Define’s "When is it?" starts: the time already picked, else what
   // the note says, else empty. Never an invented default: a "tomorrow 9:00"
-  // you didn't choose is a false answer one tap away from being saved.
+  // you didn’t choose is a false answer one tap away from being saved.
   function defineWhen(loop, ov) {
     const picked = ov.at ? new Date(ov.at) : (loop.details && loop.details.at ? new Date(loop.details.at) : null);
     if (picked && !Number.isNaN(picked.getTime())) return { date: picked, readFrom: null };
@@ -6234,9 +6604,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         <div class="step-kind">${kindChip}</div>
         <h3 class="step-q" id="define-when-q">When is it?</h3>
         <div class="define-when" role="group" aria-labelledby="define-when-q">
-          ${scheduleFieldsHtml('define', when.date, true)}
+          ${scheduleFieldsHtml('define', when.date, true, ov.repeat !== undefined ? ov.repeat : ((loop.details && loop.details.repeat) || parseRepeat(rawText) || parseRepeat(loop.promptAnswer)))}
         </div>
-        ${when.readFrom ? `<p class="input-hint">I read “${esc(when.readFrom)}” from your note. Change it if that’s wrong.</p>` : ''}
+        ${when.readFrom ? `<p class="input-hint">Read from your note: “${esc(when.readFrom)}”. Change it if that’s wrong.</p>` : ''}
         <div class="overlay-actions">
           <button class="btn btn-ghost" data-action="define-next" data-skip="1">Not sure yet</button>
           <button class="btn btn-primary" data-action="define-next">Next</button>
@@ -6249,7 +6619,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         <h3 class="step-q"><label for="define-detail-input">${q.q}</label></h3>
         <textarea class="big-input" id="define-detail-input" rows="2" placeholder="${esc(q.ph)}" maxlength="${MAX_LOOP_TEXT_LEN}" enterkeyhint="next" aria-describedby="define-detail-hint">${esc(ans)}</textarea>
         <div class="input-hint-row">
-          <p class="input-hint" id="define-detail-hint">One sentence is enough. This is the part that quiets the loop.</p>
+          <p class="input-hint" id="define-detail-hint">One sentence is enough.</p>
           <span class="char-counter" id="define-detail-counter" aria-live="polite">${ans.length}/${MAX_LOOP_TEXT_LEN}</span>
         </div>
         <div class="overlay-actions">
@@ -6295,7 +6665,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         <div class="define-top">
           ${back}
           <div class="define-progress" aria-hidden="true">${bars}</div>
-          <span class="define-stepcount" id="define-title-label">Define · ${step} of 3</span>
+          <span class="define-stepcount" id="define-title-label">Sort · ${step} of 3</span>
           ${close}
         </div>
         <textarea class="define-title-input" id="define-raw-input" rows="1" maxlength="${MAX_LOOP_TEXT_LEN}" aria-label="Loop text" enterkeyhint="done">${esc(rawText)}</textarea>
@@ -6343,6 +6713,22 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
   }
 
+  // Reordering from the menu: the way to do it on a phone, where cards can’t
+  // be dragged and carry no arrows.
+  function activeOrderItems(loop) {
+    if (loop.status !== 'active') return '';
+    const order = data.loops.filter(l => l.status === 'active').sort((a, b) => (b.position || 0) - (a.position || 0));
+    const i = order.findIndex(l => l.id === loop.id);
+    if (i < 0 || order.length < 2) return '';
+    const item = (action, label, path) => `<button class="menu-item" data-action="${action}" data-loop-id="${esc(loop.id)}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="${path}" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            ${label}
+          </button>`;
+    return (i > 0 ? item('make-now', 'Make it Now', 'M3 3h8M7 11V5.5M4.5 8 7 5.5 9.5 8') : '') +
+      (i > 1 ? item('move-loop-up', 'Move up', 'M7 11V3M4 6l3-3 3 3') : '') +
+      (i < order.length - 1 ? item('move-loop-down', 'Move down', 'M7 3v8M4 8l3 3 3-3') : '');
+  }
+
   function renderMenu(loop) {
     if (!loop) return '';
     const m = kindMeta[loop.kind] || kindMeta.inbox;
@@ -6367,11 +6753,16 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           </button>
           ${inbox ? `<button class="menu-item menu-item-primary" data-action="define-raw" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-            Define and route
+            Sort it
           </button>` : ''}
           ${!inbox ? `<button class="menu-item" data-action="reclarify-kind" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2a5 5 0 0 1 5 5M7 12a5 5 0 0 1-5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M12 4V7H9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10V7h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Change kind
+          </button>` : ''}
+          ${activeOrderItems(loop)}
+          ${canRepeat(loop) ? `<button class="menu-item" data-action="open-repeat" data-loop-id="${esc(loop.id)}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M11.5 5.5A4.6 4.6 0 0 0 3 4.6M2.5 8.5A4.6 4.6 0 0 0 11 9.4M3 2v2.6h2.6M11 12V9.4H8.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            ${loop.details && REPEATS[loop.details.repeat] ? `Repeats ${REPEATS[loop.details.repeat].toLowerCase()}` : 'Repeat…'}
           </button>` : ''}
           ${active ? `<button class="menu-item" data-action="move-waiting" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
@@ -6404,13 +6795,30 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       </div>`;
   }
 
+  function renderRepeat(loop) {
+    if (!loop) return '';
+    const cur = (loop.details && loop.details.repeat) || '';
+    const first = new Date(repeatAnchor(loop));
+    const opts = [['', 'Doesn’t repeat', 'Closing it closes it']].concat(Object.keys(REPEATS).map(k => [k, REPEATS[k],
+      k === 'day' ? `At ${clockText(first)}` : k === 'week' ? `${first.toLocaleDateString(undefined, { weekday: 'long' })}s at ${clockText(first)}` : `On day ${first.getDate()} of each month`]));
+    return `
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="repeat-title">
+        <div class="overlay-header"><div class="overlay-meta"></div>${SHEET_CLOSE}</div>
+        <h2 class="overlay-title" id="repeat-title">Repeat “${esc(shortText(loop.rawText, 40))}”</h2>
+        <p class="overlay-subtitle">When you close it, the next one is set up and parked until its time. Letting it go ends the series.</p>
+        <div class="act-list" role="radiogroup" aria-labelledby="repeat-title">
+          ${opts.map(([k, label, sub]) => actBtn({ action: 'set-repeat', label, sub, loopId: loop.id, attrs: `data-repeat="${k}" role="radio" aria-checked="${cur === k}"`, primary: cur === k, icon: ACT_ICON.next })).join('')}
+        </div>
+      </div>`;
+  }
+
   function renderChangekind(loop) {
     if (!loop) return '';
     const kinds = ['do','decide','ask','schedule','let_go'];
     const opts = kinds.map(k => {
       const m = kindMeta[k];
       const sel = loop.kind === k ? ` selected ${k}` : '';
-      // Switching to Schedule asks when it happens (Define's time step).
+      // Switching to Schedule asks when it happens (Define’s time step).
       const act = k === 'schedule' && loop.kind !== 'schedule' ? 'define-schedule' : 'set-kind-direct';
       return `<button class="kind-option${sel}" data-action="${act}" data-kind="${k}" data-loop-id="${esc(loop.id)}" type="button">
         <div class="kind-option-dot"></div>
@@ -6457,7 +6865,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             <button class="btn btn-ghost" data-action="close-overlay">Close</button>
           </div>
         ` : `
-          <div class="sync-info">Enter your email — we'll send a magic link. No password needed.</div>
+          <div class="sync-info">Enter your email to get a sign-in link. No password needed.</div>
           <div class="email-row">
             <input type="email" class="email-input" id="sync-email" placeholder="you@example.com" autocomplete="email">
             <button class="btn btn-primary" data-action="send-magic-link">Send link</button>
@@ -6477,13 +6885,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   const WHY_SCENES = [
     { h: 'Your head is full of open loops.', p: 'Every unfinished thing keeps pulling at you.' },
     { h: 'One next step quiets a loop.', p: 'Studies show a plan calms the nagging, even before it’s done.', cite: 'Masicampo & Baumeister, 2011' },
-    { h: 'Catch it. Shape it. Focus.', p: 'Drop it in Inbox, give it one next step, do one at a time.' },
+    { h: 'Catch it. Sort it. Focus.', p: 'Drop it in Inbox, give it one next step, do one at a time.' },
     { h: 'Close it. Let it go.', p: 'Every closed loop lands on your shelf, and out of your head.' },
     { h: 'Made for crowded heads.', p: 'If your mind keeps saying “I still need to…”, this is for you.' }
   ];
 
   // Story soundtrack: one mood per scene, same instrument and scale as the
-  // app's sounds. Plays when Sounds are on. The voice is opt-in per sheet.
+  // app’s sounds. Plays when Sounds are on. The voice is opt-in per sheet.
   const StoryAudio = (() => {
     let ctx = null, master = null, group = null;
     const N = { A2: 110, D3: 146.83, A3: 220, D4: 293.66, E4: 329.63, Fs4: 369.99, A4: 440, B4: 493.88, D5: 587.33, E5: 659.25, Fs5: 739.99, A5: 880, B5: 987.77 };
@@ -6582,7 +6990,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       stopClip();
       if (!ensure()) { onEnd(); return; }
       let settled = false;
-      // Never stall: if the clip isn't decoded in 4s, play it the plain way.
+      // Never stall: if the clip isn’t decoded in 4s, play it the plain way.
       const fallback = setTimeout(() => { if (settled || my !== voiceTicket) return; settled = true; elementClip(i, onEnd); }, 4000);
       loadClip(i).then(buf => {
         if (settled || my !== voiceTicket) return;
@@ -6622,7 +7030,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         pluck(N.A4, 1.95, 0.45, 0.7); pluck(N.D5, 2.12, 0.45, 0.7); pluck(N.Fs5, 2.3, 0.45, 1.4);
         [3.1, 3.9, 4.7].forEach(t => pluck(N.D4, t, 0.25, 0.9));
       },
-      // 4 · close: the app's own closing sound, suspended then resolved
+      // 4 · close: the app’s own closing sound, suspended then resolved
       () => {
         pluck(N.E4, 0.5, 0.55, 1.0); pluck(N.A4, 0.57, 0.55, 1.2);
         thud(1.9, 0.38); pluck(N.D4, 1.91, 0.65, 1.8); pluck(N.Fs4, 1.94, 0.5, 1.8); pluck(N.D5, 1.97, 0.55, 2.0);
@@ -6803,14 +7211,14 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return `
       <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
         <div class="overlay-header">
-          <div class="overlay-meta"><div class="overlay-eyebrow">Settings</div></div>
+          <div class="overlay-meta"></div>
           <button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
         <h2 class="overlay-title" id="settings-title">Settings</h2>
 
         <section class="settings-section">
           <div class="settings-label">Theme</div>
-          <div class="settings-helper">Choose the view that feels calmest right now.</div>
+          <div class="settings-helper">Light or dark. It remembers your choice.</div>
           <div class="seg-row" role="group" aria-label="Theme">
             <button type="button" data-action="set-theme" data-theme="dark" class="${view.theme === 'dark' ? 'active' : ''}" aria-pressed="${view.theme === 'dark'}">Dark</button>
             <button type="button" data-action="set-theme" data-theme="light" class="${view.theme === 'light' ? 'active' : ''}" aria-pressed="${view.theme === 'light'}">Light</button>
@@ -6853,7 +7261,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
         <section class="settings-section">
           <div class="settings-label">Why Open Loops</div>
-          <p class="settings-helper">Why this exists, who it's for, and how to use it best.</p>
+          <p class="settings-helper">Why this exists, who it’s for, and how to use it best.</p>
           <button class="btn btn-ghost" data-action="open-why">Read the why</button>
         </section>
 
@@ -6868,6 +7276,15 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           <p class="settings-helper">Know someone with a crowded head? Send them Open Loops.</p>
           <button class="btn btn-ghost" data-action="share-app">Share Open Loops</button>
         </section>
+
+        ${Sync.isLoggedIn() ? `<section class="settings-section">
+          <div class="settings-label">Your data</div>
+          <p class="settings-helper">Every loop you have, open and closed, as a file you keep.</p>
+          <div class="settings-row-buttons">
+            <button class="btn btn-ghost" data-action="export-loops">Download your loops</button>
+            <button class="btn btn-ghost" data-action="open-delete-account">Delete account…</button>
+          </div>
+        </section>` : ''}
 
         <section class="settings-section">
           <div class="settings-label">App version</div>
@@ -6917,7 +7334,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             <div class="auth-gate-sent">
               <div class="auth-gate-sent-icon">✉️</div>
               <div class="auth-gate-sent-title">Check your inbox.</div>
-              <div class="auth-gate-sent-body">We sent a magic link to <strong>${esc(view.authGateEmail)}</strong>.<br>Tap the link to sign in — no password needed.</div>
+              <div class="auth-gate-sent-body">Sign-in link sent to <strong>${esc(view.authGateEmail)}</strong>.<br>Tap the link to sign in. No password needed.</div>
             </div>
             <div class="auth-gate-hint" style="margin-top:24px">
               Wrong email? <button type="button" class="inline-link" data-action="auth-gate-reset">Try again</button>
@@ -6942,7 +7359,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             <input type="email" class="auth-gate-input" id="auth-gate-email" placeholder="your@email.com" autocomplete="email" value="${esc(view.authGateEmail)}">
             <button class="auth-gate-btn" id="auth-gate-btn" data-action="auth-gate-send">Send link</button>
           </div>
-          <p class="auth-gate-hint">We'll email you a sign-in link. No password.</p>
+          <p class="auth-gate-hint">A sign-in link comes by email. No password.</p>
           <a class="aux-credit" href="https://auxila.cc" target="_blank" rel="noopener">Powered by <span class="aux-word">auxila<i>.cc</i></span></a>
         </div>
       </div>`;
@@ -6969,19 +7386,19 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     {
       eyebrow: '1 of 4',
       title: 'Capture.',
-      body: 'A thought entered your head. Write it down. That act alone quiets it.',
+      body: 'Something on your mind? Write it down, one thing at a time.',
       visual: `
         <div class="onboarding-visual">
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Reply to the contractor quote</span></div>
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Choose a new laptop</span></div>
-          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Raw</span><span>Check in with Sarah</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Inbox</span><span>Reply to the contractor quote</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Inbox</span><span>Choose a new laptop</span></div>
+          <div class="onboarding-visual-row"><span class="kind-chip inbox"><span class="kind-dot"></span>Inbox</span><span>Check in with Sarah</span></div>
         </div>`,
       next: 'Next',
     },
     {
       eyebrow: '2 of 4',
-      title: 'Activate.',
-      body: 'Give it a kind — Do, Decide, Ask, Schedule, Let go. Naming the attention is half the work.',
+      title: 'Sort.',
+      body: 'Give it a kind: Do, Decide, Ask, Schedule or Let go. The kind says what it needs next.',
       visual: `
         <div class="onboarding-visual">
           <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
@@ -6996,8 +7413,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     },
     {
       eyebrow: '3 of 4',
-      title: 'Park what isn\'t yours.',
-      body: 'If the next move belongs to someone else, or to a later day, park it and pick when it should come back. It\'s waiting, not forgotten.',
+      title: 'Park what isn’t yours.',
+      body: 'If the next move belongs to someone else, or to a later day, park it and pick when it should come back.',
       visual: `
         <div class="onboarding-visual" style="text-align:center;padding:18px 20px;">
           <div style="font-size:13px;color:var(--text-2);line-height:1.7;">Parked loops sit quietly, then come back<br>to Up next on the day you picked.</div>
@@ -7007,10 +7424,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     {
       eyebrow: '4 of 4',
       title: 'Close.',
-      body: 'When a loop is done — whether you did it or let it go — close it. The point is relief.',
+      body: 'When a loop is done, or you decide to let it go, close it.',
       visual: `
         <div class="onboarding-visual" style="text-align:center;padding:18px 20px;">
-          <div style="font-size:13px;color:var(--text-2);line-height:1.7;">Closed loops are kept, not deleted.<br>You can always look back.</div>
+          <div style="font-size:13px;color:var(--text-2);line-height:1.7;">Closed loops stay on your shelf.<br>You can always look back.</div>
         </div>`,
       next: 'Start capturing',
     },
@@ -7047,7 +7464,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           ${!isLast ? `<div class="onboarding-skip"><button type="button" class="inline-link" data-action="onboarding-skip">Skip tutorial</button></div>` : ''}`;
     const existing = root.querySelector('.onboarding-card');
     if (existing) {
-      // Already open: never replay the card's entrance. A new step slides in.
+      // Already open: never replay the card’s entrance. A new step slides in.
       const prevStep = Number(existing.dataset.step);
       existing.style.animation = 'none';
       if (prevStep === step) return;
@@ -7103,10 +7520,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   }
 
   // ── PRIMARY ACTIONS ──
-  // Each kind's button does what it says, and every "not yet" asks "when?".
+  // Each kind’s button does what it says, and every "not yet" asks "when?".
   //   Do       → step done (set the next one) or all done
   //   Decide   → name the decision, optionally start the next Do
-  //   Ask      → send it, then park it until it's time to check back;
+  //   Ask      → send it, then park it until it’s time to check back;
   //              when it wakes: did they reply?
   //   Schedule → a real calendar event (Google link or .ics file), then close
   //   Let go   → let it go
@@ -7200,27 +7617,27 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           actField('act-decision', 'Your decision',
             `<textarea class="big-input act-input${options.length ? ' no-autofocus' : ''}" id="act-decision" rows="1" maxlength="${MAX_LOOP_TEXT_LEN}" placeholder="e.g. Go with the first one" enterkeyhint="next">${esc(ov.decision || '')}</textarea>`) + `
           <div class="act-list">
-            ${actBtn({ action: 'decide-confirm', label: "That's my decision", primary: true, loopId: id, icon: ACT_ICON.next })}
+            ${actBtn({ action: 'decide-confirm', label: "That’s my decision", primary: true, loopId: id, icon: ACT_ICON.next })}
             ${notYetBtn(loop, 'Still deciding')}
           </div>${editLink}`;
       }
     } else if (kind === 'ask') {
-      const { who, ask } = parseAsk(loop.promptAnswer);
+      const { who, ask } = askOf(loop);
       const them = who || 'them';
       if (step === 'reply') {
         title = who ? `Did ${who} reply?` : 'Did they reply?';
         sub = `You asked ${relativeDay(d.sentAt)}${d.nudges ? ` and nudged ${d.nudges === 1 ? 'once' : d.nudges + ' times'}` : ''}.`;
-        body = actLoopBox(loop.rawText, ask) + `
+        body = actLoopBox(loop.rawText, d.sentText ? `You sent: ${d.sentText}` : ask) + `
           <div class="act-list">
             ${actBtn({ action: 'complete-done', label: 'Got it, close it', primary: true, loopId: id, icon: ACT_ICON.ring })}
             ${actBtn({ action: 'ask-nudge', label: `Nudge ${them}`, sub: 'A short follow-up, ready to send', loopId: id, icon: ACT_ICON.send })}
             ${actBtn({ action: 'act-step', label: 'Wait longer', sub: 'Pick when to check back', loopId: id, attrs: 'data-step="sent" data-wait="1"', icon: ACT_ICON.clock })}
           </div>`;
       } else if (step === 'sent') {
-        title = ov.waitOnly ? 'When should I check back?' : `Sent. Now it's on ${them}.`;
+        title = ov.waitOnly ? 'When should you check back?' : `Sent. Now it’s on ${them}.`;
         sub = 'An Ask closes when they answer, not when you hit send.';
         const presets = wakePresets('ask').map(p => actBtn({
-          action: 'ask-park', label: p.label, sub: formatWake(p.when), loopId: id,
+          action: 'ask-park', label: p.label, sub: formatEvent(p.when.toISOString()), loopId: id,
           attrs: `data-when="${p.when.toISOString()}"`, icon: ACT_ICON.clock
         })).join('');
         body = `<div class="act-list">${presets}
@@ -7247,7 +7664,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         sub = atMs !== null ? `It was ${formatEvent(new Date(atMs).toISOString())}.` : '';
         body = actLoopBox(loop.rawText, loop.promptAnswer) + `
           <div class="act-list">
-            ${actBtn({ action: 'complete-done', label: 'Yes, close the loop', primary: true, loopId: id, icon: ACT_ICON.ring })}
+            ${actBtn({ action: 'complete-done', label: 'Yes, close it', primary: true, loopId: id, icon: ACT_ICON.ring })}
             ${actBtn({ action: 'act-step', label: 'It moved', sub: 'Pick its new day and time', loopId: id, attrs: 'data-step="main"', icon: ACT_ICON.clock })}
             ${actBtn({ action: 'move-released', label: 'It isn’t happening', sub: 'Let it go', loopId: id, icon: ACT_ICON.drift })}
           </div>`;
@@ -7257,11 +7674,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         const typed = fromScheduleInputs(ov.schedDate, ov.schedTime);
         const pickStart = typed || (upcoming ? new Date(atMs) : null);
         title = upcoming ? 'Change the time' : 'When is it?';
-        body = actLoopBox(loop.rawText, loop.promptAnswer) + scheduleFieldsHtml('sched', pickStart) + `
+        body = actLoopBox(loop.rawText, loop.promptAnswer) + scheduleFieldsHtml('sched', pickStart, false, ov.schedRepeat !== undefined ? ov.schedRepeat : (d.repeat || ''), seriesOf(loop)) + `
           <div class="act-list">
             ${actBtn({ action: 'sched-save', label: 'Save the time', primary: true, loopId: id, icon: ACT_ICON.clock })}
             ${upcoming ? actBtn({ action: 'act-step', label: 'Put it on my calendar too', sub: 'Google, Apple, Outlook or other', loopId: id, attrs: 'data-step="cal"', icon: ACT_ICON.cal }) : ''}
-            ${actBtn({ action: 'complete-done', label: 'It’s done', sub: 'Close the loop now', loopId: id, icon: ACT_ICON.ring })}
+            ${actBtn({ action: 'complete-done', label: 'It’s done', sub: 'Close it now', loopId: id, icon: ACT_ICON.ring })}
           </div>${editLink}`;
       } else if (step === 'confirm') {
         title = 'On your calendar?';
@@ -7269,13 +7686,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         const when = `${start.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}, ${clockText(start)}`;
         body = actLoopBox(ov.calTitle || loop.rawText, when) + `
           <div class="act-list">
-            ${actBtn({ action: 'complete-done', label: 'Yes, close the loop', primary: true, loopId: id, icon: ACT_ICON.ring })}
-            ${actBtn({ action: 'act-step', label: "It didn't save. Try again", loopId: id, attrs: 'data-step="main"', icon: ACT_ICON.cal })}
+            ${actBtn({ action: 'complete-done', label: 'Yes, close it', primary: true, loopId: id, icon: ACT_ICON.ring })}
+            ${actBtn({ action: 'act-step', label: "It didn’t save. Try again", loopId: id, attrs: 'data-step="main"', icon: ACT_ICON.cal })}
             ${notYetBtn(loop)}
           </div>`;
       } else {
         title = 'Add to calendar';
-        sub = saved ? 'Check the time, then pick a calendar.' : parsed ? `I read "${parsed.text}" from your note. Check it, then pick a calendar.` : 'Pick a day and time, then a calendar.';
+        sub = saved ? 'Check the time, then pick a calendar.' : parsed ? `Read from your note: “${parsed.text}”. Check it, then pick a calendar.` : 'Pick a day and time, then a calendar.';
         body = actField('cal-title', 'Event',
             `<input class="big-input act-input no-autofocus" id="cal-title" type="text" maxlength="200" value="${esc(ov.calTitle != null ? ov.calTitle : loop.rawText)}">`) + `
           <div class="act-row">
@@ -7285,7 +7702,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           <div class="act-list">
             ${actBtn({ action: 'cal-google', label: 'Google Calendar', sub: 'Opens a ready-made event, 30 minutes', primary: true, loopId: id, icon: ACT_ICON.cal })}
             ${actBtn({ action: 'cal-ics', label: 'Apple, Outlook or other', sub: 'Downloads an event file', loopId: id, icon: ACT_ICON.file })}
-            ${actBtn({ action: 'complete-done', label: 'It’s already on my calendar', sub: 'Close the loop now', loopId: id, icon: ACT_ICON.ring })}
+            ${actBtn({ action: 'complete-done', label: 'It’s already on my calendar', sub: 'Close it now', loopId: id, icon: ACT_ICON.ring })}
           </div>
           <button type="button" class="act-link" data-action="act-step" data-step="main">Back</button>`;
       }
@@ -7301,7 +7718,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       // Do (and any loop without a kind yet).
       if (step === 'next') {
         const typed = (ov.nextText || '').trim();
-        title = "Nice. What's next?";
+        title = "Nice. What’s next?";
         sub = 'Concrete enough that you could start right now without planning.';
         body = actField('act-next', 'Next visible step',
             `<textarea class="big-input act-input" id="act-next" rows="2" maxlength="${MAX_LOOP_TEXT_LEN}" placeholder="e.g. Draft the three key messages" enterkeyhint="done">${esc(ov.nextText || '')}</textarea>`) + `
@@ -7311,7 +7728,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           </div>`;
       } else {
         title = 'How did it go?';
-        sub = "A Do holds your next step. Finishing the step isn't always finishing the loop.";
+        sub = "A Do holds your next step. Finishing the step isn’t always finishing the loop.";
         body = actLoopBox(loop.rawText, loop.promptAnswer ? `Next: ${loop.promptAnswer}` : '') + `
           <div class="act-list">
             ${actBtn({ action: 'complete-done', label: 'All done, close it', primary: true, loopId: id, icon: ACT_ICON.ring })}
@@ -7332,9 +7749,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const ov = view.overlay || {};
     if ((ov.define ? ov.define.kind : loop.kind) === 'schedule') return renderScheduleWhen(loop);
     const rawText = ov.define ? ov.define.rawText : loop.rawText;
-    const current = loop.status === 'waiting' && loop.wakeAt ? ` Right now it's set for ${formatWake(loop.wakeAt)}.` : '';
+    const current = loop.status === 'waiting' && loop.wakeAt ? ` Right now it’s set for ${formatWake(loop.wakeAt)}.` : '';
     const presets = wakePresets('park').map(p => actBtn({
-      action: 'park-until', label: p.label, sub: formatWake(p.when), loopId: loop.id,
+      action: 'park-until', label: p.label, sub: formatEvent(p.when.toISOString()), loopId: loop.id,
       attrs: `data-when="${p.when.toISOString()}"`, icon: ACT_ICON.clock
     })).join('');
     const def = ov.pickDate ? new Date(ov.pickDate) : atTime(addDays(new Date(), 2), 9);
@@ -7361,14 +7778,14 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     });
   }
 
-  // "Not yet" for a Schedule loop: it's happening at a different time, so
+  // "Not yet" for a Schedule loop: it’s happening at a different time, so
   // the only question is when. A day and a time, no quick presets.
   function renderScheduleWhen(loop) {
     const at = scheduleAt(loop);
     const start = at !== null && at > Date.now() ? new Date(at) : null;
     const body = actLoopBox(loop.rawText, at !== null ? `${at > Date.now() ? 'Now' : 'Was'} ${formatEvent(new Date(at).toISOString())}` : '') + `
       <div class="act-pick">
-        ${scheduleFieldsHtml('when-sched', start)}
+        ${scheduleFieldsHtml('when-sched', start, false, (loop.details && loop.details.repeat) || '', seriesOf(loop))}
         <button type="button" class="btn btn-primary act-pick-go" data-action="park-until" data-when="schedule" data-loop-id="${esc(loop.id)}">Save the time</button>
       </div>
       <button type="button" class="act-link" data-action="park-until" data-when="schedule-clear" data-loop-id="${esc(loop.id)}">Not sure yet</button>`;
@@ -7382,7 +7799,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // Keep what the person typed when the sheet changes step.
   function readActInputs(ov) {
     const val = id => { const el = document.getElementById(id); return el ? el.value : null; };
-    const map = { 'act-next': 'nextText', 'act-decision': 'decision', 'act-spawn': 'spawnText', 'act-msg': 'message', 'cal-title': 'calTitle', 'cal-date': 'calDate', 'cal-time': 'calTime', 'sched-date': 'schedDate', 'sched-time': 'schedTime' };
+    const map = { 'act-next': 'nextText', 'act-decision': 'decision', 'act-spawn': 'spawnText', 'act-msg': 'message', 'cal-title': 'calTitle', 'cal-date': 'calDate', 'cal-time': 'calTime', 'sched-date': 'schedDate', 'sched-time': 'schedTime', 'sched-repeat': 'schedRepeat', 'sched-scope': 'schedScope' };
     Object.keys(map).forEach(id => { const v = val(id); if (v !== null) ov[map[id]] = v; });
   }
 
@@ -7436,18 +7853,18 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           <button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
         <h2 class="overlay-title" id="confirm-delete-title" style="font-size:1.4rem">Delete this loop?</h2>
-        <p class="overlay-subtitle">You can undo for a few seconds after. If you'd rather keep it archived, close it instead.</p>
+        <p class="overlay-subtitle">You can undo for a few seconds after. If you’d rather keep it archived, close it instead.</p>
         <p style="font-size:13px;color:var(--text-2);margin:0 0 20px;padding:10px 12px;background:var(--surface-2);border-radius:8px;line-height:1.5">${esc(loop.rawText)}</p>
         <div class="overlay-actions">
           <button class="btn btn-ghost" data-action="close-overlay">Cancel</button>
-          <button class="btn btn-primary" data-action="confirm-delete" data-loop-id="${esc(loop.id)}" style="background:var(--error);color:#fff">Delete</button>
+          <button class="btn btn-primary" data-action="confirm-delete" data-loop-id="${esc(loop.id)}" style="background:var(--error);color:var(--error-ink)">Delete</button>
         </div>
       </div>`;
   }
 
   // ── RENDER SIDEBAR ──
   // The sidebar element is hidden via CSS (display:none) on every viewport.
-  // Kept as a no-op so renderAll() doesn't need a special case; if a sidebar
+  // Kept as a no-op so renderAll() doesn’t need a special case; if a sidebar
   // is reintroduced, this is the place to wire it.
   function renderSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -7617,7 +8034,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       let tries = 0;
       const show = () => {
         if (view.overlay && tries++ < 20) { setTimeout(show, 1000); return; }
-        toast('Sound is on. You can turn it off in Settings.');
+        toast('Sound is on. You can turn it off in Settings.', { tip: true });
       };
       setTimeout(show, 1700);
     }
@@ -7655,7 +8072,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   // ── MOTION ──
   // Every move shows where the loop went. Data is saved first; motion only
-  // replays the change. Flights and sounds run only for this device's own
+  // replays the change. Flights and sounds run only for this device’s own
   // taps, never for realtime updates arriving from another device.
   const Motion = (() => {
     const EASE = 'cubic-bezier(.2,.8,.2,1)';
@@ -7730,7 +8147,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
     const tabFor = s => s === 'active' ? 'now' : s === 'waiting' ? 'later' : s === 'inbox' ? 'inbox' : 'done';
 
-    // A ball of clay in the loop's kind color.
+    // A ball of clay in the loop’s kind color.
     function token(color, size) {
       const t = document.createElement('div');
       t.className = 'motion-token';
@@ -7904,7 +8321,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       };
     }
 
-    // Capture: the sheet's pellet drops onto the new Inbox card.
+    // Capture: the sheet’s pellet drops onto the new Inbox card.
     function landCapture(el, fromRect, kind) {
       el.style.animation = 'none';
       if (!fromRect || reduced()) { captured(); return; }
@@ -8127,7 +8544,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       }
       let ceremony = false;
 
-      // The panel's fade-in is for switching tabs only. Re-renders within the
+      // The panel’s fade-in is for switching tabs only. Re-renders within the
       // same view (reorder, close, park) must not flash the whole list.
       if (!tabChanged) main.querySelectorAll('.tab-panel').forEach(el => { el.style.animation = 'none'; });
 
@@ -8173,7 +8590,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         if (lifted) { from.boxShadow = '0 16px 36px rgba(40,30,10,0.16)'; to.boxShadow = cs.boxShadow === 'none' ? '0 0 0 rgba(0,0,0,0)' : cs.boxShadow; el.style.zIndex = '2'; }
         if (resized) el.style.overflow = 'hidden';
         // While a closing ring is still on screen, hold the promotion so the
-        // two moments don't compete.
+        // two moments don’t compete.
         const anim = el.animate([from, to], { duration: closing ? 460 : 420, delay: hold, easing: EASE, fill: 'backwards' });
         anim.onfinish = anim.oncancel = () => { el.style.overflow = ''; el.style.zIndex = ''; };
         const eb = el.querySelector('.focus-eyebrow');
@@ -8261,7 +8678,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   }
 
   // Finished loops sit on the shelf as rings; loops you let go of sit there
-  // as pebbles. Letting go isn't finishing, so it shouldn't look the same.
+  // as pebbles. Letting go isn’t finishing, so it shouldn’t look the same.
   function shelfItemHtml(loop) {
     if (isLetGo(loop)) {
       return `<svg class="clay-ring clay-pebble" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="14" rx="7.5" ry="5.5" filter="url(#ol-clay-xs)" style="fill:var(--let_go)"/></svg>`;
@@ -8298,12 +8715,16 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (!root) return;
     const ov = view.overlay;
     if (!ov) { root.innerHTML = ''; delete root.dataset.sheet; return; }
+    const tipEl = document.getElementById('toast');
+    if (tipEl && tipEl.dataset.tip) { clearTimeout(toastTimer); tipEl.classList.remove('visible'); delete tipEl.dataset.tip; }
 
     let inner = '';
     if      (ov.type === 'capture')        inner = renderCapture(ov);
     else if (ov.type === 'define-raw')     inner = renderDefineRaw(getLoop(ov.loopId));
     else if (ov.type === 'menu')           inner = renderMenu(getLoop(ov.loopId));
     else if (ov.type === 'change-kind')    inner = renderChangekind(getLoop(ov.loopId));
+    else if (ov.type === 'repeat')         inner = renderRepeat(getLoop(ov.loopId));
+    else if (ov.type === 'delete-account') inner = renderDeleteAccount();
     else if (ov.type === 'sync')           inner = renderSync();
     else if (ov.type === 'settings')       inner = renderSettings();
     else if (ov.type === 'why')            inner = renderWhy();
@@ -8344,8 +8765,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
     autoGrow(document.getElementById('define-raw-input'));
 
-    // Focus first input/button so keyboard users don't have to hunt.
-    // Define's title is editable but not the first job, so skip it.
+    // Focus first input/button so keyboard users don’t have to hunt.
+    // Define’s title is editable but not the first job, so skip it.
     const firstInput = root.querySelector('textarea:not(#define-raw-input):not(.no-autofocus), input[type="email"], input[type="text"]:not(.no-autofocus)');
     if (firstInput) {
       setTimeout(() => firstInput.focus(), 50);
@@ -8413,6 +8834,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // Signed-in local cache + re-render. Supabase remains the source of truth;
   // localStorage only keeps the UI fast and protects queued offline writes.
   function persistAndRender() {
+    ensureRepeats();
     save();
     renderAll();
   }
@@ -8442,15 +8864,15 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // see the auth gate and cannot mutate state.
   function requireLogin() {
     if (Sync.isLoggedIn()) return false;
-    // Showing this phone's saved loops while the sign-in check finishes:
-    // you are signed in, the app just hasn't confirmed it yet.
+    // Showing this phone’s saved loops while the sign-in check finishes:
+    // you are signed in, the app just hasn’t confirmed it yet.
     if (!authReady && currentLocalUserId) { toast('Still opening. One moment.'); return true; }
     toast('Sign in to save your loops.');
     if (authReady) renderAuthGate();
     return true;
   }
 
-  // Save a Schedule loop's time from any picker (Not yet, the card's sheet):
+  // Save a Schedule loop’s time from any picker (Not yet, the card’s sheet):
   // schedulePatch() decides where it waits, then the usual save and sync.
   async function saveScheduleTime(target, atIso, opts = {}, extra = null) {
     const base = extra ? { ...target, ...extra, kind: 'schedule' } : target;
@@ -8504,7 +8926,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         renderAuthGate();
       } catch(err) {
         // Keep label consistent with initial state ("Send link") so repeated
-        // attempts don't look like a different button.
+        // attempts don’t look like a different button.
         if (btn) { btn.disabled = false; btn.textContent = 'Send link'; }
         toast(linkErrorText(err));
       }
@@ -8658,6 +9080,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             if (picked.getTime() <= Date.now()) { toast('Pick a time that is still ahead.'); return; }
             ov.at = picked.toISOString();
             ov.atCleared = false;
+            ov.repeat = readScheduleRepeat('define') || '';
           }
         } else {
           const d = document.getElementById('define-detail-input');
@@ -8690,8 +9113,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const prevLoop = getLoop(ov.loopId);
       // A new note means a new ask: forget that the old one was sent.
       const details = { ...((prevLoop && prevLoop.details) || {}) };
-      if (prevLoop && ans !== (prevLoop.promptAnswer || '')) { delete details.sentAt; delete details.nudges; }
-      // A Schedule loop's time decides where it waits and when it comes back,
+      if (prevLoop && ans !== (prevLoop.promptAnswer || '')) { delete details.sentAt; delete details.nudges; delete details.sentText; }
+      // A Schedule loop’s time decides where it waits and when it comes back,
       // so it never goes through the "when should it come back?" presets:
       // schedulePatch() works it out. Every other kind drops the Schedule
       // time, along with any heads-up that time had set.
@@ -8702,7 +9125,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           if (atIso) { if (details.at !== atIso) delete details.calAt; details.at = atIso; }
           else { delete details.at; delete details.calAt; }
         } else {
-          sched = schedulePatch({ ...(prevLoop || {}), kind: 'schedule', details }, atIso, { status });
+          sched = schedulePatch({ ...(prevLoop || {}), kind: 'schedule', details }, atIso, ov.repeat !== undefined ? { status, repeat: ov.repeat } : { status });
         }
       } else {
         delete details.at;
@@ -8745,7 +9168,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         const when = formatWake(sched.wakeAt);
         announce(finalStatus === 'waiting' ? `Parked. Back with a nudge ${when}.` : `In Up next. Nudge ${when}.`);
       } else {
-        announce(finalStatus === 'active' ? 'Defined. Now in Up next.' : finalStatus === 'waiting' ? 'Defined and parked.' : 'Defined and closed.');
+        announce(finalStatus === 'active' ? 'Sorted. Now in Up next.' : finalStatus === 'waiting' ? 'Sorted and parked.' : 'Sorted and closed.');
       }
       return;
     }
@@ -8880,9 +9303,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (!msg) { toast('Write the message first.'); return; }
       const result = await shareText(msg);
       if (result === 'cancelled') return;
-      if (result === 'failed') { toast("Couldn't open sharing here. Copy the text and send it yourself."); return; }
+      if (result === 'failed') { toast("Couldn’t open sharing here. Copy the text and send it yourself."); return; }
       if (result === 'copied') toast('Copied. Paste it wherever you talk to them.');
       if (view.overlay !== ov) return;
+      if (!ov.nudge) ov.sentText = msg;
       ov.step = 'sent';
       ov.waitOnly = false;
       renderActStep();
@@ -8907,12 +9331,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       // sentAt is the first time it was sent; nudges count the follow-ups.
       if (!details.sentAt) details.sentAt = nowIso();
       if (ov.nudge) details.nudges = (details.nudges || 0) + 1;
+      else if (ov.sentText) details.sentText = ov.sentText;
       const patch = { status: 'waiting', wakeAt, details: cleanDetails(details) };
       updateLoop(target.id, patch);
       closeOverlay();
       await persistAndRender();
       Sync.updateLoop(target.id, patch);
-      const who = parseAsk(target.promptAnswer).who || 'them';
+      const who = askOf(target).who || 'them';
       announce(`Parked. Checking back with ${who} ${formatWake(wakeAt)}.`);
       return;
     }
@@ -8922,7 +9347,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (!target) { closeOverlay(); return; }
       const atIso = readSchedulePick('sched');
       if (!atIso) return;
-      await saveScheduleTime(target, atIso);
+      await saveScheduleTime(target, atIso, schedulePickOpts('sched'));
       return;
     }
     if (action === 'cal-google' || action === 'cal-ics') {
@@ -8983,11 +9408,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const target = getLoop(ov.loopId);
       if (!target) { closeOverlay(); return; }
       if (el.dataset.when === 'schedule' || el.dataset.when === 'schedule-clear') {
-        // A Schedule loop's new time: where it waits follows from it.
+        // A Schedule loop’s new time: where it waits follows from it.
         const atIso = el.dataset.when === 'schedule' ? readSchedulePick('when-sched') : null;
         if (el.dataset.when === 'schedule' && !atIso) return;
         const extra = ov.define ? { rawText: ov.define.rawText, kind: ov.define.kind, promptAnswer: ov.define.promptAnswer } : null;
-        await saveScheduleTime(target, atIso, atIso ? {} : { status: 'waiting' }, extra);
+        await saveScheduleTime(target, atIso, atIso ? schedulePickOpts('when-sched') : { status: 'waiting' }, extra);
         return;
       }
       let wakeAt = null;
@@ -9030,7 +9455,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (requireLogin()) return;
       const target = getLoop(loopId);
       if (!target) { closeOverlay(); return; }
-      // The menu's "Let go": a release, not a finish, whatever the kind.
+      // The menu’s "Let go": a release, not a finish, whatever the kind.
       const patch = { status: 'released', completedAt: nowIso(), details: cleanDetails({ ...target.details, outcome: 'let_go' }) };
       updateLoop(loopId, patch);
       closeOverlay();
@@ -9054,7 +9479,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       delete details.outcome;
       const patch = { status: 'active', position: upNext.position, completedAt: null, details: cleanDetails(details) };
       // Brought back early: drop the wake time it no longer needs. A Schedule
-      // loop's heads-up stays: you still want the nudge before it happens.
+      // loop’s heads-up stays: you still want the nudge before it happens.
       if (prevLoop && prevLoop.wakeAt && new Date(prevLoop.wakeAt).getTime() > Date.now() && !wakeIsScheduleNudge(prevLoop)) patch.wakeAt = null;
       updateLoop(loopId, patch);
       const positionChanges = upNext.rebalance ? rebalanceActivePositions() : null;
@@ -9069,7 +9494,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (action === 'delete-loop') {
       if (!loopId) return;
       if (!getLoop(loopId)) { closeOverlay(); return; }
-      // Don't require login here — the confirm-delete handler re-checks.
+      // Don’t require login here — the confirm-delete handler re-checks.
       // Open the confirm dialog with the current opener preserved so focus
       // returns properly when the user hits Cancel.
       view.overlay = { type: 'confirm-delete', loopId };
@@ -9106,6 +9531,28 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
 
     // Change kind
+    if (action === 'open-repeat') {
+      view.overlay = { type: 'repeat', loopId };
+      renderOverlay();
+      return;
+    }
+    if (action === 'set-repeat') {
+      if (requireLogin()) return;
+      const target = getLoop(loopId);
+      if (!target) { closeOverlay(); return; }
+      const unit = REPEATS[el.dataset.repeat] ? el.dataset.repeat : '';
+      const details = { ...target.details };
+      // Choosing it here starts the series from this loop's own time.
+      if (unit) { details.repeat = unit; details.repeatFrom = validIso(details.at) || target.wakeAt || repeatAnchor(target); details.series = details.series || target.id; }
+      else { delete details.repeat; delete details.repeatFrom; delete details.series; }
+      const patch = { details: cleanDetails(details) };
+      updateLoop(target.id, patch);
+      closeOverlay();
+      await persistAndRender();
+      Sync.updateLoop(target.id, patch);
+      announce(unit ? `Repeats ${REPEATS[unit].toLowerCase()}.` : 'Doesn’t repeat.');
+      return;
+    }
     if (action === 'reclarify-kind') {
       view.overlay = { type: 'change-kind', loopId };
       renderOverlay();
@@ -9213,8 +9660,38 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       }
       return;
     }
+    if (action === 'export-loops') {
+      if (requireLogin()) return;
+      const r = await exportLoops();
+      if (r === 'saved') toast('Saved your loops as a file.');
+      return;
+    }
+    if (action === 'open-delete-account') {
+      if (requireLogin()) return;
+      view.overlay = { type: 'delete-account' };
+      renderOverlay();
+      return;
+    }
+    if (action === 'confirm-delete-account') {
+      if (requireLogin()) return;
+      const ov = view.overlay;
+      if (!ov || ov.type !== 'delete-account' || ov.busy) return;
+      if (navigator.onLine === false) { ov.error = 'You’re offline. Connect, then try again.'; renderOverlay(); return; }
+      ov.busy = true; ov.error = null; renderOverlay();
+      const r = await Sync.deleteAccount();
+      if (!r.ok) { ov.busy = false; ov.error = 'Couldn’t delete it just now. Nothing was deleted. Try again in a moment.'; renderOverlay(); return; }
+      // The server already removed this phone's nudge row; stop the browser
+      // subscription too, so nothing more can arrive here.
+      await Push.disable().catch(() => {});
+      // Turning nudges off rewrote this device's nudge settings; nothing of
+      // the deleted account should stay behind.
+      try { Object.keys(localStorage).filter(k => k.endsWith(':' + r.id)).forEach(k => localStorage.removeItem(k)); } catch (_) {}
+      closeOverlay();
+      toast('Your account and all your loops are deleted.', { duration: 6000 });
+      return;
+    }
     if (action === 'sign-out') {
-      // This phone shouldn't keep getting nudges for an account that left it.
+      // This phone shouldn’t keep getting nudges for an account that left it.
       await Push.disable().catch(() => {});
       await Sync.signOut();
       closeOverlay();
@@ -9230,14 +9707,16 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       return;
     }
 
-    if (action === 'move-loop-up' || action === 'move-loop-down') {
+    if (action === 'move-loop-up' || action === 'move-loop-down' || action === 'make-now') {
       if (requireLogin()) return;
-      const offset = action === 'move-loop-up' ? -1 : 1;
+      const order = data.loops.filter(l => l.status === 'active').sort((a, b) => (b.position || 0) - (a.position || 0));
+      const offset = action === 'make-now' ? -order.findIndex(l => l.id === loopId) : action === 'move-loop-up' ? -1 : 1;
+      if (view.overlay && view.overlay.type === 'menu') closeOverlay();
       const result = moveActiveLoopByOffset(loopId, offset);
       if (!result.ok) return;
       await persistAndRender();
       syncPositionChanges(result);
-      announce(action === 'move-loop-up' ? 'Moved up.' : 'Moved down.');
+      announce(action === 'make-now' ? 'Now it’s your Now.' : action === 'move-loop-up' ? 'Moved up.' : 'Moved down.');
       return;
     }
 
@@ -9282,7 +9761,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       } catch (_) {
         el.disabled = false;
         el.textContent = 'Check for update';
-        toast("Couldn't check for an update. Are you online?");
+        toast("Couldn’t check for an update. Are you online?");
         return;
       }
       if (found) {
@@ -9293,7 +9772,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       } else {
         el.disabled = false;
         el.textContent = 'Check for update';
-        toast("You're on the latest version.");
+        toast("You’re on the latest version.");
       }
       return;
     }
@@ -9366,14 +9845,16 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       const pick = action === 'sweep-park' ? 'park' : el.dataset.pick;
       if (loop && action === 'sweep-pick' && pick === 'park') { ov.step = 'park'; renderOverlay(); return; }
       let schedIso = null;
+      let schedRepeat;
       if (loop && action === 'sweep-park' && loop.kind === 'schedule' && el.dataset.when === 'schedule') {
         schedIso = readSchedulePick('sweep-sched');
         if (!schedIso) return;
+        schedRepeat = schedulePickOpts('sweep-sched');
       }
       let result = null;
       if (loop && sweepable(it)) {
         const wakeAt = action === 'sweep-park' && el.dataset.when && el.dataset.when !== 'schedule' ? validIso(el.dataset.when) : null;
-        result = sweepApply(loop, pick, wakeAt, schedIso);
+        result = sweepApply(loop, pick, wakeAt, schedIso, schedRepeat);
         if (pick === 'now') ov.nowId = loop.id;
       }
       ov.picks.push(pick);
@@ -9495,7 +9976,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
     if (action === 'push-toggle') {
       const k = el.dataset.key;
-      if (!['wakeups', 'stale', 'recap'].includes(k)) return;
+      if (!['wakeups', 'stale', 'recap', 'hideText'].includes(k)) return;
       await savePushPrefs({ [k]: !Push.prefs()[k] });
       return;
     }
@@ -9551,7 +10032,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (action === 'open-settings') {
       rememberOverlayOpener(el);
       nudgeUi.note = null;
-      nudgeUi.waiting = false;   // a prompt left unanswered earlier isn't on screen now
+      nudgeUi.waiting = false;   // a prompt left unanswered earlier isn’t on screen now
       view.overlay = { type: 'settings' };
       renderOverlay();
       return;
@@ -9622,7 +10103,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const card = e.target.closest('[data-draggable-loop="1"]');
     if (!card || !view.draggingLoopId) return;
     e.preventDefault();
-    // Mutation guard: if the user isn't signed in, don't reorder (matches
+    // Mutation guard: if the user isn’t signed in, don’t reorder (matches
     // how every other mutation path behaves).
     if (requireLogin()) { view.draggingLoopId = null; return; }
     const result = moveActiveLoop(view.draggingLoopId, card.dataset.loopId);
@@ -9631,7 +10112,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     await persistAndRender();
     // Sync the position change(s). Common case: one row updated. Rare case
     // (rebalance fired): many rows. Either way we enqueue a position-only
-    // patch per changed row — the queue's coalescing means consecutive
+    // patch per changed row — the queue’s coalescing means consecutive
     // drags of the same loop merge into a single update.
     syncPositionChanges(result);
   });
@@ -9760,6 +10241,44 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
   }, true); // capture phase so it fires before the main keydown handler
 
+  // The Capture button floats over the list. Scrolling down tucks it away so
+  // it never sits on a card’s buttons; scrolling up, or reaching the end of
+  // the list, brings it back.
+  let lastScrollY = window.scrollY || 0;
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY || 0;
+    const atEnd = window.innerHeight + y >= document.documentElement.scrollHeight - 40;
+    const tuck = !atEnd && y > 80 && y > lastScrollY + 4 ? true : (y < lastScrollY - 4 || atEnd || y <= 80 ? false : fabTucked);
+    lastScrollY = y;
+    if (tuck === fabTucked) return;
+    fabTucked = tuck;
+    document.querySelectorAll('.fab').forEach(b => b.classList.toggle('tucked', tuck));
+  }, { passive: true });
+
+  // Tab stays inside whatever is on top (the first-run tour, a sheet, the
+  // sign-in screen): the page behind it can’t be reached until it closes.
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  function topLayer() {
+    const shown = el => el && el.firstElementChild && el.getClientRects().length && getComputedStyle(el).display !== 'none';
+    const tour = document.getElementById('onboarding-root');
+    if (view.onboardingStep >= 0 && shown(tour)) return tour;
+    const sheet = document.getElementById('overlay-root');
+    if (view.overlay && shown(sheet)) return sheet;
+    const gate = document.getElementById('auth-gate-root');
+    return shown(gate) ? gate : null;
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    const layer = topLayer();
+    if (!layer) return;
+    const items = [...layer.querySelectorAll(FOCUSABLE)].filter(el => el.getClientRects().length && !el.closest('[hidden],[inert]'));
+    if (!items.length) { e.preventDefault(); return; }
+    const first = items[0], last = items[items.length - 1];
+    const inside = layer.contains(document.activeElement);
+    if (!inside || (e.shiftKey && document.activeElement === first)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
   // Minimal keyboard handling:
   //   Escape               → exit inline edit or close overlay
   //   Enter in inline edit → save (Shift+Enter inserts a newline)
@@ -9789,7 +10308,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
   // ── AUTO-RETRY ON NETWORK / VISIBILITY EVENTS ──
   // ── BACK FROM THE CALENDAR ──
-  // A loop just sent to a calendar asks, as soon as you're back in the app,
+  // A loop just sent to a calendar asks, as soon as you’re back in the app,
   // whether it made it. Once per loop; the card keeps asking quietly.
   const askedCal = new Set();
   function askCalendarBack() {
@@ -9815,8 +10334,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
   });
 
-  // Nudges follow the browser's permission: allowed in site settings → on by
-  // themselves (when they'd asked for them); blocked → off, and Settings says
+  // Nudges follow the browser’s permission: allowed in site settings → on by
+  // themselves (when they’d asked for them); blocked → off, and Settings says
   // why. Another tab flipping the switch shows here too.
   Push.watchPermission(() => { resyncNudges(); });
   window.addEventListener('storage', e => {
@@ -9854,21 +10373,21 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // Every edit is a single-row INSERT/UPDATE. PostgreSQL serializes concurrent
   // writes to the same row, so two devices editing different loops never
   // conflict, and two devices editing the same loop serialize rather than
-  // overwriting each other's whole state.
+  // overwriting each other’s whole state.
   //
   // Reliability features:
   //   - Offline edits queue in localStorage; drained on reconnect.
   //   - Queue uses exponential backoff (4s → 60s cap) and moves poison-pill
   //     entries to a dead-letter queue after MAX_QUEUE_ATTEMPTS so one bad
-  //     write can't block every subsequent edit.
+  //     write can’t block every subsequent edit.
   //   - Realtime subscription monitors its own connection status; on drop it
   //     tears down and re-subscribes, then does a pullAll() to catch up.
   //   - visibilitychange / online handlers verify the channel and drain the
   //     queue whenever the user returns to the tab or comes back online.
-  //   - TOKEN_REFRESHED updates realtime's JWT so the channel doesn't silently
+  //   - TOKEN_REFRESHED updates realtime’s JWT so the channel doesn’t silently
   //     die after token rotation.
   //   - Incoming realtime updates compare updated_at vs local; a remote row
-  //     older than our local copy doesn't clobber (prevents late echoes from
+  //     older than our local copy doesn’t clobber (prevents late echoes from
   //     overwriting newer state).
   const OFFLINE_QUEUE_KEY_BASE = 'open_loops_offline_queue';
   const DEAD_QUEUE_KEY_BASE = 'open_loops_dead_queue';
@@ -9890,6 +10409,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         ensureRealtime: () => {},
         sendMagicLink: async () => { throw new Error(supabaseClientIssue() || 'Sign-in isn’t ready yet. Try again in a moment.'); },
         signOut:       async () => {},
+        deleteAccount: async () => ({ ok: false }),
         savePush:      async () => { throw new Error('Sign in first.'); },
         deletePush:    async () => {},
         testPush:      async () => { throw new Error('Sign in first.'); },
@@ -9912,13 +10432,14 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     let draining    = false;
     // True while a full pull is in flight. Edits made meanwhile wait in the
     // queue (the pull keeps queued edits on top of what it downloads), then
-    // go out the moment it lands. Sent earlier, the pull's older snapshot
+    // go out the moment it lands. Sent earlier, the pull’s older snapshot
     // would paint over them.
     let pulling     = false;
     let deadQueueDirty = false;
+    let memQueue = null;  // the queue, when this browser has no room left to store it
 
     // Echo suppression: when we write a row, the realtime subscription will
-    // echo it back. We don't want that echo to clobber a newer in-flight
+    // echo it back. We don’t want that echo to clobber a newer in-flight
     // local edit, so we track recently-written ids for a few seconds.
     const recentEchoes = new Map(); // id -> expiry timestamp (ms)
     function markEcho(id) { recentEchoes.set(id, Date.now() + 3000); }
@@ -9986,6 +10507,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     function loadQueue() {
       const key = queueKey();
       if (!key || !currentUser) return [];
+      if (memQueue) return memQueue.filter(entry => !entry.ownerUserId || entry.ownerUserId === currentUser.id);
       try {
         const raw = localStorage.getItem(key);
         if (!raw) return [];
@@ -10000,7 +10522,13 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       try {
         if (!q.length) localStorage.removeItem(key);
         else           localStorage.setItem(key, JSON.stringify(q));
-      } catch(e) {}
+        memQueue = null;
+      } catch(e) {
+        // No room to keep the queue: hold it in memory so the writes still
+        // go out while the app is open.
+        memQueue = q.slice();
+        noteStorageFull();
+      }
     }
     function loadDeadQueue() {
       const key = deadQueueKey();
@@ -10011,8 +10539,33 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         return parsed.filter(entry => !entry.ownerUserId || entry.ownerUserId === currentUser.id);
       } catch(e) { return []; }
     }
+    function keptDeadQueue() {
+      const dead = loadDeadQueue().filter(e => e.keep);
+      // A loop that was created and then deleted without ever reaching the
+      // server has nothing left to save.
+      const deletedIds = new Set(dead.filter(e => e.op === 'delete').map(e => e.id));
+      const createdIds = new Set(dead.filter(e => e.op === 'create').map(e => e.id));
+      return dead.filter(e => !(deletedIds.has(e.id) && createdIds.has(e.id)));
+    }
+    // Retry: put this device’s unsaved changes back at the front of the queue.
+    function requeueDead() {
+      const key = deadQueueKey();
+      if (!key || !currentUser) return 0;
+      const kept = keptDeadQueue();
+      try {
+        const all = JSON.parse(localStorage.getItem(key) || '[]');
+        const rest = Array.isArray(all) ? all.filter(e => !e.keep) : [];
+        if (rest.length) localStorage.setItem(key, JSON.stringify(rest));
+        else localStorage.removeItem(key);
+      } catch(_) {}
+      if (kept.length) {
+        saveQueue([...kept.map(({ keep, lastError, droppedAt, attempts, ...entry }) => entry), ...loadQueue()]);
+      }
+      deadQueueDirty = false;
+      return kept.length;
+    }
     function settleSyncStatus() {
-      if (deadQueueDirty && loadDeadQueue().length) {
+      if ((deadQueueDirty && loadDeadQueue().length) || keptDeadQueue().length) {
         setSyncStatus('error', 'Still saving');
         showSyncErrorBanner();
         return { ok: false, dead: true };
@@ -10029,7 +10582,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (!currentUser) return;
       entry.ownerUserId = currentUser.id;
       const q = loadQueue();
-      // Coalesce back-to-back updates to the same id so we don't pile up
+      // Coalesce back-to-back updates to the same id so we don’t pile up
       // hundreds of small UPDATEs from typing into an inline edit field.
       // During a drain, q[0] may already be in flight. Only coalesce into a
       // tail entry that is not the active network write.
@@ -10059,6 +10612,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         prompt_answer: loop.promptAnswer || '',
         position:      typeof loop.position === 'number' ? loop.position : nowPosition(),
         created_at:    loop.createdAt || nowIso(),
+        completed_at:  loop.completedAt || null,
         wake_at:       loop.wakeAt || null,
         details:       cleanDetails(loop.details)
         // updated_at is set by the DB trigger.
@@ -10095,7 +10649,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
 
     // ── Columns added after launch ──
-    // wake_at and details arrived with wake-ups. If a database hasn't run the
+    // wake_at and details arrived with wake-ups. If a database hasn’t run the
     // newer SQL yet, writes would fail on the unknown columns and pile up in
     // the dead queue. Instead: notice once, keep syncing everything else, and
     // keep those two fields on this device until the columns exist.
@@ -10143,11 +10697,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         ({ data: updated, error } = await db.from('loops').update(row).eq('id', id).select('id').maybeSingle());
       }
       if (error) throw error;
-      if (!updated) throw new Error('No matching loop was updated for this signed-in user.');
+      if (!updated) throw gone('No matching loop was updated for this signed-in user.');
     }
 
     // Server rows from a database without the new columns carry no wake time
-    // or details. Keep this device's copy of those two fields instead of
+    // or details. Keep this device’s copy of those two fields instead of
     // wiping them on every pull.
     function keepLocalNewFields(remoteLoops, rows) {
       const serverHasThem = rows.some(r => 'wake_at' in r || 'details' in r);
@@ -10167,7 +10721,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         .select('id')
         .maybeSingle();
       if (error) throw error;
-      if (!updated) throw new Error('No matching loop was deleted for this signed-in user.');
+      if (!updated) throw gone('No matching loop was deleted for this signed-in user.');
     }
     async function netUndelete(id) {
       markEcho(id);
@@ -10177,20 +10731,43 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         .select('id')
         .maybeSingle();
       if (error) throw error;
-      if (!updated) throw new Error('No matching loop was restored for this signed-in user.');
+      if (!updated) throw gone('No matching loop was restored for this signed-in user.');
     }
 
     // Max attempts per queue entry before moving it to a dead-letter queue.
     // Prevents a single poison-pill entry from blocking every edit behind it.
+    // Only a write the server understood and refused can end up there: one
+    // that never got an answer is retried for as long as it takes.
     const MAX_QUEUE_ATTEMPTS = 5;
+
+    // The row this write needs isn’t on the server, so retrying won’t help.
+    function gone(message) {
+      const e = new Error(message);
+      e.permanent = true;
+      return e;
+    }
+    // Worth trying again: no answer at all (offline, server down, a paused
+    // project, a Wi-Fi login page), a timeout, a busy database or an expired
+    // sign-in. Anything the server understood and refused is not.
+    function isRetryableError(e) {
+      if (!e) return true;
+      if (e.permanent) return false;
+      const code = String(e.code || '');
+      if (!code) return true;
+      if (/^PGRST(0\d\d|3\d\d)$/.test(code)) return true;
+      return /^(08|40|53|57|58)/.test(code);
+    }
 
     function moveToDeadQueue(entry, error) {
       const key = deadQueueKey();
       if (!key) return;
       try {
         const dead = JSON.parse(localStorage.getItem(key) || '[]');
+        // keep: still this device’s change. Pulls keep showing it and Retry
+        // sends it again; older entries without it are history only.
         dead.push({
           ...entry,
+          keep: true,
           lastError: String(error && error.message ? error.message : error),
           droppedAt: Date.now()
         });
@@ -10241,7 +10818,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
             // Poison-pill: after MAX_QUEUE_ATTEMPTS, move this entry to the
             // dead-letter queue so it stops blocking everything behind it.
-            if (entry.attempts >= MAX_QUEUE_ATTEMPTS) {
+            // A write that never got an answer stays at the head and keeps
+            // retrying; dropping it would lose it at the next pull.
+            if (entry.attempts >= MAX_QUEUE_ATTEMPTS && !isRetryableError(e)) {
               const latest = loadQueue();
               const skipped = latest.shift();
               saveQueue(latest);
@@ -10269,7 +10848,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         draining = false;
         if (shouldChain) {
           // More work showed up while we were draining — chain another pass
-          // without awaiting so we don't deepen the call stack.
+          // without awaiting so we don’t deepen the call stack.
           Promise.resolve().then(processQueue);
         }
       }
@@ -10290,7 +10869,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
 
     function applyPendingQueueOverlay(remoteLoops) {
-      const pending = loadQueue();
+      const pending = [...keptDeadQueue(), ...loadQueue()];
       if (!pending.length) return remoteLoops;
 
       const byId = new Map(remoteLoops.map(loop => [loop.id, loop]));
@@ -10325,10 +10904,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
 
     // ── Full pull (on login / init) ──
     async function pullAll() {
-      // Capture the user we're pulling for. If the user signs out (or signs in
+      // Capture the user we’re pulling for. If the user signs out (or signs in
       // as a different account) while any of these awaits are in flight, we
-      // must abort — otherwise we'd overwrite the new user's data with the
-      // previous user's server rows.
+      // must abort — otherwise we’d overwrite the new user’s data with the
+      // previous user’s server rows.
       const pullForUser = currentUser;
       if (!pullForUser) return;
       setSyncStatus('syncing', 'Syncing…');
@@ -10343,11 +10922,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         if (error) throw error;
 
         if (!rows || !rows.length) {
-          // Empty visible server. But don't blindly re-seed — the server
+          // Empty visible server. But don’t blindly re-seed — the server
           // might just have everything soft-deleted. If there are ANY rows
           // (including deleted) we treat the server as "initialized" and
           // trust it. Only seed if the server has genuinely never seen
-          // this user's data.
+          // this user’s data.
           const { count, error: countErr } = await db
             .from('loops')
             .select('id', { count: 'exact', head: true });
@@ -10366,6 +10945,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
               promptAnswer: l.promptAnswer,
               position:     l.position,
               createdAt:    l.createdAt,
+              completedAt:  l.completedAt || null,
               wakeAt:       l.wakeAt || null,
               details:      l.details || {}
             }));
@@ -10385,8 +10965,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             save();
             renderMain();
           } else if (!serverTrulyEmpty) {
-            // Server has data, but it's all soft-deleted. Trust the server:
-            // clear local state so we don't silently resurrect rows the
+            // Server has data, but it’s all soft-deleted. Trust the server:
+            // clear local state so we don’t silently resurrect rows the
             // user deleted on another device.
             data = {
               version:    2,
@@ -10417,7 +10997,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       } catch(e) {
         if (currentUser !== pullForUser) return;   // ignore errors from a stale pull
         console.error('Pull error:', e);
-        // Nothing saved here to show instead: the page says it can't reach
+        // Nothing saved here to show instead: the page says it can’t reach
         // your loops, rather than "empty". The "Still saving" banner is about
         // queued edits, so it stays out of that screen unless edits are queued.
         if (bootState === 'loading' || bootState === 'unreachable') {
@@ -10437,12 +11017,12 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     // ── Realtime: apply per-row changes from other devices ──
     // Tracks state for reconnection logic. Supabase realtime channels can drop
     // for many reasons (network blip, sleep, JWT expiry, free-tier idle cuts),
-    // and without a status callback we'd never notice. When a channel drops we
+    // and without a status callback we’d never notice. When a channel drops we
     // tear it down, re-subscribe, and do a pullAll() to catch up on anything
     // we missed while disconnected.
     let realtimeReconnectTimer = null;
     // When setupRealtime is called right after an explicit pullAll (during
-    // init or SIGNED_IN), we don't need to pull again on the first SUBSCRIBED
+    // init or SIGNED_IN), we don’t need to pull again on the first SUBSCRIBED
     // event. Subsequent SUBSCRIBEDs (from reconnects) still pull to catch up.
     let skipNextSubscribePull = false;
 
@@ -10510,8 +11090,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
               data.loops.unshift(mapped);
             } else {
               // Fix 5: if our local copy is newer than what realtime is
-              // sending us, don't clobber. This handles the case where we
-              // just wrote locally and haven't gotten our own echo yet, or
+              // sending us, don’t clobber. This handles the case where we
+              // just wrote locally and haven’t gotten our own echo yet, or
               // the case where a stale queued write from another device
               // arrives late.
               const existing = data.loops[idx];
@@ -10561,11 +11141,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         const foundLegacy = foundLegacyData || foundLegacyQueue;
         load();
         rememberAccount(currentUser.id);
-        // Draw this phone's saved loops now; the pull below corrects them.
+        // Draw this phone’s saved loops now; the pull below corrects them.
         bootFromSavedCopy();
         cleanUrl();
         setSyncStatus('syncing', 'Syncing…');
-        // Drain only this user's offline queue, then pull server truth.
+        // Drain only this user’s offline queue, then pull server truth.
         if (loadQueue().length) await processQueue();
         await pullAll();
         setupRealtime({ skipInitialPull: true });
@@ -10578,11 +11158,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           startOnboarding();
         }
         renderAll();
-        if (foundLegacy) toast('We kept an older copy of your loops on this device, just in case.');
+        if (foundLegacy) toast('An older copy of your loops is kept on this device, just in case.');
         else wakeDueLoops();
       } else if (event === 'TOKEN_REFRESHED' && session) {
         // Fix 4: the JWT was refreshed. Realtime uses this token — if we
-        // don't tell it about the new one, the channel will die the next
+        // don’t tell it about the new one, the channel will die the next
         // time the old token expires at the server. Also re-subscribe so
         // any silently-dropped channel gets rebuilt.
         currentUser = session.user;
@@ -10600,11 +11180,11 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         channelConnecting = false;
         channelSeq++;
         if (channel) { db.removeChannel(channel); channel = null; }
-        // Clean up any pending retry timers so they don't fire stale.
+        // Clean up any pending retry timers so they don’t fire stale.
         if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
         if (realtimeReconnectTimer) { clearTimeout(realtimeReconnectTimer); realtimeReconnectTimer = null; }
         resetLocalAppState();
-        // A signed-out phone must never paint the previous person's loops.
+        // A signed-out phone must never paint the previous person’s loops.
         forgetAccount();
         bootState = 'ready';
         setSyncStatus('idle', 'Sync');
@@ -10634,8 +11214,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             const foundLegacyData = quarantineLegacyLocalData();
             const foundLegacyQueue = quarantineLegacyQueueData();
             const foundLegacy = foundLegacyData || foundLegacyQueue;
-            // Already showing this account's saved copy from the first frame:
-            // keep it (and whatever tab or sheet you've touched since). Otherwise
+            // Already showing this account’s saved copy from the first frame:
+            // keep it (and whatever tab or sheet you’ve touched since). Otherwise
             // load it now and draw it before going to the network.
             if (!sameAsShown) { load(); bootFromSavedCopy(); }
             rememberAccount(currentUser.id);
@@ -10644,7 +11224,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             if (loadQueue().length) await processQueue();
             await pullAll();
             setupRealtime({ skipInitialPull: true });
-            if (foundLegacy) toast('We kept an older copy of your loops on this device, just in case.');
+            if (foundLegacy) toast('An older copy of your loops is kept on this device, just in case.');
             else wakeDueLoops({ quiet: /[?&](sweep|loop)=/.test(location.search) });
             resyncNudges();
           } else if (!sessionError) {
@@ -10659,7 +11239,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         // Auth check complete. The app remains locked until a user signs in.
         authReady = true;
         if (!currentUser) {
-          // The first frame may have shown a remembered account's saved loops;
+          // The first frame may have shown a remembered account’s saved loops;
           // take them down before the sign-in screen goes up.
           if (currentLocalUserId) { setLocalUser(null); resetLocalAppState(); renderAll(); }
           bootState = 'ready';
@@ -10707,6 +11287,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       async retry() {
         if (!currentUser) return { ok: true, pending: true };
         setSyncStatus('syncing', 'Syncing…');
+        requeueDead();
         try {
           const r = await processQueue();
           if (!r.ok) return r;
@@ -10735,10 +11316,24 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       },
 
       async signOut() { await db.auth.signOut(); },
+      // Deletes every loop and nudge row and the sign-in itself (on the
+      // server, delete_my_account), then forgets this account on this device.
+      async deleteAccount() {
+        if (!currentUser) return { ok: false };
+        const { error } = await db.rpc('delete_my_account');
+        if (error) { console.error('Delete account failed:', error); return { ok: false, error }; }
+        const id = currentUser.id;
+        try {
+          Object.keys(localStorage).filter(k => k.endsWith(':' + id)).forEach(k => localStorage.removeItem(k));
+        } catch (_) {}
+        forgetAccount();
+        await db.auth.signOut().catch(() => {});
+        return { ok: true, id };
+      },
       isLoggedIn() { return !!currentUser; },
       userEmail() { return (currentUser && currentUser.email) || ''; },
 
-      // Nudges: this device's push subscription and its settings.
+      // Nudges: this device’s push subscription and its settings.
       async savePush(sub, p) {
         if (!currentUser) throw new Error('Sign in first.');
         const keys = (sub && sub.keys) || {};
@@ -10751,7 +11346,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
           nudge_time: p.time || '09:00',
           wakeups: !!p.wakeups,
           stale: !!p.stale,
-          recap: !!p.recap
+          recap: !!p.recap,
+          hide_text: !!p.hideText
         };
         // A check-in time that has already passed today starts tomorrow, so
         // changing the time never fires a surprise check-in right away. A
@@ -10759,10 +11355,17 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         const now = new Date();
         const t = /^(\d{1,2}):(\d{2})/.exec(row.nudge_time);
         row.quiet_on = t && atTime(now, +t[1], +t[2]) <= now ? localDateValue(now) : null;
-        const { data: saved, error } = await db.from('push_subscriptions')
-          .upsert(row, { onConflict: 'endpoint' })
+        const upsert = r => db.from('push_subscriptions')
+          .upsert(r, { onConflict: 'endpoint' })
           .select('last_run_on, last_stale_at')
           .maybeSingle();
+        let { data: saved, error } = await upsert(row);
+        // A database that hasn't run the version-29 SQL has no hide_text yet:
+        // keep nudges working without it rather than failing to save.
+        if (error && /hide_text/.test([error.message, error.details, error.hint].join(' '))) {
+          const { hide_text, ...older } = row;
+          ({ data: saved, error } = await upsert(older));
+        }
         if (error) throw error;
         return saved ? { lastRunOn: saved.last_run_on || null, lastStaleAt: saved.last_stale_at || null } : null;
       },
@@ -10776,7 +11379,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         if (error) throw error;
         return data;
       },
-      // Whether the server still has this device. null when it can't tell.
+      // Whether the server still has this device. null when it can’t tell.
       async pushRowExists(endpoint) {
         if (!currentUser || !endpoint) return null;
         try {
@@ -10926,10 +11529,10 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
   // open-loops-sw.js calls skipWaiting() and clients.claim(), so a new version
   // takes over this page as soon as it installs. When that happens we reload
   // so the page itself is the new version too, but never while a sheet is
-  // open or someone is typing: that waits until they're done.
+  // open or someone is typing: that waits until they’re done.
   //
   // Phones pause timers while an installed app sits in the background and
-  // don't re-check for updates when it comes back, so we also check every
+  // don’t re-check for updates when it comes back, so we also check every
   // time the app returns to the foreground, not just once a minute.
   if ('serviceWorker' in navigator && !IS_FILE) {
     let hadController = !!navigator.serviceWorker.controller;
@@ -10943,7 +11546,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const reloadWhenSafe = () => {
       if (isBusy()) { setTimeout(reloadWhenSafe, 1000); return; }
       if (document.hidden) { window.location.reload(); return; }
-      toast('Updated — reloading…', { duration: 1500 });
+      toast('Updated. Reloading…', { duration: 1500 });
       setTimeout(() => (isBusy() ? reloadWhenSafe() : window.location.reload()), 1500);
     };
 

@@ -1,5 +1,5 @@
 // Bump on every release, together with APP_VERSION in open-loops.html.
-const CACHE = 'open-loops-v28-on-time';
+const CACHE = 'open-loops-v29-review-fixes';
 
 const NETWORK_FIRST = [
   './open-loops.html',

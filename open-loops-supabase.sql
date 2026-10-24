@@ -105,7 +105,7 @@ create policy "users update own loops"
 -- ── BATCH UPSERT (used when seeding server from local data) ──────────────
 -- p_loops is a JSON array whose items use camelCase keys to match the JS
 -- client: { id, rawText, kind, status, promptAnswer, position, createdAt,
--- wakeAt, details }.
+-- completedAt, wakeAt, details }.
 -- Every inserted row is stamped with auth.uid() as user_id regardless of
 -- what the payload contains, so a caller cannot impersonate another user.
 -- RLS on public.loops blocks updates to rows owned by a different user, so
@@ -127,7 +127,7 @@ begin
   for item in select * from jsonb_array_elements(p_loops)
   loop
     insert into public.loops
-      (id, user_id, raw_text, kind, status, prompt_answer, position, created_at, wake_at, details)
+      (id, user_id, raw_text, kind, status, prompt_answer, position, created_at, completed_at, wake_at, details)
     values (
       item->>'id',
       auth.uid(),
@@ -138,6 +138,7 @@ begin
       coalesce((item->>'position')::double precision,
                extract(epoch from coalesce((item->>'createdAt')::timestamptz, now()))),
       coalesce((item->>'createdAt')::timestamptz, now()),
+      nullif(item->>'completedAt', '')::timestamptz,
       nullif(item->>'wakeAt', '')::timestamptz,
       case when jsonb_typeof(item->'details') = 'object' then item->'details' else '{}'::jsonb end
     )
@@ -147,6 +148,7 @@ begin
           status        = excluded.status,
           prompt_answer = excluded.prompt_answer,
           position      = excluded.position,
+          completed_at  = excluded.completed_at,
           wake_at       = excluded.wake_at,
           details       = excluded.details,
           deleted_at    = null,
@@ -157,6 +159,28 @@ $$;
 
 grant execute on function public.batch_upsert_loops(jsonb) to authenticated;
 revoke all   on function public.batch_upsert_loops(jsonb) from anon;
+
+-- ── DELETE MY ACCOUNT (version 29) ───────────────────────────────────────
+-- Settings → Your data → Delete account. Deletes the caller's loops, their
+-- phones' nudge rows and their sign-in. Only ever the caller's own: the user
+-- comes from the session, never from an argument. security definer because
+-- signed-in users can't touch auth.users themselves.
+create or replace function public.delete_my_account()
+returns void
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_user uuid := auth.uid();
+begin
+  if v_user is null then
+    raise exception 'not signed in' using errcode = '42501';
+  end if;
+  delete from public.push_subscriptions where user_id = v_user;
+  delete from public.loops where user_id = v_user;
+  delete from auth.users where id = v_user;
+end;
+$$;
+revoke all on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;
 
 -- ── NUDGES (web push) ────────────────────────────────────────────────────
 -- One row per phone or browser that said yes to nudges. The "push" Edge
@@ -180,6 +204,7 @@ create table if not exists public.push_subscriptions (
   quiet_on        date,          -- set by the app: no check-in on this day (a time picked after it passed)
   wake_checked_at timestamptz not null default now(),  -- wake-ups are sent for loops that woke after this
   last_stale_at   timestamptz,
+  hide_text       boolean not null default false,  -- nudges say "A loop is back" instead of its words
   recent_lines    text[] not null default '{}',
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now(),
@@ -191,6 +216,8 @@ alter table public.push_subscriptions drop constraint if exists push_nudge_time_
 alter table public.push_subscriptions add column if not exists last_run_at timestamptz;
 alter table public.push_subscriptions add column if not exists quiet_on date;
 alter table public.push_subscriptions add column if not exists wake_checked_at timestamptz not null default now();
+-- Version 29: nudges that leave out what a loop says, per device.
+alter table public.push_subscriptions add column if not exists hide_text boolean not null default false;
 create index if not exists push_subscriptions_user_idx on public.push_subscriptions (user_id);
 -- Woken loops by user and time (parked ones, and ones the app already woke).
 create index if not exists loops_user_woke_idx on public.loops (user_id, wake_at)
@@ -231,8 +258,9 @@ create policy "users remove own push subscriptions" on public.push_subscriptions
   for delete to authenticated using ((select auth.uid()) = user_id);
 
 -- The sender runs as service_role: it reads loops to decide what a nudge
--- says, applies Done / Tomorrow, and keeps its own bookkeeping.
-grant select, update on table public.loops to service_role;
+-- says, applies Done / Tomorrow (Done on a repeating loop adds the next
+-- one), and keeps its own bookkeeping.
+grant select, insert, update on table public.loops to service_role;
 grant select, update, delete on table public.push_subscriptions to service_role;
 
 -- Check-ins: phones whose time came in the last 3 hours (a missed run still
@@ -240,18 +268,20 @@ grant select, update, delete on table public.push_subscriptions to service_role;
 -- A 23:00 check-in sent after midnight still counts for the day it belonged
 -- to, so there's never a second one. Only the recap and stale checks ride on
 -- it; wake-ups have their own nudge.
+-- The returned columns changed in version 29 (hide_text), which needs a drop.
+drop function if exists public.push_due_subscriptions();
 create or replace function public.push_due_subscriptions()
 returns table (
   endpoint text, user_id uuid, p256dh text, auth text, tz text, voice text,
   wakeups boolean, stale boolean, recap boolean, last_stale_at timestamptz,
-  recent_lines text[], local_date date, local_dow int
+  recent_lines text[], local_date date, local_dow int, hide_text boolean
 )
 language sql stable set search_path = '' as $$
   with s as (
     select p.endpoint as s_endpoint, p.user_id as s_user, p.p256dh as s_p256dh, p.auth as s_auth,
            p.tz as s_tz, p.voice as s_voice, p.wakeups as s_wakeups, p.stale as s_stale,
            p.recap as s_recap, p.last_stale_at as s_last_stale, p.recent_lines as s_recent,
-           p.last_run_on as s_last_run_on, p.quiet_on as s_quiet_on,
+           p.last_run_on as s_last_run_on, p.quiet_on as s_quiet_on, p.hide_text as s_hide_text,
            (now() at time zone p.tz) as s_local_now,
            mod((floor(extract(epoch from ((now() at time zone p.tz)::time - p.nudge_time)) / 60))::int + 1440, 1440) as s_since
       from public.push_subscriptions p
@@ -263,7 +293,7 @@ language sql stable set search_path = '' as $$
   )
   select slot.s_endpoint, slot.s_user, slot.s_p256dh, slot.s_auth, slot.s_tz, slot.s_voice,
          slot.s_wakeups, slot.s_stale, slot.s_recap, slot.s_last_stale, slot.s_recent,
-         slot.s_slot_date, extract(dow from slot.s_slot_date)::int
+         slot.s_slot_date, extract(dow from slot.s_slot_date)::int, slot.s_hide_text
     from slot
    where (slot.s_last_run_on is null or slot.s_last_run_on < slot.s_slot_date)
      and (slot.s_quiet_on is null or slot.s_quiet_on < slot.s_slot_date)
@@ -272,14 +302,15 @@ $$;
 -- Wake-ups: phones with at least one loop that woke since their last check
 -- (looking back two hours at most, so switching wake-ups back on never
 -- replays a backlog). checked_to is the cut-off the sender saves afterwards.
+drop function if exists public.push_due_wakeups();
 create or replace function public.push_due_wakeups()
 returns table (
   endpoint text, user_id uuid, p256dh text, auth text, tz text,
-  recent_lines text[], checked_from timestamptz, checked_to timestamptz
+  recent_lines text[], checked_from timestamptz, checked_to timestamptz, hide_text boolean
 )
 language sql stable set search_path = '' as $$
   select s.endpoint, s.user_id, s.p256dh, s.auth, s.tz, s.recent_lines,
-         greatest(s.wake_checked_at, now() - interval '2 hours'), now()
+         greatest(s.wake_checked_at, now() - interval '2 hours'), now(), s.hide_text
     from public.push_subscriptions s
    where s.wakeups
      and exists (
@@ -293,13 +324,49 @@ language sql stable set search_path = '' as $$
      )
 $$;
 
--- Done / Tomorrow from a notification button.
+-- The next time in a repeating loop's series (version 29), the same way the
+-- app's nextOccurrence() works it out: counted from the series' first time,
+-- in the phone's time zone, after both now and the loop's own time. Months
+-- keep the day where they can and use the last day where they can't.
+create or replace function public.loop_next_occurrence(p_details jsonb, p_wake timestamptz, p_tz text)
+returns timestamptz
+language plpgsql stable set search_path = '' as $$
+declare
+  v_unit   text := p_details->>'repeat';
+  v_anchor timestamptz := coalesce(nullif(p_details->>'repeatFrom', '')::timestamptz, nullif(p_details->>'at', '')::timestamptz, p_wake);
+  v_after  timestamptz;
+  v_step   interval;
+  v_max    numeric;
+  v_k      int;
+  v_t      timestamptz;
+begin
+  if v_unit is null or v_unit not in ('day', 'week', 'month') or v_anchor is null then return null; end if;
+  v_after := greatest(now(), coalesce(nullif(p_details->>'at', '')::timestamptz, '-infinity'), coalesce(p_wake, '-infinity'));
+  v_step := case v_unit when 'day' then interval '1 day' when 'week' then interval '7 days' else interval '1 month' end;
+  v_max := case v_unit when 'day' then 1 when 'week' then 7 else 31 end;
+  v_k := greatest(1, floor(extract(epoch from (v_after - v_anchor)) / (v_max * 86400))::int);
+  for i in 1..1000 loop
+    v_t := ((v_anchor at time zone p_tz) + v_k * v_step) at time zone p_tz;
+    if v_t > v_after then return v_t; end if;
+    v_k := v_k + 1;
+  end loop;
+  return null;
+end;
+$$;
+
+-- Done / Tomorrow from a notification button. Done on a repeating loop also
+-- sets up the next one (same id the app would build, so never twice).
 create or replace function public.push_apply_action(p_user uuid, p_loop text, p_action text, p_tz text)
 returns boolean
 language plpgsql set search_path = '' as $$
 declare
   v_tz text := coalesce((select name from pg_catalog.pg_timezone_names where name = p_tz limit 1), 'UTC');
   v_rows int;
+  v_loop public.loops%rowtype;
+  v_next timestamptz;
+  v_series text;
+  v_id text;
+  v_iso text;
 begin
   if p_action = 'done' then
     update public.loops
@@ -307,7 +374,27 @@ begin
            completed_at = now(),
            details = coalesce(details, '{}'::jsonb)
                      || jsonb_build_object('outcome', case when kind = 'let_go' then 'let_go' else 'done' end)
-     where id = p_loop and user_id = p_user and deleted_at is null and status <> 'released';
+     where id = p_loop and user_id = p_user and deleted_at is null and status <> 'released'
+     returning * into v_loop;
+    get diagnostics v_rows = row_count;
+    if v_rows > 0 and v_loop.details ? 'repeat' and not (v_loop.details ? 'next')
+       and v_loop.kind in ('do', 'schedule') then
+      v_next := public.loop_next_occurrence(v_loop.details, v_loop.wake_at, v_tz);
+      if v_next is not null then
+        v_series := coalesce(v_loop.details->>'series', v_loop.id);
+        v_id := v_series || '~' || (extract(epoch from v_next) * 1000)::bigint;
+        v_iso := to_char(v_next at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"');
+        insert into public.loops (id, user_id, raw_text, kind, status, prompt_answer, position, wake_at, details)
+        values (v_id, v_loop.user_id, v_loop.raw_text, v_loop.kind, 'waiting', v_loop.prompt_answer,
+                extract(epoch from now()), v_next,
+                jsonb_build_object('repeat', v_loop.details->>'repeat', 'series', v_series,
+                                   'repeatFrom', coalesce(v_loop.details->>'repeatFrom', v_loop.details->>'at', v_iso))
+                || case when v_loop.kind = 'schedule' then jsonb_build_object('at', v_iso) else '{}'::jsonb end)
+        on conflict (id) do nothing;
+        update public.loops set details = details || jsonb_build_object('next', v_id) where id = v_loop.id;
+      end if;
+    end if;
+    return v_rows > 0;
   elsif p_action = 'tomorrow' then
     update public.loops
        set status = 'waiting',
@@ -335,10 +422,12 @@ $$;
 revoke all on function public.push_due_subscriptions() from public, anon, authenticated;
 revoke all on function public.push_due_wakeups() from public, anon, authenticated;
 revoke all on function public.push_apply_action(uuid, text, text, text) from public, anon, authenticated;
+revoke all on function public.loop_next_occurrence(jsonb, timestamptz, text) from public, anon, authenticated;
 revoke all on function public.push_config() from public, anon, authenticated;
 grant execute on function public.push_due_subscriptions() to service_role;
 grant execute on function public.push_due_wakeups() to service_role;
 grant execute on function public.push_apply_action(uuid, text, text, text) to service_role;
+grant execute on function public.loop_next_occurrence(jsonb, timestamptz, text) to service_role;
 grant execute on function public.push_config() to service_role;
 
 -- The schedule: every minute, inside Postgres. It only calls the sender when

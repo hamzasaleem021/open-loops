@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Open Loops — A calm place for unfinished things</title>
-<meta name="description" content="Open Loops is a calm place for unfinished things. Catch what's open, give it one next step, and keep only a few things in focus.">
+<meta name="description" content="Open Loops is a calm place for unfinished things. Catch what’s open, give it one next step, and keep only a few things in focus.">
 <meta name="theme-color" content="#fffaf0">
 <link rel="icon" href="./open-loops-icon-192-v4.png">
 <link rel="apple-touch-icon" href="./open-loops-icon-192-v4.png">
@@ -163,7 +163,7 @@ nav .container { height: 100%; display: flex; align-items: center; justify-conte
 .meter-dots span.on { background: var(--ink); }
 .focus {
   background: var(--pink);
-  color: #fff;
+  color: var(--ink);
   border-radius: 24px;
   padding: 28px;
   display: grid;
@@ -186,8 +186,8 @@ nav .container { height: 100%; display: flex; align-items: center; justify-conte
   color: var(--ink);
 }
 .chip i { width: 7px; height: 7px; border-radius: 50%; display: block; }
-.focus .chip { background: rgba(255,255,255,0.22); color: #fff; }
-.focus .chip i { background: #fff; }
+.focus .chip { background: rgba(10,10,10,0.1); color: var(--ink); }
+.focus .chip i { background: var(--ink); }
 .chip.decide { background: #f7e7bd; } .chip.decide i { background: var(--decide); }
 .chip.do { background: #d9e6e2; } .chip.do i { background: var(--do); }
 .chip.schedule { background: #e6def9; } .chip.schedule i { background: var(--schedule); }
@@ -248,7 +248,7 @@ section { padding-block: 96px; }
 }
 .k-do { background: var(--do); color: #fff; }
 .k-decide { background: var(--decide); color: var(--ink); }
-.k-ask { background: var(--ask); color: #fff; }
+.k-ask { background: var(--ask); color: var(--ink); }
 .k-schedule { background: var(--schedule); color: var(--ink); }
 .k-letgo { background: var(--let-go); color: var(--ink); }
 .k-decide .sample, .k-schedule .sample, .k-letgo .sample { background: rgba(10,10,10,0.08); }
@@ -287,7 +287,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
 .footer-right { display: flex; align-items: center; gap: 12px 28px; flex-wrap: wrap; }
 
 
-/* ── WHY STORY (same scenes as the app's Why sheet) ── */
+/* ── WHY STORY (same scenes as the app’s Why sheet) ── */
 .story-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .story-sound { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px 0 11px; border-radius: 999px; border: 1px solid var(--hairline); background: transparent; color: var(--body); font: 600 13px var(--sans); cursor: pointer; }
 .story-sound .wv-on { display: none; }
@@ -417,7 +417,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 /* ── Auxila endorsement (parent brand). Same on every Auxila release;
-      the product's own identity stays everything below this strip. ── */
+      the product’s own identity stays everything below this strip. ── */
 .aux-strip { background: #09090a; color: #b6b5b0; font-family: 'Mona Sans', system-ui, sans-serif; font-size: 13px; line-height: 1; position: relative; z-index: 11; }
 .aux-strip .aux-in { height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .aux-by, .aux-cat { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
@@ -499,7 +499,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
     <div>
       <span class="badge-pill"><i></i>A calm place for unfinished things</span>
       <h1>Stop carrying things in your head.</h1>
-      <p class="hero-sub">Catch what's unfinished, give it one next step, and keep only a few things in focus. Everything else waits quietly until its day comes, then wakes up on its own.</p>
+      <p class="hero-sub">Catch what’s unfinished, give it one next step, and keep only a few things in focus. Everything else waits until its day comes, then wakes up on its own.</p>
       <div class="hero-actions">
         <a href="./open-loops.html" class="btn btn-primary btn-lg">
           Open the app
@@ -540,7 +540,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
         <span class="eyebrow">Now</span>
         <span class="chip"><i></i>Ask</span>
         <h3>Confirm the meeting time with Sarah</h3>
-        <div class="next"><b>Next</b>Sarah, for a yes on Thursday</div>
+        <div class="next"><b>Next</b>Sarah: can she confirm Thursday?</div>
         <span class="btn-on-color">Reach out</span>
       </div>
       <div class="up-next">Up next</div>
@@ -600,7 +600,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">How it works</span>
-      <h2>Catch it. Shape it. Focus. Close it.</h2>
+      <h2>Catch it. Sort it. Focus. Close it.</h2>
     </div>
     <div class="how-grid four">
       <div class="how-card">
@@ -610,7 +610,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
       </div>
       <div class="how-card">
         <div class="how-num">2</div>
-        <h3>Shape it</h3>
+        <h3>Sort it</h3>
         <p>Pick its kind, write one next step, then send it Up next, park it until a day you choose, or close it.</p>
       </div>
       <div class="how-card">
@@ -643,8 +643,8 @@ footer .container { display: flex; align-items: center; justify-content: space-b
       </div>
       <div class="kind-card k-decide">
         <span class="eyebrow">Decide</span>
-        <h3>Stop circling</h3>
-        <p>A choice you are holding open. Name it cleanly and stop circling it.</p>
+        <h3>Make the call</h3>
+        <p>A choice you are holding open. Name it in a line and decide.</p>
         <div class="sample">Which design direction to go with</div>
         <div class="kind-btn"><span class="pill">I decided</span><p>Name the decision in a line. Options in your note, like "A or B", become one-tap choices.</p></div>
       </div>
@@ -665,9 +665,9 @@ footer .container { display: flex; align-items: center; justify-content: space-b
       <div class="kind-card k-letgo">
         <span class="eyebrow">Let go</span>
         <h3>Release it</h3>
-        <p>Choosing to release it. The goal is relief, not proving it was important.</p>
+        <p>Choosing to drop it. That counts as an ending too.</p>
         <div class="sample">Learn a third language this year</div>
-        <div class="kind-btn"><span class="pill">Let go</span><p>Its own ending, with no guilt attached. It lands on your shelf as a pebble.</p></div>
+        <div class="kind-btn"><span class="pill">Let go</span><p>Its own ending. It lands on your shelf as a pebble.</p></div>
       </div>
     </div>
   </div>
@@ -677,13 +677,13 @@ footer .container { display: flex; align-items: center; justify-content: space-b
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">It keeps itself tidy</span>
-      <h2>Nothing piles up quietly</h2>
-      <p>A list only helps if it stays honest. Open Loops brings things back when they're due and asks about the ones you've stopped touching.</p>
+      <h2>Nothing piles up unseen</h2>
+      <p>A list only helps if it stays honest. Open Loops brings things back when they’re due and asks about the ones you’ve stopped touching.</p>
     </div>
     <div class="how-grid four">
       <div class="tidy-card">
         <h3>Not yet? Pick when.</h3>
-        <p>Every park asks when the loop should come back: tonight, tomorrow morning, this weekend, next week or a day you pick. When its time comes, it wakes back into Up next.</p>
+        <p>Every park asks when the loop should come back: tonight, tomorrow morning, Saturday, Monday or a day you pick. When its time comes, it wakes back into Up next.</p>
         <span class="says">When should it come back?</span>
       </div>
       <div class="tidy-card">
@@ -693,7 +693,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
       </div>
       <div class="tidy-card">
         <h3>Still yours?</h3>
-        <p>A loop nobody touches for 10 days goes matte. After 21 it cracks and asks whether it's still yours. Keep it, park it, or let it go.</p>
+        <p>A loop nobody touches for 10 days goes matte. After 21 it cracks and asks whether it’s still yours. Keep it, park it, or let it go.</p>
         <span class="says">Still yours?</span>
       </div>
       <div class="tidy-card">
@@ -709,14 +709,14 @@ footer .container { display: flex; align-items: center; justify-content: space-b
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">Your head</span>
-      <h2>See what you've let go of</h2>
-      <p>A look back, built only from loops you've already closed.</p>
+      <h2>See what you’ve let go of</h2>
+      <p>A look back, built only from loops you’ve already closed.</p>
     </div>
     <div class="how-grid">
       <div class="tidy-card">
         <h3>Your shelf</h3>
         <div class="shelf" aria-hidden="true"><span class="ring" style="--c: var(--pink)"></span><span class="ring" style="--c: var(--ochre)"></span><span class="ring" style="--c: var(--teal)"></span><span class="pebble"></span><span class="ring" style="--c: var(--lavender)"></span><span class="ring" style="--c: var(--teal)"></span><span class="pebble"></span></div>
-        <p>A ring for every loop you closed this week, in its kind's color, and a pebble for each one you let go of.</p>
+        <p>A ring for every loop you closed this week, in its kind’s color, and a pebble for each one you let go of.</p>
       </div>
       <div class="tidy-card">
         <h3>How long things take</h3>
@@ -734,13 +734,13 @@ footer .container { display: flex; align-items: center; justify-content: space-b
   <div class="container">
     <div class="cta-band">
       <div>
-        <h2>Your head will thank you.</h2>
+        <h2>Start with what’s on your mind.</h2>
         <p>Sign in with your email, no password, and your loops follow you to every device. It works offline and installs like an app.</p>
         <a href="./open-loops.html" class="btn btn-primary btn-lg">
           Open the app
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
-        <p class="cta-note">Built for unfinished things, not productivity theater.</p>
+        <p class="cta-note">Made for unfinished things.</p>
       </div>
       <div class="cta-art" aria-hidden="true">
         <svg viewBox="0 0 300 220">
@@ -764,7 +764,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
       <span class="brand-name">Open Loops</span>
     </a>
     <div class="footer-right">
-      <span class="footer-note">Syncs across your devices. Works offline. Calm by design.</span>
+      <span class="footer-note">Syncs across your devices and works offline.</span>
       <a class="aux-credit" href="https://auxila.cc"><span class="aux-bc" aria-hidden="true"><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:1px"></i><i style="width:3px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:3px"></i><i style="width:1px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i></span><span class="aux-cat-s">AUX 001</span><span>Powered by</span><span class="aux-word">auxila<i>.cc</i></span></a>
     </div>
   </div>
@@ -775,7 +775,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
   const WHY_SCENES = [
     { h: 'Your head is full of open loops.', p: 'Every unfinished thing keeps pulling at you.' },
     { h: 'One next step quiets a loop.', p: 'Studies show a plan calms the nagging, even before it’s done.', cite: 'Masicampo & Baumeister, 2011' },
-    { h: 'Catch it. Shape it. Focus.', p: 'Drop it in Inbox, give it one next step, do one at a time.' },
+    { h: 'Catch it. Sort it. Focus.', p: 'Drop it in Inbox, give it one next step, do one at a time.' },
     { h: 'Close it. Let it go.', p: 'Every closed loop lands on your shelf, and out of your head.' },
     { h: 'Made for crowded heads.', p: 'If your mind keeps saying “I still need to…”, this is for you.' }
   ];
@@ -878,7 +878,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
       stopClip();
       if (!ensure()) { onEnd(); return; }
       let settled = false;
-      // Never stall: if the clip isn't decoded in 4s, play it the plain way.
+      // Never stall: if the clip isn’t decoded in 4s, play it the plain way.
       const fallback = setTimeout(() => { if (settled || my !== voiceTicket) return; settled = true; elementClip(i, onEnd); }, 4000);
       loadClip(i).then(buf => {
         if (settled || my !== voiceTicket) return;
@@ -918,7 +918,7 @@ footer .container { display: flex; align-items: center; justify-content: space-b
         pluck(N.A4, 1.95, 0.45, 0.7); pluck(N.D5, 2.12, 0.45, 0.7); pluck(N.Fs5, 2.3, 0.45, 1.4);
         [3.1, 3.9, 4.7].forEach(t => pluck(N.D4, t, 0.25, 0.9));
       },
-      // 4 · close: the app's own closing sound, suspended then resolved
+      // 4 · close: the app’s own closing sound, suspended then resolved
       () => {
         pluck(N.E4, 0.5, 0.55, 1.0); pluck(N.A4, 0.57, 0.55, 1.2);
         thud(1.9, 0.38); pluck(N.D4, 1.91, 0.65, 1.8); pluck(N.Fs4, 1.94, 0.5, 1.8); pluck(N.D5, 1.97, 0.55, 2.0);
