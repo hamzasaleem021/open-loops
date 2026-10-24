@@ -54,7 +54,7 @@
   --border-soft: #f0ebdd;
   --text: #0a0a0a;
   --text-2: #3a3a3a;
-  --text-3: #8a857a;
+  --text-3: #6b665c;  /* 4.5:1 or better on every light surface */
   --accent: #0a0a0a;
   --accent-hot: #1f1f1f;
   --accent-deep: #000;
@@ -66,7 +66,7 @@
   /* kind palette (fills) */
   --do: #1a3a3a;       --do-ink: #ffffff;   --do-dim: #d9e6e2;
   --decide: #e8b94a;   --decide-ink: #0a0a0a; --decide-dim: #f7e7bd;
-  --ask: #ff4d8b;      --ask-ink: #ffffff;  --ask-dim: #ffd6e5;
+  --ask: #ff4d8b;      --ask-ink: #0a0a0a;  --ask-dim: #ffd6e5;
   --schedule: #b8a4ed; --schedule-ink: #0a0a0a; --schedule-dim: #e6def9;
   --let_go: #ffb084;   --let_go-ink: #0a0a0a; --let_go-dim: #ffe2d1;
   --inbox: #f5f0e0;    --inbox-ink: #0a0a0a;
@@ -99,7 +99,7 @@
   --border-soft: rgba(255,250,240,0.06);
   --text: #fffaf0;
   --text-2: rgba(255,250,240,0.72);
-  --text-3: rgba(255,250,240,0.42);
+  --text-3: rgba(255,250,240,0.58);  /* 4.5:1 or better on every dark surface */
   --accent: #fffaf0;
   --accent-hot: #ffffff;
   --accent-ink: #0a0a0a;
@@ -908,6 +908,10 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 0 6px 8px rgba(0,0,0,0.3), 0 16px 40px var(--focus-ring);
 }
 .fab:active { transform: translateX(-50%) translateY(0); }
+@media (hover: none) and (pointer: coarse) {
+  .reorder-controls, .drag-handle { display: none; }
+}
+.fab.tucked { transform: translateX(-50%) translateY(calc(100% + 96px)); opacity: 0; pointer-events: none; }
 
 /* ── BOTTOM NAV ── */
 .bottom-nav {
@@ -3704,6 +3708,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     overlayOpenerEl: null,
   };
   let toastTimer = null;
+  let fabTucked = false;   // the Capture button, tucked away while scrolling down
+  let shownActiveIds = null; // Active loops last on screen (see noteHiddenActive)
   let deferredInstallPrompt = null; // set by 'beforeinstallprompt' event
   let currentLocalUserId = null;
   // Set to true once Sync.init() resolves so we don't flash the lock screen
@@ -4545,6 +4551,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     span.textContent = msg;
     el.appendChild(span);
     const dur = (opts && opts.duration) || DEFAULT_TOAST_MS;
+    // A tip gives way as soon as a sheet opens, so it never covers a flow.
+    if (opts && opts.tip) el.dataset.tip = '1'; else delete el.dataset.tip;
     if (opts && opts.action && typeof opts.onAction === 'function') {
       el.classList.add('has-action');
       const btn = document.createElement('button');
@@ -4604,9 +4612,12 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
+  // Dates only on the Closed shelf, where "when" is the point. Elsewhere a
+  // card's age shows only once it matters ("Untouched 12 days").
   function loopMetaHtml(loop) {
+    if (loop.status !== 'released') return '';
     const captured = formatLoopDate(loop.createdAt);
-    const closed = loop.status === 'released' ? formatLoopDate(loop.completedAt) : '';
+    const closed = formatLoopDate(loop.completedAt);
     const parts = [];
     if (captured) parts.push(`<span>Captured ${esc(captured)}</span>`);
     if (closed) parts.push(`<span>${isLetGo(loop) ? 'Let go' : 'Closed'} ${esc(closed)}</span>`);
@@ -5120,7 +5131,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       : `<p class="head-fine">Close something this month to make a card you can share.</p>`;
     return `
       <div class="overlay-card head-sheet" role="dialog" aria-modal="true" aria-labelledby="head-title">
-        <div class="overlay-header"><div class="overlay-meta"><div class="overlay-eyebrow">Profile</div></div>${SHEET_CLOSE}</div>
+        <div class="overlay-header"><div class="overlay-meta"></div>${SHEET_CLOSE}</div>
         ${body}
       </div>`;
   }
@@ -5957,6 +5968,21 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return `<span class="kind-chip ${cls}"><span class="kind-dot"></span>${m.label}</span>`;
   }
 
+  // A loop that was on screen and is still active but now sits behind
+  // "Show more" (the focus cap went down, or something landed above it):
+  // say so once, by name, so nothing disappears without a word.
+  function noteHiddenActive(visible, known) {
+    // While everything is shown there's nothing to compare against.
+    if (!known || view.expanded) return;
+    const now = new Set(visible.map(l => l.id));
+    if (shownActiveIds) {
+      const pushed = data.loops.filter(l => l.status === 'active' && shownActiveIds.has(l.id) && !now.has(l.id));
+      if (pushed.length === 1) toast(`“${shortText(pushed[0].rawText, 40)}” moved behind Show more.`);
+      else if (pushed.length > 1) toast(`${pushed.length} loops moved behind Show more.`);
+    }
+    shownActiveIds = now;
+  }
+
   // ── LOOP CARD ──
   function dragHandleHtml(enabled) {
     if (!enabled) return '';
@@ -6113,6 +6139,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       html += `<div class="tab-panel active" id="tab-now">`;
       const sweepNow = sweepBannerItems();
       if (sweepNow.length) html += sweepBannerHtml(sweepNow);
+      noteHiddenActive(visible, known);
       if (visible.length) {
         html += `<div class="loop-stack" data-active-stack="1">${visible.map((l,i) => (i === 1 ? `<div class="up-next-label">Up next</div>` : '') + cardHtml(l,i, { draggable: true, total: visible.length, focus: i === 0 })).join('')}</div>`;
         if (hidden > 0 && !view.expanded) {
@@ -6203,7 +6230,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
               <p class="loop-title">${esc(loop.rawText)}</p>
               ${loopMetaHtml(loop)}
               <div class="loop-card-bottom">
-                <button class="btn-action btn-primary" data-action="define-raw" data-loop-id="${esc(loop.id)}">Define and route</button>
+                <button class="btn-action" data-action="define-raw" data-loop-id="${esc(loop.id)}">Define and route</button>
               </div>
             </article>`;
         });
@@ -6217,7 +6244,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
 
     html += `
-      <button class="fab" data-action="open-capture" type="button">
+      <button class="fab${fabTucked ? ' tucked' : ''}" data-action="open-capture" type="button">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         Capture
       </button>`;
@@ -6478,6 +6505,22 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
   }
 
+  // Reordering from the menu: the way to do it on a phone, where cards can't
+  // be dragged and carry no arrows.
+  function activeOrderItems(loop) {
+    if (loop.status !== 'active') return '';
+    const order = data.loops.filter(l => l.status === 'active').sort((a, b) => (b.position || 0) - (a.position || 0));
+    const i = order.findIndex(l => l.id === loop.id);
+    if (i < 0 || order.length < 2) return '';
+    const item = (action, label, path) => `<button class="menu-item" data-action="${action}" data-loop-id="${esc(loop.id)}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="${path}" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            ${label}
+          </button>`;
+    return (i > 0 ? item('make-now', 'Make it Now', 'M3 3h8M7 11V5.5M4.5 8 7 5.5 9.5 8') : '') +
+      (i > 1 ? item('move-loop-up', 'Move up', 'M7 11V3M4 6l3-3 3 3') : '') +
+      (i < order.length - 1 ? item('move-loop-down', 'Move down', 'M7 3v8M4 8l3 3 3-3') : '');
+  }
+
   function renderMenu(loop) {
     if (!loop) return '';
     const m = kindMeta[loop.kind] || kindMeta.inbox;
@@ -6508,6 +6551,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2a5 5 0 0 1 5 5M7 12a5 5 0 0 1-5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M12 4V7H9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10V7h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Change kind
           </button>` : ''}
+          ${activeOrderItems(loop)}
           ${active ? `<button class="menu-item" data-action="move-waiting" data-loop-id="${esc(loop.id)}">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
             Park until…
@@ -6938,7 +6982,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     return `
       <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
         <div class="overlay-header">
-          <div class="overlay-meta"><div class="overlay-eyebrow">Settings</div></div>
+          <div class="overlay-meta"></div>
           <button class="overlay-close" data-action="close-overlay" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
         <h2 class="overlay-title" id="settings-title">Settings</h2>
@@ -7752,7 +7796,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       let tries = 0;
       const show = () => {
         if (view.overlay && tries++ < 20) { setTimeout(show, 1000); return; }
-        toast('Sound is on. You can turn it off in Settings.');
+        toast('Sound is on. You can turn it off in Settings.', { tip: true });
       };
       setTimeout(show, 1700);
     }
@@ -8433,6 +8477,8 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     if (!root) return;
     const ov = view.overlay;
     if (!ov) { root.innerHTML = ''; delete root.dataset.sheet; return; }
+    const tipEl = document.getElementById('toast');
+    if (tipEl && tipEl.dataset.tip) { clearTimeout(toastTimer); tipEl.classList.remove('visible'); delete tipEl.dataset.tip; }
 
     let inner = '';
     if      (ov.type === 'capture')        inner = renderCapture(ov);
@@ -9367,14 +9413,16 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       return;
     }
 
-    if (action === 'move-loop-up' || action === 'move-loop-down') {
+    if (action === 'move-loop-up' || action === 'move-loop-down' || action === 'make-now') {
       if (requireLogin()) return;
-      const offset = action === 'move-loop-up' ? -1 : 1;
+      const order = data.loops.filter(l => l.status === 'active').sort((a, b) => (b.position || 0) - (a.position || 0));
+      const offset = action === 'make-now' ? -order.findIndex(l => l.id === loopId) : action === 'move-loop-up' ? -1 : 1;
+      if (view.overlay && view.overlay.type === 'menu') closeOverlay();
       const result = moveActiveLoopByOffset(loopId, offset);
       if (!result.ok) return;
       await persistAndRender();
       syncPositionChanges(result);
-      announce(action === 'move-loop-up' ? 'Moved up.' : 'Moved down.');
+      announce(action === 'make-now' ? 'Now it’s your Now.' : action === 'move-loop-up' ? 'Moved up.' : 'Moved down.');
       return;
     }
 
@@ -9896,6 +9944,44 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
       if (btn && !btn.disabled) btn.click();
     }
   }, true); // capture phase so it fires before the main keydown handler
+
+  // The Capture button floats over the list. Scrolling down tucks it away so
+  // it never sits on a card's buttons; scrolling up, or reaching the end of
+  // the list, brings it back.
+  let lastScrollY = window.scrollY || 0;
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY || 0;
+    const atEnd = window.innerHeight + y >= document.documentElement.scrollHeight - 40;
+    const tuck = !atEnd && y > 80 && y > lastScrollY + 4 ? true : (y < lastScrollY - 4 || atEnd || y <= 80 ? false : fabTucked);
+    lastScrollY = y;
+    if (tuck === fabTucked) return;
+    fabTucked = tuck;
+    document.querySelectorAll('.fab').forEach(b => b.classList.toggle('tucked', tuck));
+  }, { passive: true });
+
+  // Tab stays inside whatever is on top (the first-run tour, a sheet, the
+  // sign-in screen): the page behind it can't be reached until it closes.
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  function topLayer() {
+    const shown = el => el && el.firstElementChild && el.getClientRects().length && getComputedStyle(el).display !== 'none';
+    const tour = document.getElementById('onboarding-root');
+    if (view.onboardingStep >= 0 && shown(tour)) return tour;
+    const sheet = document.getElementById('overlay-root');
+    if (view.overlay && shown(sheet)) return sheet;
+    const gate = document.getElementById('auth-gate-root');
+    return shown(gate) ? gate : null;
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    const layer = topLayer();
+    if (!layer) return;
+    const items = [...layer.querySelectorAll(FOCUSABLE)].filter(el => el.getClientRects().length && !el.closest('[hidden],[inert]'));
+    if (!items.length) { e.preventDefault(); return; }
+    const first = items[0], last = items[items.length - 1];
+    const inside = layer.contains(document.activeElement);
+    if (!inside || (e.shiftKey && document.activeElement === first)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
 
   // Minimal keyboard handling:
   //   Escape               → exit inline edit or close overlay
