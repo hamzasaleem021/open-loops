@@ -20,7 +20,10 @@ import { composeNudge, composeScheduleNudge, composeTest, composeWake, isSchedul
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const APP_URL = 'https://hamzasaleem021.github.io/open-loops/open-loops.html';
+// Relative on purpose: the service worker resolves it against its own scope,
+// so a tapped nudge opens the installed app on whatever address it lives at
+// (openloops.auxila.cc today) instead of a page outside it.
+const APP_URL = './open-loops.html';
 const SUBJECT = 'https://hamzasaleem021.github.io/open-loops/';
 const ACTION_URL = `${SUPABASE_URL}/functions/v1/push`;
 const TOKEN_DAYS = 3;

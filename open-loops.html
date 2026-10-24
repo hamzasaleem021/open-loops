@@ -4140,15 +4140,26 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         { label: 'Next week', when: atTime(addDays(now, 7), 9) }
       ];
     }
+    // Each choice names its real day ("Saturday", "Next Monday") so no two
+    // read alike, none lands in the middle of the night, and a choice within
+    // three hours of an earlier one is left out.
     const list = [];
     const tonight = atTime(now, 20);
-    if (tonight - now > 45 * 60000) list.push({ label: 'Tonight', when: tonight });
-    else list.push({ label: 'In 3 hours', when: new Date(now.getTime() + 3 * 3600000) });
-    list.push({ label: 'Tomorrow morning', when: atTime(addDays(now, 1), 9) });
-    const sat = nextWeekday(now, 6, 10, 2);
-    list.push({ label: (sat - now) / 86400000 < 7 ? 'This weekend' : 'Next weekend', when: sat });
-    list.push({ label: 'Next week', when: nextWeekday(now, 1, 9, 2) });
-    return list;
+    if (tonight - now > 45 * 60000) list.push({ id: 'tonight', label: 'Tonight', when: tonight });
+    else {
+      const later = new Date(now.getTime() + 3 * 3600000);
+      if (isSameDay(later, now) && later.getHours() >= 8 && later.getHours() < 22) list.push({ id: 'later', label: 'In 3 hours', when: later });
+    }
+    list.push({ id: 'morning', label: 'Tomorrow morning', when: atTime(addDays(now, 1), 9) });
+    // On a weekend, "Saturday" means the next one, not today or tomorrow.
+    const weekend = now.getDay() === 6 || now.getDay() === 0;
+    const named = (when, day) => ((when - atTime(now, 0)) / 86400000 < 7 ? day : `Next ${day}`);
+    const sat = nextWeekday(now, 6, 10, weekend ? 2 : 1);
+    list.push({ id: 'weekend', label: named(sat, 'Saturday'), when: sat });
+    const mon = nextWeekday(now, 1, 9, 1);
+    list.push({ id: 'week', label: named(mon, 'Monday'), when: mon });
+    return list.filter((p, i) => !list.slice(0, i).some(q => Math.abs(q.when - p.when) < 3 * 3600000))
+      .sort((a, b) => a.when - b.when);
   }
 
   function localDateValue(d) {
@@ -4905,9 +4916,9 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     }
     if (ov.step === 'park') {
       const presets = wakePresets('park')
-        .filter(p => p.label !== 'Tonight' && p.label !== 'In 3 hours')
+        .filter(p => p.id !== 'tonight' && p.id !== 'later')
         .map(p => actBtn({
-          action: 'sweep-park', label: p.label, sub: formatWake(p.when), loopId: loop.id,
+          action: 'sweep-park', label: p.label, sub: formatEvent(p.when.toISOString()), loopId: loop.id,
           attrs: `data-when="${p.when.toISOString()}"`, icon: ACT_ICON.clock
         })).join('');
       return sheet(`
@@ -7344,7 +7355,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
         title = ov.waitOnly ? 'When should I check back?' : `Sent. Now it's on ${them}.`;
         sub = 'An Ask closes when they answer, not when you hit send.';
         const presets = wakePresets('ask').map(p => actBtn({
-          action: 'ask-park', label: p.label, sub: formatWake(p.when), loopId: id,
+          action: 'ask-park', label: p.label, sub: formatEvent(p.when.toISOString()), loopId: id,
           attrs: `data-when="${p.when.toISOString()}"`, icon: ACT_ICON.clock
         })).join('');
         body = `<div class="act-list">${presets}
@@ -7458,7 +7469,7 @@ setTimeout(function () { var s = document.getElementById('boot-splash'); if (s) 
     const rawText = ov.define ? ov.define.rawText : loop.rawText;
     const current = loop.status === 'waiting' && loop.wakeAt ? ` Right now it's set for ${formatWake(loop.wakeAt)}.` : '';
     const presets = wakePresets('park').map(p => actBtn({
-      action: 'park-until', label: p.label, sub: formatWake(p.when), loopId: loop.id,
+      action: 'park-until', label: p.label, sub: formatEvent(p.when.toISOString()), loopId: loop.id,
       attrs: `data-when="${p.when.toISOString()}"`, icon: ACT_ICON.clock
     })).join('');
     const def = ov.pickDate ? new Date(ov.pickDate) : atTime(addDays(new Date(), 2), 9);
